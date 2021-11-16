@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+cd /app/frontend
+
+exec \
+    s6-setuidgid abc /usr/bin/npm run start

@@ -1,76 +1,124 @@
-import { budgets } from './stores/budgets'
-import { user } from './stores/users'
+import Axios from 'axios'
 
-export default {
-  async ping() {
-    try {
-      const response = await (await this.makeRequest('/api/me')).json()
-      user.set(response.data)
-    } catch (err) {
+const axios = Axios.create({
+  withCredentials: true
+})
 
-    }
-  },
+export default class API {
+  static async ping() {
+    const response = await axios.get('/api/me')
 
-  async login(email, password) {
-    let response = await this.makeRequest('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({
+    return response.data.data
+  }
+
+  static async createUser(email, password) {
+    const response = await axios.post('/api/users', {
+      email,
+      password,
+    })
+
+    return response.data.data
+  }
+
+  static async login(email, password) {
+    const response = await axios.post('/api/login', {
         email,
         password,
-      })
     })
 
-    const payload = await response.json()
-    if (response.status === 200) {
-      user.set(payload.data)
-      return true
-    }
+    return response.data.data
+  }
 
-    return false
-  },
-
-  async logout() {
-    await this.makeRequest('/api/logout')
-  },
-
-  async getBudgets() {
-    const response = await this.makeRequest('/api/budgets')
-    const payload = await response.json()
-
-    console.log(payload.data)
-    budgets.set(payload.data)
-  },
-
-  async createBudget(name) {
-    const response = await this.makeRequest('/api/budgets', {
-      method: 'POST',
-      body: JSON.stringify({
-        name,
-      })
+  static async createBudget(name) {
+    const response = await axios.post(`/api/budgets`, {
+      name,
     })
-  },
 
-  async createAccount(name, type, budgetId) {
-    const response = await this.makeRequest(`/api/budgets/${budgetId}/accounts`, {
-      method: 'POST',
-      body: JSON.stringify({
-        name,
-        type,
-      })
+    return response.data.data
+  }
+
+  static async fetchBudgets() {
+    const response = await axios.get('/api/budgets')
+
+    return response.data.data
+  }
+
+  static async createAccount(name, type, budgetId) {
+    const response = await axios.post(`/api/budgets/${budgetId}/accounts`, {
+      name, type
     })
-    const payload = await response.json()
-    console.log(payload)
 
-    return payload.data
-  },
+    return response.data.data
+  }
 
-  async makeRequest(url, options) {
-    return await fetch(url, {
-      ...options,
-      credentials: "include",
-      headers: {
-        'Content-Type': 'application/json'
-      },
+  static async fetchAccounts(budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/accounts`)
+
+    return response.data.data
+  }
+
+  static async fetchAccountTransactions(accountId, budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/accounts/${accountId}/transactions`)
+
+    return response.data.data
+  }
+
+  static async createTransaction(transaction, budgetId) {
+    const response = await axios.post(`/api/budgets/${budgetId}/transactions`, transaction)
+
+    return response.data.data
+  }
+
+  static async updateTransaction(transaction, budgetId) {
+    const response = await axios.put(`/api/budgets/${budgetId}/transactions/${transaction.id}`, transaction)
+
+    return response.data.data
+  }
+
+  static async deleteTransaction(transactionId, budgetId) {
+    const response = await axios.delete(`/api/budgets/${budgetId}/transactions/${transactionId}`)
+
+    return response.data.data
+  }
+
+  static async fetchCategories(budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/categories`)
+
+    return response.data.data
+  }
+
+  static async createCategoryGroup(name, budgetId) {
+    const response = await axios.post(`/api/budgets/${budgetId}/categories/groups`, { name })
+
+    return response.data.data
+  }
+
+  static async createCategory(name, categoryGroupId, budgetId) {
+    const response = await axios.post(`/api/budgets/${budgetId}/categories`, {
+      name,
+      categoryGroupId
     })
-  },
+
+    return response.data.data
+  }
+
+  static async fetchBudgetMonth(budgetId, month) {
+    const response = await axios.get(`/api/budgets/${budgetId}/months/${month}`)
+
+    return response.data.data
+  }
+
+  static async fetchBudgetMonths(budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/months/`)
+
+    return response.data.data
+  }
+
+  static async updateCategoryMonth(budgetId, categoryId, month, budgeted) {
+    const response = await axios.put(`/api/budgets/${budgetId}/categories/${categoryId}/${month}`, {
+      budgeted,
+    })
+
+    return response.data.data
+  }
 }

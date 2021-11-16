@@ -1,0 +1,25 @@
+server {
+	listen 80 default_server;
+
+	listen 443 ssl;
+
+	server_name _;
+
+	ssl_certificate /config/keys/cert.crt;
+	ssl_certificate_key /config/keys/cert.key;
+
+	client_max_body_size 0;
+
+	location / {
+		proxy_set_header Connection $connection_upgrade;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_pass http://localhost:3000;
+	}
+
+	location /api/ {
+		rewrite /foo/(.*) /$1  break;
+		proxy_set_header Connection $connection_upgrade;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_pass http://localhost:5000/;
+	}
+}

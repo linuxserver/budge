@@ -1,0 +1,17 @@
+version: '3'
+services:
+  dev-proxy:
+    container_name: dev-proxy
+    image: ghcr.io/linuxserver/nginx
+#    network_mode: host
+    ports:
+      - 8090:80
+      - 3000:3000
+      - 5000:5000
+    volumes:
+      - ./docker:/config
+      - ./:/app
+    environment:
+      PGID: 1000
+      PUID: 1000
+      TZ: America/New_York

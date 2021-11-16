@@ -1,44 +1,50 @@
 {
-	"name": "smui-example-sveltekit",
-	"version": "0.0.1",
-	"scripts": {
-		"dev": "svelte-kit dev --host 0.0.0.0",
-		"build": "svelte-kit build",
-		"preview": "svelte-kit preview",
-		"check": "svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "prettier --ignore-path .gitignore  --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
-		"format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. .",
-		"prepare": "npm run smui-theme-light && npm run smui-theme-dark",
-		"smui-theme-light": "smui-theme compile static/smui.css -i src/theme",
-		"smui-theme-dark": "smui-theme compile static/smui-dark.css -i src/theme/dark"
-	},
-	"devDependencies": {
-		"@material/theme": "^11.0.0",
-		"@material/typography": "^11.0.0",
-		"@smui/button": "^5.0.0-beta.5",
-		"@smui/dialog": "^5.0.0-beta.7",
-		"@smui/drawer": "^5.0.0-beta.8",
-		"@smui/icon-button": "^5.0.0-beta.8",
-		"@smui/list": "^5.0.0-beta.8",
-		"@smui/menu": "^5.0.0-beta.8",
-		"@smui/select": "^5.0.0-beta.8",
-		"@smui/textfield": "^5.0.0-beta.8",
-		"@smui/top-app-bar": "^5.0.0-beta.8",
-		"@sveltejs/kit": "next",
-		"@typescript-eslint/eslint-plugin": "^4.19.0",
-		"@typescript-eslint/parser": "^4.19.0",
-		"eslint": "^7.22.0",
-		"eslint-config-prettier": "^8.1.0",
-		"eslint-plugin-svelte3": "^3.2.0",
-		"prettier": "~2.2.1",
-		"prettier-plugin-svelte": "^2.2.0",
-		"smui-theme": "^5.0.0-beta.5",
-		"svelte": "^3.34.0",
-		"svelte-check": "^2.0.0",
-		"svelte-preprocess": "^4.0.0",
-		"tslib": "^2.0.0",
-		"typescript": "^4.0.0"
-	},
-	"type": "module"
+  "name": "wenab-react-js",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-table/core": "^0.2.6",
+    "@mui/icons-material": "^5.1.0",
+    "@mui/lab": "^5.0.0-alpha.54",
+    "@mui/styles": "^5.1.0",
+    "@reduxjs/toolkit": "^1.6.2",
+    "@testing-library/jest-dom": "^5.15.0",
+    "@testing-library/react": "^11.2.7",
+    "@testing-library/user-event": "^12.8.3",
+    "axios": "^0.24.0",
+    "react": "^17.0.2",
+    "react-data-grid": "^7.0.0-beta.7",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^6.0.2",
+    "react-scripts": "4.0.3",
+    "web-vitals": "^1.1.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@craco/craco": "^6.4.0",
+    "@welldone-software/why-did-you-render": "^6.2.3"
+  }
 }
