@@ -2,19 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import MaterialTable, { MTableCell, MTableEditField, MTableEditCell } from "@material-table/core";
 import { TableIcons } from '../utils/Table'
-import { fetchBudgetMonth, updateCategoryMonth } from "../redux/slices/Budgets";
+import { fetchBudgetMonth, updateCategoryMonth, setCurrentMonth, fetchCategoryMonths } from "../redux/slices/Budgets";
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { makeStyles } from '@mui/styles'
-
-const useStyles = makeStyles(theme => ({
-  categoryBalance: {
-    '&.positive-balance': {
-      color: '#32ae7b',
-    },
-  }
-}))
+import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
 
 export default function BudgetTable(props) {
   /**
@@ -22,6 +18,8 @@ export default function BudgetTable(props) {
    */
   const dispatch = useDispatch()
   const month = useSelector(state => state.budgets.currentMonth)
+  const availableMonths = useSelector(state => state.budgets.availableMonths)
+  const budgetMonths = useSelector(state => Object.keys(state.budgets.budgetMonths).sort())
   const categoriesMap = useSelector(
     state => state.categories.categoryGroups.reduce(
       (acc, group) => {
@@ -97,10 +95,39 @@ export default function BudgetTable(props) {
   */
   let cellEditing = false
   const openCategoryDialog = props.openCategoryDialog
+  const openCategoryGroupDialog = props.openCategoryGroupDialog
 
   const columns = [
     {
-      title: "Category", field: "categoryId", lookup: categoriesMap, editable: "onAdd", editComponent: props => (
+      title: "Category",
+      field: "categoryId",
+      lookup: categoriesMap,
+      editable: "never",
+      align: "left",
+      render: (rowData) => (
+        <>
+          <div style={{cursor: 'pointer', display: 'inline-block'}} onClick={() => {
+            if (rowData.groupId) {
+              console.log(rowData)
+              openCategoryDialog({ name: categoriesMap[rowData.categoryId], categoryId: rowData.categoryId, categoryGroupId: rowData.groupId })
+            } else {
+              openCategoryGroupDialog({ name: categoriesMap[rowData.categoryId], categoryGroupId: rowData.id })
+            }
+          }}>
+            {categoriesMap[rowData.categoryId]}
+          </div>
+          {
+            !rowData.groupId && (
+              <IconButton aria-label="add" size="small" onClick={(event) => {
+                openCategoryDialog({ categoryGroupId: rowData.id })
+              }}>
+                <AddCircleIcon fontSize="small" />
+              </IconButton>
+            )
+          }
+        </>
+      ),
+      editComponent: props => (
         <TextField
         onChange={(e, value) => {
           console.log(props)
@@ -108,11 +135,36 @@ export default function BudgetTable(props) {
         }}
         label=""
         variant="standard" />
-      )
+      ),
     },
     { title: "Assigned", field: "budgeted", type: "currency", },
     { title: "Activity", field: "activity", type: "currency", editable: "never" },
-    { title: "Balance", field: "balance", type: "currency", editable: "never" },
+    {
+        title: "Balance",
+        field: "balance",
+        type: "currency",
+        align: "right",
+        editable: "never",
+        render: (rowData) => {
+          const value = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(rowData.balance !== undefined ? rowData.balance : 0);
+
+          if (!rowData.groupId) {
+            // @TODO: can we use the getCurrencyValue from MTableCell somehow? or the default in general?
+            return value
+          }
+
+          if (rowData.balance > 0) {
+            return <Chip label={value} color="success"></Chip>
+          } else if (rowData.balance < 0) {
+            return <Chip label={value} color="error"></Chip>
+          } else {
+            return <Chip label={value}></Chip>
+          }
+        }
+      },
   ]
 
   const onBudgetEdit = async (newRow, oldRow) => {
@@ -123,99 +175,120 @@ export default function BudgetTable(props) {
 
     await dispatch(updateCategoryMonth({ categoryId: newRow.categoryId, month, budgeted: newRow.budgeted }))
 
-    return dispatch(fetchBudgetMonth({ month }))
+    // const monthIndex = availableMonths.indexOf(month)
+    // Fetch all months starting with the existing to get cascaded balance updates
+    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
+    // return Promise.all(availableMonths.slice(monthIndex).map(month => dispatch(fetchBudgetMonth({ month }))))
   }
 
-  const classes = useStyles()
+  const budgetTableCell = (props) => {
+    let children = <></>
+    const childProps = {
+      ...props,
+      onCellEditStarted: (rowData, columnDef) => {
+        if (cellEditing === true) {
+          return
+        }
+
+        cellEditing = true
+        props.onCellEditStarted(rowData, columnDef)
+      },
+    }
+
+    switch (props.columnDef.field) {
+      case 'budgeted':
+        // don't let group rows get editable 'budgeted' cell
+        if (props.rowData.groupId === undefined) {
+          childProps.cellEditable = false
+        }
+
+        break
+    }
+
+    return (
+      <MTableCell {...childProps}>{children}</MTableCell>
+    )
+  }
+
+  const navigateMonth = (direction) => {
+    const monthDate = new Date(Date.UTC(...month.split('-')))
+    monthDate.setDate(1)
+    monthDate.setMonth(monthDate.getMonth() + direction)
+    console.log(monthDate)
+    dispatch(setCurrentMonth(monthDate))
+  }
+
+  const nextMonth = getDateFromString(month)
+  nextMonth.setMonth(nextMonth.getMonth() + 1)
+  const nextMonthDisabled = !availableMonths.includes(formatMonthFromDateString(nextMonth))
+
+  const prevMonth = getDateFromString(month)
+  prevMonth.setMonth(prevMonth.getMonth() - 1)
+  const prevMonthDisabled = !availableMonths.includes(formatMonthFromDateString(prevMonth))
+
   return (
-    <MaterialTable
-      title={(new Date(month)).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
-      components={{
-        Cell: props => {
-          const childProps = {
-            ...props,
-            onCellEditStarted: (rowData, columnDef) => {
-              if (cellEditing === true) {
-                return
-              }
+    <>
+      <div className="budget-month-navigation">
+        <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
+          <ArrowBackIosNewIcon />
+        </IconButton>
+        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
+        <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
+          <ArrowForwardIosIcon />
+        </IconButton>
+      </div>
 
-              cellEditing = true
-              props.onCellEditStarted(rowData, columnDef)
-            },
-            ...(props.rowData.groupId === undefined && props.columnDef.field === 'budgeted') && { cellEditable: false }, // Don't let group rows get budgeted cell editable
-          }
+      <MaterialTable
+        components={{
+          Cell: budgetTableCell,
+          EditCell: props => (
+            <MTableEditCell {...props} onCellEditFinished={(rowData, columnDef) => {
+              cellEditing = false
+              props.onCellEditFinished(rowData, columnDef)
+            }}></MTableEditCell>
+          )
+        }}
+        options={{
+          padding: "dense",
+          paging: false,
+          search: false,
+          defaultExpanded: true,
+          showTitle: false,
+        }}
+        icons={TableIcons}
+        columns={columns}
+        data={data}
+        parentChildData={(row, rows) => rows.find(a => {
+          return a.id === row.groupId
+        })}
+        cellEditable={{
+          onCellEditApproved: async (newValue, oldValue, rowData, columnDef) => {
+            // await onBudgetEdit()
+            const newData = {
+              ...rowData,
+              [columnDef.field]: newValue,
+            }
 
-          if (props.columnDef.field === 'categoryId') {
-            childProps.columnDef = {
-              ...props.columnDef,
-              initialEditValue: props.columnDef.lookup[props.rowData.categoryId]
+            switch (columnDef.field) {
+              case 'budgeted':
+                onBudgetEdit(newData, rowData)
+                break
             }
           }
-
-          return (
-            <MTableCell {...childProps}>
-              {
-                (props.columnDef.field === 'categoryId' && !props.rowData.groupId) && (
-                  <div style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                  }}>
-                    <IconButton aria-label="add" size="small" onClick={(event) => {
-                      openCategoryDialog(props.rowData.categoryId)
-                    }}>
-                      <AddCircleIcon />
-                    </IconButton>
-                  </div>
-              )}
-            </MTableCell>
-          )
-        },
-        EditCell: props => (
-          <MTableEditCell {...props} onCellEditFinished={(rowData, columnDef) => {
-            cellEditing = false
-            props.onCellEditFinished(rowData, columnDef)
-          }}></MTableEditCell>
-        )
-      }}
-      options={{
-        padding: "dense",
-        paging: false,
-        search: false,
-        defaultExpanded: true,
-      }}
-      icons={TableIcons}
-      columns={columns}
-      data={data}
-      parentChildData={(row, rows) => rows.find(a => {
-        return a.id === row.groupId
-      })}
-      cellEditable={{
-        onCellEditApproved: async (newValue, oldValue, rowData, columnDef) => {
-          // await onBudgetEdit()
-          const newData = {
-            ...rowData,
-            [columnDef.field]: newValue,
-          }
-
-          switch (columnDef.field) {
-            case 'budgeted':
-              onBudgetEdit(newData, rowData)
-              break
-          }
-        }
-      }}
-      // editable={{
-      //   isEditable: rowData => rowData.groupId,
-      //   onRowAdd: async (row) => {
-      //     console.log(row)
-      //   },
-      //   onRowUpdate: async (newData, oldData) => {
-      //     await onBudgetEdit(newData, oldData)
-      //   },
-      //   // onRowDelete: async (row) => {
-      //   //   await onTransactionDelete(row)
-      //   // },
-      // }}
-    />
+        }}
+        // editable={{
+        //   isEditable: rowData => rowData.groupId,
+        //   onRowAdd: async (row) => {
+        //     console.log(row)
+        //   },
+        //   onRowUpdate: async (newData, oldData) => {
+        //     await onBudgetEdit(newData, oldData)
+        //   },
+        //   // onRowDelete: async (row) => {
+        //   //   await onTransactionDelete(row)
+        //   // },
+        // }}
+      />
+    </>
   )
 }

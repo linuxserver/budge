@@ -2,12 +2,13 @@ import { Get, Put, Delete, Route, Path, Security, Post, Patch, Body, Controller,
 import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { Account } from '../entities/Account'
+import { Account, AccountTypes } from '../entities/Account'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { TransactionRequest, TransactionResponse, TransactionsResponse } from '../schemas/transaction'
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { formatMonthFromDateString } from '../utils'
 import { BudgetMonth } from '../entities/BudgetMonth'
+import { Category } from '../entities/Category'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
@@ -47,19 +48,12 @@ export class TransactionsController extends Controller {
       }
 
       // New transaction, create budget month if it doesn't exist yet.
-      let budgetMonth = await BudgetMonth.findOne({
+      let budgetMonth = await BudgetMonth.findOrCreate(
         budgetId,
-        month: formatMonthFromDateString(new Date(requestBody.date))
-      }, { relations: ['categories'] })
-      if (!budgetMonth) {
-        budgetMonth = BudgetMonth.create({
-          budgetId,
-          month: formatMonthFromDateString(new Date(requestBody.date)),
-          categories: [],
-          activity: 0,
-        })
-      }
+        formatMonthFromDateString(new Date(requestBody.date))
+      )
 
+      const account = await Account.findOne(requestBody.accountId)
       const transaction: Transaction = Transaction.create({
         ...requestBody,
         date: new Date(requestBody.date)
@@ -71,24 +65,27 @@ export class TransactionsController extends Controller {
       await budgetMonth.save()
 
       // Update or create category month
-      let categoryMonth = await CategoryMonth.findOne({
-        categoryId: transaction.categoryId,
-        month: transaction.getMonth(),
-      })
+      let categoryMonth = await CategoryMonth.findOrCreate(transaction.categoryId, budgetMonth)
+      await categoryMonth.updateActivity(transaction.amount)
 
-      if (!categoryMonth) {
-        categoryMonth = CategoryMonth.create({
-          categoryId: transaction.categoryId,
+      if (account.type === AccountTypes.CreditCard) {
+        // If this is a credit card, update the category month for the payment
+        let ccCategory = await Category.findOne({ budgetId, name: account.name })
+        let ccCategoryMonth = await CategoryMonth.findOne({
+          categoryId: ccCategory.id,
+          month: transaction.getMonth(),
+        }) || CategoryMonth.create({
+          categoryId: ccCategory.id,
           month: transaction.getMonth(),
           budgetMonth: budgetMonth,
           activity: 0,
           balance: 0,
           budgeted: 0,
         })
-      }
 
-      categoryMonth.updateActivity(transaction.amount)
-      await categoryMonth.save()
+        // CC activities are inversed
+        await ccCategoryMonth.updateActivity(transaction.amount * -1)
+      }
 
       return {
         message: 'success',
@@ -136,7 +133,8 @@ export class TransactionsController extends Controller {
 
       // Load in original transaction to check if the amount has been altered
       // and updated the category month accordingly
-      const transaction = await Transaction.findOne(transactionId)
+      // @TODO: remove relation to test db transactions
+      const transaction = await Transaction.findOne(transactionId, { relations: ["account"] })
 
       const originalAmount = transaction.amount
       const newAmount = requestBody.amount
@@ -155,8 +153,7 @@ export class TransactionsController extends Controller {
         if (newAmount !== originalAmount) {
           const categoryMonth = await CategoryMonth.findOne({ categoryId: originalCategoryId, month: originalMonth }, { relations: ["budgetMonth"] })
 
-          categoryMonth.updateActivity(difference)
-          await categoryMonth.save()
+          await categoryMonth.updateActivity(difference)
 
           categoryMonth.budgetMonth.activity += difference
           await categoryMonth.budgetMonth.save()
@@ -164,20 +161,27 @@ export class TransactionsController extends Controller {
       } else if (originalCategoryId !== newCategoryId || originalMonth !== newMonth) {
         // Category month has changed, so reset 'original' month's amount from original transaction and
         // add / create to new month
-        const originalCategoryMonth = await CategoryMonth.findOne({ categoryId: originalCategoryId, month: originalMonth })
-        originalCategoryMonth.updateActivity(originalAmount * -1)
-        await originalCategoryMonth.save()
+        const originalCategoryMonth = await CategoryMonth.findOne({ categoryId: originalCategoryId, month: originalMonth }, { relations: ["budgetMonth"] })
+        await originalCategoryMonth.updateActivity(originalAmount * -1)
 
         originalCategoryMonth.budgetMonth.activity += originalAmount * -1
         await originalCategoryMonth.budgetMonth.save()
 
         const newBudgetMonth = await BudgetMonth.findOrCreate(budgetId, newMonth)
         const newCategoryMonth = await CategoryMonth.findOrCreate(newCategoryId, newBudgetMonth)
-        newCategoryMonth.updateActivity(newAmount)
-        await newCategoryMonth.save()
+        await newCategoryMonth.updateActivity(newAmount)
 
         newCategoryMonth.activity += newAmount
         await newCategoryMonth.budgetMonth.save()
+      }
+
+      if (transaction.account.type === AccountTypes.CreditCard && difference !== 0) {
+        // Update the CC month as well
+        const ccCategory = await Category.findOne({ budgetId, name: transaction.account.name })
+        const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: originalMonth })
+
+        // Again, inverse because it's a CC
+        await ccCategoryMonth.updateActivity(difference * -1)
       }
 
       const updatedTransaction = Transaction.merge(transaction, {
@@ -191,6 +195,7 @@ export class TransactionsController extends Controller {
         data: await updatedTransaction.sanitize(),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -217,13 +222,18 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transaction = await Transaction.findOne(transactionId)
+      const transaction = await Transaction.findOne(transactionId, { relations: ["account"] })
       const categoryMonth = await CategoryMonth.findOne({ categoryId: transaction.categoryId, month: transaction.getMonth() }, { relations: ["budgetMonth"] })
-      categoryMonth.updateActivity(transaction.amount * -1)
-      await categoryMonth.save()
+      await categoryMonth.updateActivity(transaction.amount * -1)
 
       categoryMonth.budgetMonth.activity += transaction.amount * -1
       await categoryMonth.budgetMonth.save()
+
+      if (transaction.account.type === AccountTypes.CreditCard) {
+        const ccCategory = await Category.findOne({ budgetId, name: transaction.account.name })
+        const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: transaction.getMonth() })
+        await ccCategoryMonth.updateActivity(transaction.amount) // Inverse, remember
+      }
 
       await Transaction.delete(transactionId)
 

@@ -7,7 +7,7 @@ import { CategoryGroupRequest, CategoryGroupResponse, CategoryGroupsResponse } f
 import { CategoryResponse } from '../schemas/category'
 import { CategoryRequest } from '../schemas/category'
 import { Category } from '../entities/Category'
-import { CategoryMonthRequest, CategoryMonthResponse } from '../schemas/category_month'
+import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../schemas/category_month'
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { BudgetMonth } from '../entities/BudgetMonth'
 
@@ -92,7 +92,49 @@ export class CategoriesController extends Controller {
       })
       await categoryGroup.save()
 
-      console.log(categoryGroup)
+      return {
+        message: 'success',
+        data: await categoryGroup.sanitize(),
+      }
+    } catch (err) {
+      return { message: err.message }
+    }
+  }
+
+  /**
+   * Update a category group
+   */
+  @Security('jwtRequired')
+  @Put('groups/{id}')
+  @Example<CategoryGroupResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      budgetId: 'def456',
+      name: 'Expenses',
+      categories: [],
+      created: '2011-10-05T14:48:00.000Z',
+      updated: '2011-10-05T14:48:00.000Z',
+    },
+  })
+  public async updateCategoryGroup(
+    @Path() budgetId: string,
+    @Path() id: string,
+    @Body() requestBody: CategoryGroupRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<CategoryGroupResponse | ErrorResponse> {
+    try {
+      const budget = await Budget.findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
+      const categoryGroup = await CategoryGroup.findOne(id)
+      categoryGroup.name = requestBody.name
+      await categoryGroup.save()
 
       return {
         message: 'success',
@@ -148,6 +190,55 @@ export class CategoriesController extends Controller {
   }
 
   /**
+   * Update a category
+   */
+  @Security('jwtRequired')
+  @Put("{id}")
+  @Example<CategoryResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      categoryGroupId: 'def456',
+      name: 'Expenses',
+      created: '2011-10-05T14:48:00.000Z',
+      updated: '2011-10-05T14:48:00.000Z',
+    },
+  })
+  public async updateCategory(
+    @Path() budgetId: string,
+    @Path() id: string,
+    @Body() requestBody: CategoryRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<CategoryResponse | ErrorResponse> {
+    try {
+      const budget = await Budget.findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
+      const category = await Category.findOne(id, { relations: ["categoryGroup"] })
+
+      category.name = requestBody.name
+      if (category.categoryGroupId !== requestBody.categoryGroupId) {
+        delete category.categoryGroup
+        category.categoryGroupId = requestBody.categoryGroupId
+      }
+
+      await category.save()
+
+      return {
+        message: 'success',
+        data: await category.sanitize(),
+      }
+    } catch (err) {
+      return { message: err.message }
+    }
+  }
+
+  /**
    * Update category month
    */
   @Security('jwtRequired')
@@ -182,14 +273,15 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const budgetMonth = await BudgetMonth.findOrCreate(budgetId, month)
+      const budgetMonth = await BudgetMonth.findOne({ budgetId, month })
       const categoryMonth = await CategoryMonth.findOrCreate(categoryId, budgetMonth)
       const originalBudgetedAmount = categoryMonth.budgeted
+      const budgetedDifference = requestBody.budgeted - originalBudgetedAmount
 
-      categoryMonth.budgeted = requestBody.budgeted
-      categoryMonth.balance = categoryMonth.budgeted + categoryMonth.activity
+      categoryMonth.budgeted += budgetedDifference
+      categoryMonth.balance += budgetedDifference
+      await categoryMonth.cascadeBalance()
 
-      const budgetedDifference = categoryMonth.budgeted - originalBudgetedAmount
       categoryMonth.budgetMonth.budgeted += budgetedDifference
 
       await categoryMonth.save()
@@ -198,6 +290,53 @@ export class CategoriesController extends Controller {
       return {
         message: 'success',
         data: await categoryMonth.sanitize(),
+      }
+    } catch (err) {
+      console.log(err)
+      return { message: err.message }
+    }
+  }
+
+  /**
+   * Get all months for a category
+   */
+  @Security('jwtRequired')
+  @Get("{categoryId}/months")
+  @Example<CategoryMonthsResponse>({
+    message: 'success',
+    data: [
+      {
+        id: "jkl789",
+        categoryId: "ghi135",
+        month: "2021-10-01",
+        budgeted: 0,
+        activity: 0,
+        balance: 0,
+        created: '2011-10-05T14:48:00.000Z',
+        updated: '2011-10-05T14:48:00.000Z',
+      },
+    ],
+  })
+  public async getCategoryMonths(
+    @Path() budgetId: string,
+    @Path() categoryId: string,
+    @Request() request: ExpressRequest,
+  ): Promise<CategoryMonthsResponse | ErrorResponse> {
+    try {
+      const budget = await Budget.findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        console.log('here')
+        return {
+          message: 'Not found',
+        }
+      }
+
+      const categoryMonths = await CategoryMonth.find({ categoryId })
+
+      return {
+        message: 'success',
+        data: await Promise.all(categoryMonths.map(categoryMonth => categoryMonth.sanitize())),
       }
     } catch (err) {
       console.log(err)

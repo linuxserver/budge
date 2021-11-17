@@ -5,6 +5,8 @@ import { ErrorResponse } from './responses'
 import { Account, AccountTypes } from '../entities/Account'
 import { AccountResponse, AccountsResponse } from '../schemas/account'
 import { AccountRequest } from '../schemas/account'
+import { CategoryGroup, CreditCardGroupName } from '../entities/CategoryGroup'
+import { Category } from '../entities/Category'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')
@@ -12,39 +14,52 @@ export class AccountsController extends Controller {
   /**
    * Create a new account
    */
-   @Security('jwtRequired')
-   @Post()
-   @Example<AccountResponse>({
-     message: 'success',
-     data: {
-       id: 'abc123',
-       budgetId: 'def456',
-       name: 'Checking Account',
-       type: AccountTypes.Bank,
-       created: '2011-10-05T14:48:00.000Z',
-       updated: '2011-10-05T14:48:00.000Z',
-     },
-   })
-   public async createAccount(
-     @Path() budgetId: string,
-     @Body() requestBody: AccountRequest,
-     @Request() request: ExpressRequest,
-   ): Promise<AccountResponse | ErrorResponse> {
-     try {
-       const account: Account = Account.create({
-         ...requestBody,
-         budgetId,
-       })
-       await account.save()
+  @Security('jwtRequired')
+  @Post()
+  @Example<AccountResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      budgetId: 'def456',
+      name: 'Checking Account',
+      type: AccountTypes.Bank,
+      created: '2011-10-05T14:48:00.000Z',
+      updated: '2011-10-05T14:48:00.000Z',
+    },
+  })
+  public async createAccount(
+    @Path() budgetId: string,
+    @Body() requestBody: AccountRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<AccountResponse | ErrorResponse> {
+    try {
+      const account: Account = Account.create({
+        ...requestBody,
+        budgetId,
+      })
+      await account.save()
 
-       return {
-         message: 'success',
-         data: await account.sanitize(),
-       }
-     } catch (err) {
-       return { message: err.message }
-     }
-   }
+      if (account.type === AccountTypes.CreditCard) {
+        // Create CC payments category if it doesn't exist
+        const ccGroup = await CategoryGroup.findOne({ budgetId, name: CreditCardGroupName }) || CategoryGroup.create({ budgetId, name: CreditCardGroupName })
+        await ccGroup.save()
+
+        const paymentCategory = Category.create({
+          budgetId,
+          categoryGroupId: ccGroup.id,
+          name: account.name,
+        })
+        await paymentCategory.save()
+      }
+
+      return {
+        message: 'success',
+        data: await account.sanitize(),
+      }
+    } catch (err) {
+      return { message: err.message }
+    }
+  }
 
   /**
    * Find all budget accounts

@@ -73,3 +73,5 @@ export type BudgetMonthResponse = DataResponse<BudgetMonthModel>
 export type BudgetMonthsResponse = DataResponse<BudgetMonthModel[]>
 
 export type BudgetMonthWithCategoriesResponse = DataResponse<BudgetMonthWithCategoriesModel>
+
+export type BudgetMonthsWithCategoriesResponse = DataResponse<BudgetMonthWithCategoriesModel[]>

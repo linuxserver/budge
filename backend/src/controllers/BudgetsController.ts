@@ -5,7 +5,8 @@ import { ErrorResponse } from './responses'
 import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../schemas/budget'
 import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
-import { BudgetMonthResponse, BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../schemas/budget_month'
+import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../schemas/budget_month'
+import { getMonthString, getMonthStringFromNow } from '../utils'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -82,6 +83,14 @@ export class BudgetsController extends Controller {
       budget.user = request.user
       await budget.save()
 
+      const today = getMonthString()
+      const prevMonth = getMonthStringFromNow(-1)
+      const nextMonth = getMonthStringFromNow(1)
+
+      await Promise.all([prevMonth, today, nextMonth].map(month => {
+        return BudgetMonth.create({ budgetId: budget.id, month }).save()
+      }))
+
       return {
         message: 'success',
         data: await budget.sanitize(),
@@ -137,7 +146,7 @@ export class BudgetsController extends Controller {
    * Get all budget months
    */
   @Security('jwtRequired')
-  @Get("{budgetId}/months/")
+  @Get("{budgetId}/months")
   @Example<BudgetMonthsResponse>({
     message: 'success',
     data: [
@@ -168,6 +177,20 @@ export class BudgetsController extends Controller {
     }
 
     const budgetMonths = await BudgetMonth.find({ budgetId })
+
+    // Create budget months for current, previous, and next month
+    // @TODO: I don't know if this is needed.
+    // await Promise.all([-1, 0, 1].map(monthsAway => {
+    //   const month = getMonthFromNow(monthsAway)
+    //   if (budgetMonths.filter(budgetMonth => budgetMonth.month === month).length === 0) {
+    //     const budgetMonth = BudgetMonth.create({
+    //       budgetId: budget.id,
+    //       month: month,
+    //     })
+
+    //     return budgetMonth.save()
+    //   }
+    // }))
 
     return {
       message: 'success',
@@ -227,8 +250,6 @@ export class BudgetsController extends Controller {
       budgetMonth = BudgetMonth.create({
         budgetId,
         month,
-        created: new Date(),
-        updated: new Date(),
       })
       budgetMonth.categories = []
     }

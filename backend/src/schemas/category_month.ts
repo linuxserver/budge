@@ -63,3 +63,5 @@ export interface CategoryMonthRequest {
 }
 
 export type CategoryMonthResponse = DataResponse<CategoryMonthModel>
+
+export type CategoryMonthsResponse = DataResponse<CategoryMonthModel[]>

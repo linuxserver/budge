@@ -3,6 +3,8 @@ import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, M
 import { Budget } from './Budget'
 import { Category } from './Category'
 
+export const CreditCardGroupName = 'Credit Card Payments'
+
 @Entity('category_groups')
 export class CategoryGroup extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')

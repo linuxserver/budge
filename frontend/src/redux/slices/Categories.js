@@ -11,9 +11,19 @@ export const createCategoryGroup = createAsyncThunk('categories/createCategoryGr
   return await api.createCategoryGroup(name, store.budgets.activeBudget.id);
 })
 
+export const updateCategoryGroup = createAsyncThunk('categories/updateCategoryGroup', async ({ id, name }, { getState }) => {
+  const store = getState()
+  return await api.updateCategoryGroup(id, name, store.budgets.activeBudget.id);
+})
+
 export const createCategory = createAsyncThunk('categories/createCategory', async ({ name, categoryGroupId }, { getState }) => {
   const store = getState()
   return await api.createCategory(name, categoryGroupId, store.budgets.activeBudget.id);
+})
+
+export const updateCategory = createAsyncThunk('categories/updateCategory', async ({ id, name, categoryGroupId }, { getState }) => {
+  const store = getState()
+  return await api.updateCategory(id, name, categoryGroupId, store.budgets.activeBudget.id);
 })
 
 const categoriesSlice = createSlice({
@@ -42,6 +52,11 @@ const categoriesSlice = createSlice({
       state.categoryGroups.push(payload)
     },
 
+    [updateCategoryGroup.fulfilled]: (state, { payload }) => {
+      const index = state.categoryGroups.findIndex(group => group.id === payload.id)
+      state.categoryGroups[index] = payload
+    },
+
     [createCategory.fulfilled]: (state, { payload }) => {
       state.categories.push(payload)
       state.categoriesToGroups[payload.id] = payload.categoryGroupId
@@ -53,6 +68,31 @@ const categoriesSlice = createSlice({
         group.categories.push(payload)
         return group
       })
+    },
+
+    [updateCategory.fulfilled]: (state, { payload }) => {
+      const index = state.categories.findIndex(category => category.id === payload.id)
+      const oldGroupIndex = state.categoryGroups.findIndex(group => group.categories.filter(cat => cat.id === payload.id).length === 1)
+
+      // Update groups first if the group has changed
+      if (state.categories[index].categoryGroupId !== payload.categoryGroupId) {
+        // remove from old group
+        state.categoryGroups[oldGroupIndex].categories = state.categoryGroups[oldGroupIndex].categories.filter(cat => cat.id !== payload.id)
+
+        // add to new group
+        const newGroupIndex = state.categoryGroups.findIndex(group => group.id === payload.categoryGroupId)
+        state.categoryGroups[newGroupIndex].categories.push(payload)
+      } else {
+        state.categoryGroups[oldGroupIndex].categories = state.categoryGroups[oldGroupIndex].categories.map(cat => {
+          if (cat.id === payload.id) {
+            return payload
+          }
+
+          return cat
+        })
+      }
+
+      state.categories[index] = payload
     },
   },
 })

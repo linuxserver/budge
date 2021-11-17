@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import Button from '@mui/material/Button';
 import BudgetTable from '../components/BudgetTable'
-import NewCategoryDialog from "../components/NewCategoryDialog";
+import CategoryGroupDialog from "../components/CategoryGroupDialog";
+import CategoryDialog from "../components/CategoryDialog";
 
 export default function Budget(props) {
   /**
@@ -14,23 +15,31 @@ export default function Budget(props) {
    * State block
    */
   const [dialogState, setDialogState] = useState({
-    open: false,
+    name: '',
+    categoryOpen: false,
+    categoryGroupOpen: false,
     mode: '',
+    categoryId: '',
     categoryGroupId: '',
   })
 
-  const openCategoryGroupDialog = () => {
+  const openCategoryGroupDialog = ({name, categoryGroupId}) => {
     setDialogState({
-      open: true,
-      mode: 'categoryGroup',
-      categoryGroupId: '',
+      name,
+      categoryOpen: false,
+      categoryGroupOpen: true,
+      mode: categoryGroupId ? 'edit' : 'create',
+      categoryGroupId,
     })
   }
 
-  const openCategoryDialog = (categoryGroupId) => {
+  const openCategoryDialog = ({name, categoryId, categoryGroupId}) => {
     setDialogState({
-      open: true,
-      mode: 'category',
+      name,
+      categoryOpen: true,
+      categoryGroupOpen: false,
+      mode: categoryId ? 'edit' : 'create',
+      categoryId,
       categoryGroupId,
     })
   }
@@ -38,7 +47,9 @@ export default function Budget(props) {
   const closeDialog = () => {
     setDialogState({
       ...dialogState,
-      open: false,
+      name: '',
+      categoryOpen: false,
+      categoryGroupOpen: false,
     })
   }
 
@@ -48,9 +59,13 @@ export default function Budget(props) {
         + Category Group
       </Button>
 
-      <NewCategoryDialog dialogState={dialogState} closeDialog={closeDialog}/>
+      <CategoryDialog dialogState={dialogState} closeDialog={closeDialog}/>
+      <CategoryGroupDialog dialogState={dialogState} closeDialog={closeDialog}/>
 
-      <BudgetTable openCategoryDialog={openCategoryDialog}/>
+      <BudgetTable
+        openCategoryDialog={openCategoryDialog}
+        openCategoryGroupDialog={openCategoryGroupDialog}
+      />
     </div>
   )
 }

@@ -45,13 +45,13 @@ export class Budget extends BaseEntity {
    * Has many category groups
    */
   @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget)
-  categoryGroups: CategoryGroup[]
+  categoryGroups: Promise<CategoryGroup[]>
 
   /**
    * Has many budget months
    */
   @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget)
-  months: BudgetMonth[]
+  months: Promise<BudgetMonth[]>
 
   public async sanitize(): Promise<BudgetModel> {
     return {
@@ -62,5 +62,9 @@ export class Budget extends BaseEntity {
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }
+  }
+
+  public async getMonths(): Promise<string[]> {
+    return (await this.months).map(month => month.month).sort()
   }
 }

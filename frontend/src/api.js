@@ -93,8 +93,23 @@ export default class API {
     return response.data.data
   }
 
+  static async updateCategoryGroup(categoryGroupId, name, budgetId) {
+    const response = await axios.put(`/api/budgets/${budgetId}/categories/groups/${categoryGroupId}`, { name })
+
+    return response.data.data
+  }
+
   static async createCategory(name, categoryGroupId, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/categories`, {
+      name,
+      categoryGroupId
+    })
+
+    return response.data.data
+  }
+
+  static async updateCategory(categoryId, name, categoryGroupId, budgetId) {
+    const response = await axios.put(`/api/budgets/${budgetId}/categories/${categoryId}`, {
       name,
       categoryGroupId
     })
@@ -109,7 +124,13 @@ export default class API {
   }
 
   static async fetchBudgetMonths(budgetId) {
-    const response = await axios.get(`/api/budgets/${budgetId}/months/`)
+    const response = await axios.get(`/api/budgets/${budgetId}/months`)
+
+    return response.data.data
+  }
+
+  static async fetchCategoryMonths(categoryId, budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/categories/${categoryId}/months`)
 
     return response.data.data
   }

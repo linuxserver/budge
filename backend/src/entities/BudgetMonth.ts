@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, M
 import { Budget } from './Budget'
 import { Category } from './Category'
 import { CategoryMonth } from './CategoryMonth'
+import { getMonthStringFromNow } from '../utils'
 
 @Entity('budget_months')
 export class BudgetMonth extends BaseEntity {
@@ -56,19 +57,44 @@ export class BudgetMonth extends BaseEntity {
       budgeted: this.budgeted,
       activity: this.activity,
       toBeBudgeted: this.toBeBudgeted,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created ? this.created.toISOString() : (new Date()).toISOString(),
+      updated: this.updated ? this.updated.toISOString() : (new Date()).toISOString(),
     }
   }
 
   public static async findOrCreate(budgetId: string, month: string): Promise<BudgetMonth> {
     let budgetMonth: BudgetMonth = await BudgetMonth.findOne({ budgetId, month })
     if (!budgetMonth) {
-      budgetMonth = BudgetMonth.create({
-        budgetId,
-        month,
-      })
-      await budgetMonth.save()
+      const budget = await Budget.findOne(budgetId)
+      const months = await budget.getMonths()
+
+      let newBudgetMonth
+      if (months[0] > month) {
+        let counter = -1
+
+        // iterate over all months until we hit the first budget month
+        do {
+          newBudgetMonth = BudgetMonth.create({
+            budgetId,
+            month: getMonthStringFromNow(counter),
+          })
+          await newBudgetMonth.save()
+          counter = counter - 1
+        } while (newBudgetMonth.month !== month)
+      } else {
+        let counter = 1
+        // add months to end of budget month until we get to target month
+        do {
+          newBudgetMonth = BudgetMonth.create({
+            budgetId,
+            month: getMonthStringFromNow(counter),
+          })
+          await newBudgetMonth.save()
+          counter = counter + 1
+        } while (newBudgetMonth.month !== month)
+      }
+
+      return newBudgetMonth
     }
 
     return budgetMonth

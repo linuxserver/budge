@@ -7,7 +7,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { setUser, login, logout, setInitComplete } from '../redux/slices/Users'
-import { createBudget, fetchBudgets, setActiveBudget } from '../redux/slices/Budgets'
+import { createBudget, fetchBudgetMonth, fetchBudgetMonths, fetchBudgets, setActiveBudget } from '../redux/slices/Budgets'
 import { fetchAccountTransactions } from '../redux/slices/Transactions'
 import { setAccounts } from '../redux/slices/Accounts'
 import { fetchCategories, createCategoryGroup, createCategory } from '../redux/slices/Categories'
@@ -66,6 +66,8 @@ export default function Login(props) {
         accountId: account.id,
       }))
     }))
+
+    await dispatch(fetchBudgetMonths())
 
     // done
     dispatch(setInitComplete(true))

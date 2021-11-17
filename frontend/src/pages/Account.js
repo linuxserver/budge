@@ -5,8 +5,8 @@ import { useParams } from "react-router";
 import { createAccount } from "../redux/slices/Accounts";
 import { createTransaction, deleteTransaction, updateTransaction } from "../redux/slices/Transactions";
 import { TableIcons } from '../utils/Table'
-import { formatMonthFromDateString } from "../utils/Date";
-import { fetchBudgetMonth } from "../redux/slices/Budgets";
+import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
+import { fetchBudgetMonth, fetchBudgetMonths, fetchCategoryMonths } from "../redux/slices/Budgets";
 import TextField from '@mui/material/TextField';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -32,7 +32,7 @@ export default function Account(props) {
   const categoriesMap = useSelector(
     state => state.categories.categories.reduce(
       (acc, category) => {
-        acc[category.id] = category.fullName
+        acc[category.id] = category.name
         return acc
       }, {}
     )
@@ -122,12 +122,12 @@ export default function Account(props) {
       }
     }))
 
-    dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
+    await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
+    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
   }
 
   const onTransactionEdit = async (newData, oldData) => {
     if (!accountsMap[newData.payeeId]) {
-      console.log('creating new payee')
       newData.payeeId = (await createNewPayee(newData.payeeId)).id
     }
 
@@ -144,14 +144,22 @@ export default function Account(props) {
       }
     }))
 
-    dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(oldData.date) }))
-    dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newData.date) }))
+    await Promise.all([
+      dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newData.date) })),
+      dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(oldData.date) })),
+    ])
+
+    Promise.all([
+      dispatch(fetchCategoryMonths({ categoryId: oldData.categoryId })),
+      dispatch(fetchCategoryMonths({ categoryId: newData.categoryId })),
+    ])
   }
 
   const onTransactionDelete = async (transaction) => {
     await dispatch(deleteTransaction({ transaction }))
 
-    dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(transaction.date) }))
+    await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(transaction.date) }))
+    dispatch(fetchCategoryMonths({ categoryId: transaction.categoryId }))
   }
 
   return (

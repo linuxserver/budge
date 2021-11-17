@@ -8,6 +8,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { createAccount } from '../redux/slices/Accounts';
 import { useSelector, useDispatch } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem';
+import { fetchCategories } from '../redux/slices/Categories';
 
 const accountTypes = ['Bank', 'Credit Card'];
 
@@ -33,6 +34,11 @@ export default function AddAccountDialog(props) {
       accountType,
       budgetId,
     }))
+
+    // If adding a credit card, update all categories since we have added a payment category for it
+    if (accountType === accountTypes[1]) {
+      dispatch(fetchCategories())
+    }
     reset()
     props.close()
   }

@@ -33,7 +33,7 @@ app.use(
 app.use(helmet())
 app.use(cookieParser())
 app.use(json())
-app.use(morgan('combined', { stream: new stream() }))
+// app.use(morgan('combined', { stream: new stream() }))
 
 // app.use(bodyParser.json({
 //     limit: '50mb',

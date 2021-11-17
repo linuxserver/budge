@@ -23,11 +23,19 @@ export const fetchBudgetMonths = createAsyncThunk('budgets/fetchMonths', async (
   return await api.fetchBudgetMonths(store.budgets.activeBudget.id)
 })
 
+export const fetchCategoryMonths = createAsyncThunk('budgets/fetchCategoryMonths', async ({ categoryId }, { getState }) => {
+  const store = getState()
+  return {
+    categoryId,
+    categoryMonths: await api.fetchCategoryMonths(categoryId, store.budgets.activeBudget.id)
+  }
+})
+
 export const updateCategoryMonth = createAsyncThunk('budgets/updateCategoryMonth', async({ categoryId, month, budgeted }, { getState }) => {
   const store = getState()
   return {
     month,
-    budgetMonth: await api.updateCategoryMonth(store.budgets.activeBudget.id, categoryId, month, budgeted),
+    categoryMonth: await api.updateCategoryMonth(store.budgets.activeBudget.id, categoryId, month, budgeted),
   }
 })
 
@@ -38,6 +46,7 @@ const budgetsSlice = createSlice({
     budgets: [],
     activeBudget: null,
     currentMonth: formatMonthFromDateString(new Date()),
+    availableMonths: [],
     budgetMonths: {},
   },
 
@@ -64,16 +73,39 @@ const budgetsSlice = createSlice({
       state.budgetMonths[month] = budgetMonth
     },
 
-    [fetchBudgetMonths.fulfilled]: (state, { payload: { month, budgetMonth } }) => {
-      // state.budgetMonths[month] = budgetMonth
+    [fetchBudgetMonths.fulfilled]: (state, { payload }) => {
+      state.availableMonths = payload.map(budgetMonth => budgetMonth.month).sort()
     },
 
-    [updateCategoryMonth.fulfilled]: (state, { payload: { month, budgetMonth } }) => {
-      state.budgetMonths[month] = budgetMonth
+    [fetchCategoryMonths.fulfilled]: (state, { payload: { categoryId, categoryMonths } }) => {
+      for (const categoryMonth of categoryMonths) {
+        if (!state.budgetMonths[categoryMonth.month]) {
+          // Haven't fetched this month yet, so no need to udpate
+          continue
+        }
+
+        const categoryMonthIndex = state.budgetMonths[categoryMonth.month].categories.findIndex(catMonth => catMonth.categoryId === categoryId)
+        if (categoryMonthIndex === -1) {
+          // This is a new category month, so append
+          state.budgetMonths[categoryMonth.month].categories.push(categoryMonth)
+        } else {
+          state.budgetMonths[categoryMonth.month].categories[categoryMonthIndex] = categoryMonth
+        }
+      }
+    },
+
+    [updateCategoryMonth.fulfilled]: (state, { payload: { month, categoryMonth } }) => {
+      state.budgetMonths[month].categories = state.budgetMonths[month].categories.map(catMonth => {
+        if (catMonth.categoryId !== categoryMonth.categoryId) {
+          return catMonth
+        }
+
+        return categoryMonth
+      })
     },
   },
 })
 
-export const { setActiveBudget } = budgetsSlice.actions
+export const { setActiveBudget, setCurrentMonth } = budgetsSlice.actions
 
 export default budgetsSlice
