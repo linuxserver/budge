@@ -74,6 +74,28 @@ export class CategoryMonth extends BaseEntity {
     return categoryMonth
   }
 
+  public async update({ activity, budgeted }: {[key: string]: number}): Promise<CategoryMonth> {
+    if (activity !== undefined) {
+      this.activity += activity
+      this.balance += activity
+
+      this.budgetMonth.activity += activity
+    }
+    if (budgeted !== undefined) {
+      const budgetedDifference = budgeted - this.budgeted
+      this.budgeted += budgetedDifference
+      this.balance += budgetedDifference
+
+      this.budgetMonth.budgeted += budgetedDifference
+    }
+
+    await this.budgetMonth.save()
+    await this.save()
+    await this.cascadeBalance()
+
+    return this
+  }
+
   public async updateActivity(activity: number = 0) {
     this.activity += activity
     this.balance += activity
