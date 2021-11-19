@@ -33,6 +33,14 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
+      const budget = await Budget.findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
       const account: Account = Account.create({
         ...requestBody,
         budgetId,

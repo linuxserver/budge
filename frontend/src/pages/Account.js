@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MaterialTable, { MTableBodyRow } from "@material-table/core";
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from "react-router";
-import { createAccount } from "../redux/slices/Accounts";
+import { createAccount, createPayee, fetchPayees } from "../redux/slices/Accounts";
 import { createTransaction, deleteTransaction, updateTransaction } from "../redux/slices/Transactions";
 import { TableIcons } from '../utils/Table'
 import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
@@ -27,8 +27,7 @@ export default function Account(props) {
 
     return []
   })
-  const accounts = useSelector(state => state.accounts.accounts)
-  const accountIds = useSelector(state => state.accounts.accounts.map(account => account.id))
+  const payeeIds = useSelector(state => state.accounts.payees.map(payee => payee.id))
   const categoriesMap = useSelector(
     state => state.categories.categories.reduce(
       (acc, category) => {
@@ -37,10 +36,10 @@ export default function Account(props) {
       }, {}
     )
   )
-  const accountsMap = useSelector(
-    state => state.accounts.accounts.reduce(
-      (acc, account) => {
-        acc[account.id] = account.name
+  const payeesMap = useSelector(
+    state => state.accounts.payees.reduce(
+      (acc, payee) => {
+        acc[payee.id] = payee.name
         return acc
       }, {}
     )
@@ -50,14 +49,13 @@ export default function Account(props) {
   const columns = [
     { title: "Date", field: "date", type: "date", default: formatMonthFromDateString(new Date()) },
     { title: "Category", field: "categoryId", lookup: categoriesMap },
-    { title: "Payee", field: "payeeId", lookup: accountsMap, editComponent: props => (
+    { title: "Payee", field: "payeeId", lookup: payeesMap, editComponent: props => (
       <Autocomplete
         sx={{ width: 300 }}
-        // value={transactionPayeeField}
-        options={accountIds}
+        options={payeeIds}
         getOptionLabel={(option) => {
-          if (accountsMap[option]) {
-            return accountsMap[option]
+          if (payeesMap[option]) {
+            return payeesMap[option]
           }
 
           return option
@@ -66,10 +64,10 @@ export default function Account(props) {
         freeSolo
         renderInput={(params) => <TextField {...params} label="" variant="standard" />}
         value={props.value}
-        onChange={(e, value) => {
+        onInputChange={(e, value) => {
           props.onChange(value)
         }}
-        onInputChange={(e, value) => {
+        onChange={(e, value) => {
           props.onChange(value)
         }}
         filterOptions={(options, params) => {
@@ -81,7 +79,7 @@ export default function Account(props) {
           }
 
           // Suggest the creation of a new value
-          const isExisting = options.some((option) => accountsMap[option] === inputValue);
+          const isExisting = options.some((option) => payeesMap[option] === inputValue);
           if (inputValue !== '' && !isExisting) {
             filtered.push(`New: ${inputValue}`);
           }
@@ -97,16 +95,14 @@ export default function Account(props) {
 
   const createNewPayee = async (name) => {
     name = name.replace(/^New: /, '')
-    return (await dispatch(createAccount({
+    return (await dispatch(createPayee({
       name,
-      accountType: 2,
       budgetId,
     }))).payload
   }
 
   const onTransactionAdd = async (newRow) => {
-    // @TODO: add support for adding payees at transaction creation
-    if (!accountsMap[newRow.payeeId]) {
+    if (!payeesMap[newRow.payeeId]) {
       newRow.payeeId = (await createNewPayee(newRow.payeeId)).id
     }
 
@@ -125,11 +121,19 @@ export default function Account(props) {
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
     dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
     dispatch(fetchBudgetMonths())
+    dispatch(fetchPayees())
   }
 
   const onTransactionEdit = async (newData, oldData) => {
-    if (!accountsMap[newData.payeeId]) {
-      newData.payeeId = (await createNewPayee(newData.payeeId)).id
+    if (!payeesMap[newData.payeeId]) {
+      // Because of the 'onInputChange' autocomplete, the edited value gets subbed out for the 'text' value. Make sure this doesn't truly already exist.
+      const payee = Object.values(payeesMap).filter(payee => payee.name === newData.payeeId)
+      if (payee.length === 0) {
+        console.log('creating new payee')
+        newData.payeeId = (await createNewPayee(newData.payeeId)).id
+      } else {
+        newData.payeeId = payee[0].id
+      }
     }
 
     await dispatch(updateTransaction({
@@ -145,16 +149,17 @@ export default function Account(props) {
       }
     }))
 
-    await Promise.all([
-      dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newData.date) })),
-      dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(oldData.date) })),
-    ])
+    dispatch(fetchPayees())
 
-    Promise.all([
-      dispatch(fetchCategoryMonths({ categoryId: oldData.categoryId })),
-      dispatch(fetchCategoryMonths({ categoryId: newData.categoryId })),
-      dispatch(fetchBudgetMonths()),
-    ])
+
+    dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newData.date) }))
+    dispatch(fetchCategoryMonths({ categoryId: newData.categoryId }))
+    if (oldData.categoryId !== newData.categoryId) {
+      dispatch(fetchCategoryMonths({ categoryId: oldData.categoryId }))
+      dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(oldData.date) }))
+    }
+
+    dispatch(fetchBudgetMonths())
   }
 
   const onTransactionDelete = async (transaction) => {

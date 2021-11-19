@@ -76,7 +76,7 @@ export interface TransactionRequest {
   amount: number
   date: string
   memo?: string
-  categoryId: string
+  categoryId?: string | null
   status: TransactionStatus
 }
 

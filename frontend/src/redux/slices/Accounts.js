@@ -9,12 +9,22 @@ export const fetchAccounts = createAsyncThunk('accounts/fetch', async ({ budgetI
   return await api.fetchAcounts(budgetId);
 })
 
+export const createPayee = createAsyncThunk('payees/create', async ({ name, budgetId }) => {
+  return await api.createPayee(name, budgetId);
+})
+
+export const fetchPayees = createAsyncThunk('accounts/fetchPayees', async (_, { getState }) => {
+  const store = getState()
+  return await api.fetchPayees(store.budgets.activeBudget.id)
+})
+
 const accountsSlice = createSlice({
   name: 'accounts',
 
   initialState: {
     accounts: [],
     accountById: {},
+    payees: [],
   },
 
   reducers: {
@@ -40,6 +50,14 @@ const accountsSlice = createSlice({
 
     [fetchAccounts.fulfilled]: (state, { payload }) => {
       state.accounts = payload
+    },
+
+    [createPayee.fulfilled]: (state, { payload }) => {
+      state.payees.push(payload)
+    },
+
+    [fetchPayees.fulfilled]: (state, { payload }) => {
+      state.payees = payload
     },
   },
 })

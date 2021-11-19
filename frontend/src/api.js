@@ -57,6 +57,18 @@ export default class API {
     return response.data.data
   }
 
+  static async createPayee(name, budgetId) {
+    const response = await axios.post(`/api/budgets/${budgetId}/payees`, { name })
+
+    return response.data.data
+  }
+
+  static async fetchPayees(budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/payees`)
+
+    return response.data.data
+  }
+
   static async fetchAccountTransactions(accountId, budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/accounts/${accountId}/transactions`)
 

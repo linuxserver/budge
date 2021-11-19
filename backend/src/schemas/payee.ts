@@ -1,26 +1,19 @@
-import { AccountTypes } from '../entities/Account'
 import { DataResponse } from '../controllers/responses'
 
 /**
  * @example {
  *   id: "abc123",
  *   budgetId: "abc456",
- *   name: "My Budget",
- *   type: 0,
+ *   name: "Random Store Name",
  *   created: "2011-10-05T14:48:00.000Z",
  *   updated: "2011-10-05T14:48:00.000Z",
  * }
  */
-export interface AccountModel {
+export interface PayeeModel {
   /**
    * Unique id
    */
   id: string
-
-  /**
-   * Parent budget ID
-   */
-  budgetId: string
 
   /**
    * Budget name
@@ -28,9 +21,9 @@ export interface AccountModel {
   name: string
 
   /**
-   * Account type
+   * Account associated with the payee for transfers
    */
-  type: AccountTypes
+  transferAccountId: string | null
 
   /**
    * Datetime user was created
@@ -45,14 +38,13 @@ export interface AccountModel {
 
 /**
  * @example {
- *  "name": "My Budget",
+ *  "name": "Random Store Name",
  * }
  */
-export interface AccountRequest {
+export interface PayeeRequest {
   name: string,
-  type: AccountTypes,
 }
 
-export type AccountResponse = DataResponse<AccountModel>
+export type PayeeResponse = DataResponse<PayeeModel>
 
-export type AccountsResponse = DataResponse<AccountModel[]>
+export type PayeesResponse = DataResponse<PayeeModel[]>

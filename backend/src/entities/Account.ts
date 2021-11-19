@@ -1,12 +1,12 @@
 import { AccountModel } from '../schemas/account'
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm'
+import { Entity, OneToOne, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, JoinColumn, AfterInsert, BeforeInsert } from 'typeorm'
 import { Budget } from './Budget'
 import { Transaction } from './Transaction'
+import { Payee } from './Payee'
 
 export enum AccountTypes {
   Bank,
   CreditCard,
-  Payee,
 }
 
 @Entity('accounts')
@@ -14,8 +14,11 @@ export class Account extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ nullable: false })
   budgetId: string
+
+  @Column({ nullable: true })
+  transferPayeeId: string
 
   @Column()
   name: string
@@ -33,13 +36,34 @@ export class Account extends BaseEntity {
    * Belongs to a budget
    */
   @ManyToOne(() => Budget, budget => budget.accounts)
-  budget: Budget
+  budget: Promise<Budget>
 
   /**
    * Has many transactions
    */
   @OneToMany(() => Transaction, transaction => transaction.account)
-  transactions: Transaction[]
+  transactions: Promise<Transaction[]>
+
+  /**
+   * Can have one payee
+   */
+  @OneToOne(() => Payee, payee => payee.transferAccount, { cascade: true })
+  @JoinColumn()
+  transferPayee: Promise<Payee>;
+
+  @AfterInsert()
+  private async createAccountPayee() {
+    const payee = Payee.create({
+      budgetId: this.budgetId,
+      name: `Transfer : ${this.name}`,
+      transferAccountId: this.id,
+    })
+
+    // @TODO: I wish there was a better way around this
+    await payee.save()
+    this.transferPayeeId = payee.id
+    await this.save()
+  }
 
   public async sanitize(): Promise<AccountModel> {
     return {

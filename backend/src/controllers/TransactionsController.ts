@@ -46,7 +46,8 @@ export class TransactionsController extends Controller {
       const transaction = await Transaction.createNew({
         budgetId,
         ...requestBody,
-        date: new Date(requestBody.date)
+        date: new Date(requestBody.date),
+        handleTransfers: true,
       })
 
       return {
@@ -101,6 +102,7 @@ export class TransactionsController extends Controller {
       await transaction.update({
         ...requestBody,
         date: new Date(requestBody.date), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
+        handleTransfers: true,
       })
 
       return {
@@ -136,6 +138,7 @@ export class TransactionsController extends Controller {
       }
 
       const transaction = await Transaction.findOne(transactionId)
+      transaction.handleTransfers = true
       await transaction.remove()
 
       return {
@@ -187,7 +190,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(account.transactions.map(transaction => transaction.sanitize())),
+        data: await Promise.all((await account.transactions).map(transaction => transaction.sanitize())),
       }
     } catch (err) {
       return { message: err.message }

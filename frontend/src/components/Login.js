@@ -9,7 +9,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import { setUser, login, logout, setInitComplete } from '../redux/slices/Users'
 import { createBudget, fetchBudgetMonth, fetchBudgetMonths, fetchBudgets, setActiveBudget } from '../redux/slices/Budgets'
 import { fetchAccountTransactions } from '../redux/slices/Transactions'
-import { setAccounts } from '../redux/slices/Accounts'
+import { fetchPayees, setAccounts } from '../redux/slices/Accounts'
 import { fetchCategories, createCategoryGroup, createCategory } from '../redux/slices/Categories'
 import api from '../api'
 import { useDispatch, useSelector } from 'react-redux'
@@ -57,16 +57,12 @@ export default function Login(props) {
 
     // Fetch all account transactions
     await Promise.all(budgets[0].accounts.map(account => {
-      if (account.type === 2) {
-        // skip payee accounts
-        return
-      }
-
       return dispatch(fetchAccountTransactions({
         accountId: account.id,
       }))
     }))
 
+    await dispatch(fetchPayees())
     await dispatch(fetchBudgetMonths())
 
     // done
