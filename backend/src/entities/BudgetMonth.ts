@@ -69,30 +69,23 @@ export class BudgetMonth extends BaseEntity {
       const months = await budget.getMonths()
 
       let newBudgetMonth
-      if (months[0] > month) {
-        let counter = -1
+      let counter = 1
+      let direction = 1
 
-        // iterate over all months until we hit the first budget month
-        do {
-          newBudgetMonth = BudgetMonth.create({
-            budgetId,
-            month: getMonthStringFromNow(counter),
-          })
-          await newBudgetMonth.save()
-          counter = counter - 1
-        } while (newBudgetMonth.month !== month)
-      } else {
-        let counter = 1
-        // add months to end of budget month until we get to target month
-        do {
-          newBudgetMonth = BudgetMonth.create({
-            budgetId,
-            month: getMonthStringFromNow(counter),
-          })
-          await newBudgetMonth.save()
-          counter = counter + 1
-        } while (newBudgetMonth.month !== month)
+      if (months[0] > month) {
+        direction = -1
+        counter = -1
       }
+
+      // iterate over all months until we hit the first budget month
+      do {
+        newBudgetMonth = BudgetMonth.create({
+          budgetId,
+          month: getMonthStringFromNow(counter),
+        })
+        await newBudgetMonth.save()
+        counter = counter + direction
+      } while (newBudgetMonth.month !== month)
 
       return newBudgetMonth
     }

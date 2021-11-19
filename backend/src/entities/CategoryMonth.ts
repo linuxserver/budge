@@ -1,5 +1,5 @@
 import { CategoryMonthModel } from '../schemas/category_month'
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index } from 'typeorm'
+import { Entity, BeforeInsert, AfterInsert, AfterUpdate, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, AfterLoad } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
@@ -48,70 +48,75 @@ export class CategoryMonth extends BaseEntity {
   @ManyToOne(() => BudgetMonth, budgetMonth => budgetMonth.categories)
   budgetMonth: BudgetMonth
 
-  public static async findOrCreate(categoryId: string, budgetMonth: BudgetMonth ): Promise<CategoryMonth> {
-    let categoryMonth: CategoryMonth = await CategoryMonth.findOne({ categoryId, month: budgetMonth.month }, { relations: ["budgetMonth"] })
+  originalBudgeted: number = 0
+
+  originalActivity: number = 0
+
+  @AfterLoad()
+  private storeOriginalValues() {
+    this.originalBudgeted = this.budgeted
+  }
+
+  public static async findOrCreate(budgetId: string, categoryId: string, month: string ): Promise<CategoryMonth> {
+    let categoryMonth: CategoryMonth = await CategoryMonth.findOne({ categoryId, month: month }, { relations: ["budgetMonth"] })
     if (!categoryMonth) {
+      const budgetMonth = await BudgetMonth.findOrCreate(budgetId, month)
       categoryMonth = CategoryMonth.create({
         categoryId,
-        month: budgetMonth.month,
+        month: month,
         // @TODO: I DON'T KNOW WHY I HAVE TO SPECIFY 0s HERE AND NOT ABOVE WHEN CREATING BUDGET MONTH!!! AHHH!!!
         activity: 0,
         balance: 0,
         budgeted: 0,
       })
       categoryMonth.budgetMonth = budgetMonth
-
-      // If previous month category month exists, update this new one with the balance
-      const prevMonth = getDateFromString(budgetMonth.month)
-      prevMonth.setMonth(prevMonth.getMonth() - 1)
-      const prevCategoryMonth = await CategoryMonth.findOne({ categoryId, month: formatMonthFromDateString(prevMonth) })
-      if (prevCategoryMonth && prevCategoryMonth.balance > 0) {
-        categoryMonth.balance = prevCategoryMonth.balance
-        await categoryMonth.cascadeBalance()
-      }
     }
 
     return categoryMonth
+  }
+
+  @BeforeInsert()
+  private async getInitialBalance(): Promise<void> {
+    const prevMonth = getDateFromString(this.month)
+    prevMonth.setMonth(prevMonth.getMonth() - 1)
+    const prevCategoryMonth = await CategoryMonth.findOne({ categoryId: this.categoryId, month: formatMonthFromDateString(prevMonth) })
+    if (prevCategoryMonth && prevCategoryMonth.balance > 0) {
+      this.balance = prevCategoryMonth.balance + this.budgeted + this.activity
+    }
   }
 
   public async update({ activity, budgeted }: {[key: string]: number}): Promise<CategoryMonth> {
     if (activity !== undefined) {
       this.activity += activity
       this.balance += activity
-
-      this.budgetMonth.activity += activity
     }
     if (budgeted !== undefined) {
       const budgetedDifference = budgeted - this.budgeted
       this.budgeted += budgetedDifference
       this.balance += budgetedDifference
-
-      this.budgetMonth.budgeted += budgetedDifference
     }
 
-    await this.budgetMonth.save()
     await this.save()
-    await this.cascadeBalance()
 
     return this
   }
 
-  public async updateActivity(activity: number = 0) {
-    this.activity += activity
-    this.balance += activity
-    await this.save()
-    return this.cascadeBalance()
-  }
+  @AfterInsert()
+  @AfterUpdate()
+  public async bookkeeping(): Promise<void> {
+    // Update budget month activity and and budgeted
+    this.budgetMonth.budgeted = this.budgeted - this.originalBudgeted
+    this.budgetMonth.activity += this.activity - this.originalActivity
+    this.budgetMonth.save()
 
-  public async cascadeBalance(): Promise<void> {
     const nextMonth = getDateFromString(this.month)
     nextMonth.setMonth(nextMonth.getMonth() + 1)
-    const budgetMonth = await BudgetMonth.findOne({ budgetId: this.budgetMonth.budgetId, month: formatMonthFromDateString(nextMonth) })
-    if (!budgetMonth) {
+    const nextBudgetMonth = await BudgetMonth.findOne({ budgetId: this.budgetMonth.budgetId, month: formatMonthFromDateString(nextMonth) })
+    if (!nextBudgetMonth) {
       return
     }
 
-    const nextCategorymonth = await CategoryMonth.findOrCreate( this.categoryId, budgetMonth )
+    const nextCategorymonth = await CategoryMonth.findOrCreate(nextBudgetMonth.budgetId, this.categoryId, nextBudgetMonth.month )
 
     if (this.balance > 0) {
       nextCategorymonth.balance = this.balance + nextCategorymonth.budgeted + nextCategorymonth.activity
@@ -125,8 +130,6 @@ export class CategoryMonth extends BaseEntity {
     }
 
     await nextCategorymonth.save()
-
-    return nextCategorymonth.cascadeBalance()
   }
 
   public async sanitize(): Promise<CategoryMonthModel> {

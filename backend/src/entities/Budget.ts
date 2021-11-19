@@ -5,6 +5,7 @@ import { Account } from './Account'
 import { CategoryGroup } from './CategoryGroup'
 import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
+import { Transaction } from './Transaction'
 
 @Entity('budgets')
 export class Budget extends BaseEntity {
@@ -52,6 +53,12 @@ export class Budget extends BaseEntity {
    */
   @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget)
   months: Promise<BudgetMonth[]>
+
+  /**
+   * Has many budget transactions
+   */
+  @OneToMany(() => Transaction, transaction => transaction.budget)
+  transactions: Promise<Transaction[]>
 
   public async sanitize(): Promise<BudgetModel> {
     return {

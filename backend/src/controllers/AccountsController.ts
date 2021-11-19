@@ -39,18 +39,18 @@ export class AccountsController extends Controller {
       })
       await account.save()
 
-      if (account.type === AccountTypes.CreditCard) {
-        // Create CC payments category if it doesn't exist
-        const ccGroup = await CategoryGroup.findOne({ budgetId, name: CreditCardGroupName }) || CategoryGroup.create({ budgetId, name: CreditCardGroupName })
-        await ccGroup.save()
+      // if (account.type === AccountTypes.CreditCard) {
+      //   // Create CC payments category if it doesn't exist
+      //   const ccGroup = await CategoryGroup.findOne({ budgetId, name: CreditCardGroupName }) || CategoryGroup.create({ budgetId, name: CreditCardGroupName })
+      //   await ccGroup.save()
 
-        const paymentCategory = Category.create({
-          budgetId,
-          categoryGroupId: ccGroup.id,
-          name: account.name,
-        })
-        await paymentCategory.save()
-      }
+      //   const paymentCategory = Category.create({
+      //     budgetId,
+      //     categoryGroupId: ccGroup.id,
+      //     name: account.name,
+      //   })
+      //   await paymentCategory.save()
+      // }
 
       return {
         message: 'success',

@@ -178,20 +178,6 @@ export class BudgetsController extends Controller {
 
     const budgetMonths = await BudgetMonth.find({ budgetId })
 
-    // Create budget months for current, previous, and next month
-    // @TODO: I don't know if this is needed.
-    // await Promise.all([-1, 0, 1].map(monthsAway => {
-    //   const month = getMonthFromNow(monthsAway)
-    //   if (budgetMonths.filter(budgetMonth => budgetMonth.month === month).length === 0) {
-    //     const budgetMonth = BudgetMonth.create({
-    //       budgetId: budget.id,
-    //       month: month,
-    //     })
-
-    //     return budgetMonth.save()
-    //   }
-    // }))
-
     return {
       message: 'success',
       data: await Promise.all(budgetMonths.map(budgetMonth => budgetMonth.sanitize())),

@@ -273,21 +273,8 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const budgetMonth = await BudgetMonth.findOne({ budgetId, month })
-      const categoryMonth = await CategoryMonth.findOrCreate(categoryId, budgetMonth)
-
+      const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
       await categoryMonth.update({ budgeted: requestBody.budgeted})
-      // const originalBudgetedAmount = categoryMonth.budgeted
-      // const budgetedDifference = requestBody.budgeted - originalBudgetedAmount
-
-      // categoryMonth.budgeted += budgetedDifference
-      // categoryMonth.balance += budgetedDifference
-      // await categoryMonth.cascadeBalance()
-
-      // categoryMonth.budgetMonth.budgeted += budgetedDifference
-
-      // await categoryMonth.save()
-      // await categoryMonth.budgetMonth.save()
 
       return {
         message: 'success',

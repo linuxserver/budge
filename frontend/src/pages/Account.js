@@ -124,6 +124,7 @@ export default function Account(props) {
 
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
     dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
+    dispatch(fetchBudgetMonths())
   }
 
   const onTransactionEdit = async (newData, oldData) => {
@@ -152,6 +153,7 @@ export default function Account(props) {
     Promise.all([
       dispatch(fetchCategoryMonths({ categoryId: oldData.categoryId })),
       dispatch(fetchCategoryMonths({ categoryId: newData.categoryId })),
+      dispatch(fetchBudgetMonths()),
     ])
   }
 
