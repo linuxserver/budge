@@ -1,5 +1,5 @@
 import { BudgetMonthModel, BudgetMonthWithCategoriesModel } from '../schemas/budget_month'
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, OneToMany } from 'typeorm'
+import { Entity, AfterLoad, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, OneToMany, DeepPartial } from 'typeorm'
 import { Budget } from './Budget'
 import { Category } from './Category'
 import { CategoryMonth } from './CategoryMonth'
@@ -47,6 +47,22 @@ export class BudgetMonth extends BaseEntity {
    */
   @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.budgetMonth)
   categories: CategoryMonth[]
+
+  originalIncome: number = 0
+
+  originalBudgeted: number = 0
+
+  originalActivity: number = 0
+
+  originalToBeBudgeted: number = 0
+
+  @AfterLoad()
+  private loadInitialValues(): void {
+    this.originalIncome = this.income
+    this.originalBudgeted = this.budgeted
+    this.originalActivity = this.activity
+    this.originalToBeBudgeted = this.toBeBudgeted
+  }
 
   public async sanitize(): Promise<BudgetMonthModel> {
     return {

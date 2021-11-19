@@ -53,7 +53,7 @@ export class CategoryMonth extends BaseEntity {
   originalActivity: number = 0
 
   @AfterLoad()
-  private storeOriginalValues() {
+  private storeOriginalValues(): void {
     this.originalBudgeted = this.budgeted
   }
 
@@ -75,6 +75,9 @@ export class CategoryMonth extends BaseEntity {
     return categoryMonth
   }
 
+  /**
+   * Get the previous month's 'balance' as this will be the 'carry over' amount for this new month
+   */
   @BeforeInsert()
   private async getInitialBalance(): Promise<void> {
     const prevMonth = getDateFromString(this.month)
@@ -85,22 +88,12 @@ export class CategoryMonth extends BaseEntity {
     }
   }
 
-  public async update({ activity, budgeted }: {[key: string]: number}): Promise<CategoryMonth> {
-    if (activity !== undefined) {
-      this.activity += activity
-      this.balance += activity
-    }
-    if (budgeted !== undefined) {
-      const budgetedDifference = budgeted - this.budgeted
-      this.budgeted += budgetedDifference
-      this.balance += budgetedDifference
-    }
-
-    await this.save()
-
-    return this
-  }
-
+  /**
+   * == RECURSIVE ==
+   *
+   * Cascade the new assigned and activity amounts up into the parent budget month for new totals.
+   * Also, cascade the new balance of this month into the next month to update the carry-over amount.
+   */
   @AfterInsert()
   @AfterUpdate()
   public async bookkeeping(): Promise<void> {
@@ -121,7 +114,7 @@ export class CategoryMonth extends BaseEntity {
     if (this.balance > 0) {
       nextCategorymonth.balance = this.balance + nextCategorymonth.budgeted + nextCategorymonth.activity
     } else {
-      // If the balance hasn't changed, no need to keep cascading
+      // If the next month's balance already matched it's activity, no need to keep cascading
       if (nextCategorymonth.balance === nextCategorymonth.budgeted + nextCategorymonth.activity) {
         return
       }
@@ -130,6 +123,22 @@ export class CategoryMonth extends BaseEntity {
     }
 
     await nextCategorymonth.save()
+  }
+
+  public async update({ activity, budgeted }: {[key: string]: number}): Promise<CategoryMonth> {
+    if (activity !== undefined) {
+      this.activity += activity
+      this.balance += activity
+    }
+    if (budgeted !== undefined) {
+      const budgetedDifference = budgeted - this.budgeted
+      this.budgeted += budgetedDifference
+      this.balance += budgetedDifference
+    }
+
+    await this.save()
+
+    return this
   }
 
   public async sanitize(): Promise<CategoryMonthModel> {
