@@ -205,8 +205,6 @@ export class Transaction extends BaseEntity {
       return
     }
 
-    console.log('updating transfers')
-
     // If the payees, dates, and amounts haven't changed, bail
     if (this.payeeId === this.originalPayeeId && this.amount === this.originalAmount && formatMonthFromDateString(this.date) === formatMonthFromDateString(this.originalDate)) {
       return
@@ -215,13 +213,10 @@ export class Transaction extends BaseEntity {
     if (this.payeeId === this.originalPayeeId && this.transferTransactionId) {
       // Payees are the same, just update details
       const transferTransaction = await Transaction.findOne({ transferTransactionId: this.id })
-      console.log('updating paired tx details')
-      console.log(transferTransaction)
       await transferTransaction.update({
         amount: this.amount * -1,
         date: this.date,
       })
-      console.log('done')
       return
     }
 
