@@ -65,7 +65,7 @@ export class Account extends BaseEntity {
     await this.save()
   }
 
-  public async sanitize(): Promise<AccountModel> {
+  public async toResponseModel(): Promise<AccountModel> {
     return {
       id: this.id,
       budgetId: this.budgetId,

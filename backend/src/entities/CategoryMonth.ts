@@ -141,7 +141,7 @@ export class CategoryMonth extends BaseEntity {
     return this
   }
 
-  public async sanitize(): Promise<CategoryMonthModel> {
+  public async toResponseModel(): Promise<CategoryMonthModel> {
     return {
       id: this.id,
       categoryId: this.categoryId,

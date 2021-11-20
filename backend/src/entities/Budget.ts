@@ -60,12 +60,12 @@ export class Budget extends BaseEntity {
   @OneToMany(() => Transaction, transaction => transaction.budget)
   transactions: Promise<Transaction[]>
 
-  public async sanitize(): Promise<BudgetModel> {
+  public async toResponseModel(): Promise<BudgetModel> {
     return {
       id: this.id,
       userId: this.userId,
       name: this.name,
-      accounts: await Promise.all((await this.accounts).map(account => account.sanitize())),
+      accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

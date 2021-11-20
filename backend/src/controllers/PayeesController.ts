@@ -45,7 +45,7 @@ export class PayeesController extends Controller {
 
       return {
         message: 'success',
-        data: await payee.sanitize(),
+        data: await payee.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -86,7 +86,7 @@ export class PayeesController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(payees.map(payee => payee.sanitize())),
+        data: await Promise.all(payees.map(payee => payee.toResponseModel())),
       }
     } catch (err) {
       return { message: err.message }
@@ -126,7 +126,7 @@ export class PayeesController extends Controller {
 
       return {
         message: 'success',
-        data: await payee.sanitize(),
+        data: await payee.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }

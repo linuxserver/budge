@@ -34,7 +34,7 @@ export class UsersController extends Controller {
       await newUser.save()
       return {
         message: 'success',
-        data: await newUser.sanitize(),
+        data: await newUser.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -63,7 +63,7 @@ export class UsersController extends Controller {
       const user: User = await User.findOne({ email })
 
       return {
-        data: await user.sanitize(),
+        data: await user.toResponseModel(),
         message: 'success',
       }
     } catch (err) {
@@ -122,7 +122,7 @@ export class UsersController extends Controller {
       let user: User = await User.findOne(request.user.id)
       user = await User.merge(user, { ...requestBody })
       return {
-        data: await user.sanitize(),
+        data: await user.toResponseModel(),
         message: 'success',
       }
     } catch (err) {

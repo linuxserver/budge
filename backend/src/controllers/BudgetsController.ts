@@ -51,7 +51,7 @@ export class BudgetsController extends Controller {
       const budgets = await Budget.find({ where: { userId: request.user.id }, relations: ["accounts"] })
       return {
         message: 'success',
-        data: await Promise.all(budgets.map(budget => budget.sanitize())),
+        data: await Promise.all(budgets.map(budget => budget.toResponseModel())),
       }
     } catch (err) {
       return { message: err.message }
@@ -93,7 +93,7 @@ export class BudgetsController extends Controller {
 
       return {
         message: 'success',
-        data: await budget.sanitize(),
+        data: await budget.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -135,7 +135,7 @@ export class BudgetsController extends Controller {
 
       return {
         message: 'success',
-        data: await budget.sanitize(),
+        data: await budget.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -180,7 +180,7 @@ export class BudgetsController extends Controller {
 
     return {
       message: 'success',
-      data: await Promise.all(budgetMonths.map(budgetMonth => budgetMonth.sanitize())),
+      data: await Promise.all(budgetMonths.map(budgetMonth => budgetMonth.toResponseModel())),
     }
   }
 
@@ -243,8 +243,8 @@ export class BudgetsController extends Controller {
     return {
       message: 'success',
       data: {
-        ...await budgetMonth.sanitize(),
-        categories: await Promise.all((await budgetMonth.categories).map(categoryMonth => categoryMonth.sanitize())),
+        ...await budgetMonth.toResponseModel(),
+        categories: await Promise.all((await budgetMonth.categories).map(categoryMonth => categoryMonth.toResponseModel())),
       }
     }
   }

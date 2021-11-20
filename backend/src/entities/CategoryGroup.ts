@@ -35,12 +35,12 @@ export class CategoryGroup extends BaseEntity {
   @OneToMany(() => Category, category => category.categoryGroup, { eager: true })
   categories: Promise<Category[]>
 
-  public async sanitize(): Promise<CategoryGroupModel> {
+  public async toResponseModel(): Promise<CategoryGroupModel> {
     return {
       id: this.id,
       budgetId: this.budgetId,
       name: this.name,
-      categories: await Promise.all((await this.categories).map(category => category.sanitize())),
+      categories: await Promise.all((await this.categories).map(category => category.toResponseModel())),
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

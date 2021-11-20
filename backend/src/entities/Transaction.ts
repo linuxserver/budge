@@ -205,6 +205,8 @@ export class Transaction extends BaseEntity {
       return
     }
 
+    console.log('updating transfers')
+
     // If the payees, dates, and amounts haven't changed, bail
     if (this.payeeId === this.originalPayeeId && this.amount === this.originalAmount && formatMonthFromDateString(this.date) === formatMonthFromDateString(this.originalDate)) {
       return
@@ -213,10 +215,13 @@ export class Transaction extends BaseEntity {
     if (this.payeeId === this.originalPayeeId && this.transferTransactionId) {
       // Payees are the same, just update details
       const transferTransaction = await Transaction.findOne({ transferTransactionId: this.id })
+      console.log('updating paired tx details')
+      console.log(transferTransaction)
       await transferTransaction.update({
         amount: this.amount * -1,
         date: this.date,
       })
+      console.log('done')
       return
     }
 
@@ -243,9 +248,9 @@ export class Transaction extends BaseEntity {
 
   @AfterUpdate()
   private async bookkeepingOnUpdate(): Promise<void> {
-    // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'
     if (this.transferTransactionId !== null) {
-      return
+      // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'
+     return
     }
 
     let activity = this.amount - this.originalAmount
@@ -288,7 +293,7 @@ export class Transaction extends BaseEntity {
     await originalCategoryMonth.update({ activity: this.amount * -1 })
   }
 
-  public async sanitize(): Promise<TransactionModel> {
+  public async toResponseModel(): Promise<TransactionModel> {
     return {
       id: this.id,
       accountId: this.accountId,

@@ -50,7 +50,7 @@ export class Category extends BaseEntity {
   @OneToMany(() => Transaction, transaction => transaction.category)
   transactions: Transaction[]
 
-  public async sanitize(): Promise<CategoryModel> {
+  public async toResponseModel(): Promise<CategoryModel> {
     return {
       id: this.id,
       categoryGroupId: this.categoryGroupId,

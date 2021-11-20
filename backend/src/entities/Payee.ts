@@ -33,7 +33,7 @@ export class Payee extends BaseEntity {
   @OneToMany(() => Transaction, transaction => transaction.account)
   transactions: Promise<Transaction[]>
 
-  public async sanitize(): Promise<PayeeModel> {
+  public async toResponseModel(): Promise<PayeeModel> {
     return {
       id: this.id,
       transferAccountId: this.transferAccountId,

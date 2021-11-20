@@ -49,7 +49,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(categoryGroups.map(categoryGroup => categoryGroup.sanitize())),
+        data: await Promise.all(categoryGroups.map(categoryGroup => categoryGroup.toResponseModel())),
       }
     } catch (err) {
       return { message: err.message }
@@ -94,7 +94,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await categoryGroup.sanitize(),
+        data: await categoryGroup.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -138,7 +138,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await categoryGroup.sanitize(),
+        data: await categoryGroup.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -182,7 +182,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await category.sanitize(),
+        data: await category.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -231,7 +231,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await category.sanitize(),
+        data: await category.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -278,7 +278,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await categoryMonth.sanitize(),
+        data: await categoryMonth.toResponseModel(),
       }
     } catch (err) {
       console.log(err)
@@ -325,7 +325,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(categoryMonths.map(categoryMonth => categoryMonth.sanitize())),
+        data: await Promise.all(categoryMonths.map(categoryMonth => categoryMonth.toResponseModel())),
       }
     } catch (err) {
       console.log(err)

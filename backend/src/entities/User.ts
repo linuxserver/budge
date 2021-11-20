@@ -62,7 +62,7 @@ export class User extends BaseEntity {
     })
   }
 
-  public async sanitize(): Promise<UserModel> {
+  public async toResponseModel(): Promise<UserModel> {
     return {
       id: this.id,
       email: this.email,

@@ -64,7 +64,7 @@ export class BudgetMonth extends BaseEntity {
     this.originalToBeBudgeted = this.toBeBudgeted
   }
 
-  public async sanitize(): Promise<BudgetMonthModel> {
+  public async toResponseModel(): Promise<BudgetMonthModel> {
     return {
       id: this.id,
       budgetId: this.budgetId,

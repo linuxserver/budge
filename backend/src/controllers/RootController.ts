@@ -43,7 +43,7 @@ export class RootController extends Controller {
     )
 
     return {
-      data: await user.sanitize(),
+      data: await user.toResponseModel(),
       token: token,
     }
   }
@@ -84,7 +84,7 @@ export class RootController extends Controller {
       const user: User = await User.findOne({ email: request.user.email })
 
       return {
-        data: await user.sanitize(),
+        data: await user.toResponseModel(),
         message: 'success',
       }
     } catch (err) {

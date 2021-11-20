@@ -62,7 +62,7 @@ export class AccountsController extends Controller {
 
       return {
         message: 'success',
-        data: await account.sanitize(),
+        data: await account.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -104,7 +104,7 @@ export class AccountsController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(accounts.map(account => account.sanitize())),
+        data: await Promise.all(accounts.map(account => account.toResponseModel())),
       }
     } catch (err) {
       return { message: err.message }
@@ -145,7 +145,7 @@ export class AccountsController extends Controller {
 
       return {
         message: 'success',
-        data: await account.sanitize(),
+        data: await account.toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }

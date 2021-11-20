@@ -52,7 +52,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await transaction.sanitize(),
+        data: await transaction.toResponseModel(),
       }
     } catch (err) {
       console.log(err)
@@ -107,7 +107,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await transaction.sanitize(),
+        data: await transaction.toResponseModel(),
       }
     } catch (err) {
       console.log(err)
@@ -190,7 +190,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all((await account.transactions).map(transaction => transaction.sanitize())),
+        data: await Promise.all((await account.transactions).map(transaction => transaction.toResponseModel())),
       }
     } catch (err) {
       return { message: err.message }
