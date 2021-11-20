@@ -114,7 +114,7 @@ export default function Account(props) {
         memo: newRow.memo,
         payeeId: newRow.payeeId,
         categoryId: newRow.categoryId,
-        status: 0, // @TODO: fix
+        status: 0, // @TODO: implement transaction status
       }
     }))
 
@@ -126,13 +126,15 @@ export default function Account(props) {
 
   const onTransactionEdit = async (newData, oldData) => {
     if (!payeesMap[newData.payeeId]) {
-      // Because of the 'onInputChange' autocomplete, the edited value gets subbed out for the 'text' value. Make sure this doesn't truly already exist.
-      const payee = Object.values(payeesMap).filter(payee => payee.name === newData.payeeId)
-      if (payee.length === 0) {
+      console.log(payeesMap)
+      console.log(newData.payeeId)
+      // @TODO: Fix : Because of the 'onInputChange' autocomplete, the edited value gets subbed out for the 'text' value. Make sure this doesn't truly already exist.
+      const payee = Object.keys(payeesMap).find(key => payeesMap[key] === newData.payeeId)
+      if (!payee) {
         console.log('creating new payee')
         newData.payeeId = (await createNewPayee(newData.payeeId)).id
       } else {
-        newData.payeeId = payee[0].id
+        newData.payeeId = payee
       }
     }
 
