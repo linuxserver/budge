@@ -10,12 +10,18 @@ export class CategoryGroup extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column()
-  name: string
-
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   budgetId: string
+
+  @Column({ type: 'varchar' })
+  name: string
+
+  @Column({ type: 'boolean', default: false })
+  internal: boolean
+
+  @Column({ type: 'boolean', default: false })
+  locked: boolean
 
   @CreateDateColumn()
   created: Date
@@ -40,6 +46,8 @@ export class CategoryGroup extends BaseEntity {
       id: this.id,
       budgetId: this.budgetId,
       name: this.name,
+      internal: this.internal,
+      locked: this.locked,
       categories: await Promise.all((await this.categories).map(category => category.toResponseModel())),
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),

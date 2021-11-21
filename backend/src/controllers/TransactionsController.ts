@@ -193,6 +193,7 @@ export class TransactionsController extends Controller {
         data: await Promise.all((await account.transactions).map(transaction => transaction.toResponseModel())),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }

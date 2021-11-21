@@ -1,7 +1,6 @@
-import { BudgetMonthModel, BudgetMonthWithCategoriesModel } from '../schemas/budget_month'
-import { Entity, AfterLoad, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, OneToMany, DeepPartial } from 'typeorm'
+import { BudgetMonthModel } from '../schemas/budget_month'
+import { Entity, AfterLoad, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, OneToMany, DeepPartial, AfterInsert, AfterUpdate, BeforeInsert, BeforeUpdate, LessThan, MoreThan } from 'typeorm'
 import { Budget } from './Budget'
-import { Category } from './Category'
 import { CategoryMonth } from './CategoryMonth'
 import { getMonthStringFromNow } from '../utils'
 
@@ -10,25 +9,22 @@ export class BudgetMonth extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   budgetId: string
 
-  @Column({ nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   month: string
 
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   income: number
 
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   budgeted: number
 
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   activity: number
-
-  @Column({ default: 0 })
-  toBeBudgeted: number
 
   @CreateDateColumn()
   created: Date
@@ -40,7 +36,7 @@ export class BudgetMonth extends BaseEntity {
    * Belongs to a budget
    */
   @ManyToOne(() => Budget, budget => budget.months)
-  budget: Budget
+  budget: Promise<Budget>
 
   /**
    * Has man category months
@@ -54,14 +50,11 @@ export class BudgetMonth extends BaseEntity {
 
   originalActivity: number = 0
 
-  originalToBeBudgeted: number = 0
-
   @AfterLoad()
-  private loadInitialValues(): void {
+  private async loadInitialValues(): Promise<void> {
     this.originalIncome = this.income
     this.originalBudgeted = this.budgeted
     this.originalActivity = this.activity
-    this.originalToBeBudgeted = this.toBeBudgeted
   }
 
   public async toResponseModel(): Promise<BudgetMonthModel> {
@@ -72,7 +65,6 @@ export class BudgetMonth extends BaseEntity {
       income: this.income,
       budgeted: this.budgeted,
       activity: this.activity,
-      toBeBudgeted: this.toBeBudgeted,
       created: this.created ? this.created.toISOString() : (new Date()).toISOString(),
       updated: this.updated ? this.updated.toISOString() : (new Date()).toISOString(),
     }

@@ -10,15 +10,21 @@ export class Category extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   budgetId: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   categoryGroupId: string
 
-  @Column()
+  @Column({ type: 'varchar' })
   name: string
+
+  @Column({ type: 'int', default: false })
+  inflow: boolean
+
+  @Column({ type: 'boolean', default: false })
+  locked: boolean
 
   @CreateDateColumn()
   created: Date
@@ -55,6 +61,8 @@ export class Category extends BaseEntity {
       id: this.id,
       categoryGroupId: this.categoryGroupId,
       name: this.name,
+      inflow: this.inflow,
+      locked: this.locked,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

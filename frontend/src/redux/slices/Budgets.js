@@ -6,8 +6,13 @@ export const createBudget = createAsyncThunk('budgets/create', async ({ name }) 
   return await api.createBudget(name);
 })
 
-export const fetchBudgets = createAsyncThunk('budgets/fetch', async () => {
+export const fetchBudgets = createAsyncThunk('budgets/fetchBudgets', async () => {
   return await api.fetchBudgets();
+})
+
+export const refreshBudget = createAsyncThunk('budgets/refreshBudget', async (_, { getState }) => {
+  const store = getState()
+  return await api.fetchBudget(store.budgets.activeBudget.id);
 })
 
 export const fetchBudgetMonth = createAsyncThunk('budgets/fetchMonth', async ({ month }, { getState }) => {
@@ -67,6 +72,10 @@ const budgetsSlice = createSlice({
 
     [fetchBudgets.fulfilled]: (state, action) => {
       state.budgets = action.payload
+    },
+
+    [refreshBudget.fulfilled]: (state, { payload }) => {
+      state.activeBudget = payload
     },
 
     [fetchBudgetMonth.fulfilled]: (state, { payload: { month, budgetMonth } }) => {

@@ -8,13 +8,13 @@ export class Payee extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   budgetId: string
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   transferAccountId: string
 
-  @Column()
+  @Column({ type: 'varchar' })
   name: string
 
   @CreateDateColumn()

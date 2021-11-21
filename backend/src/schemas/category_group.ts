@@ -28,6 +28,16 @@ export interface CategoryGroupModel {
   name: string
 
   /**
+   * Flag for internal use only
+   */
+  internal: boolean
+
+  /**
+   * Flag for locked accounts - prevents renaming and other actions
+   */
+  locked: boolean
+
+  /**
    * Child categories
    */
   categories: CategoryModel[]

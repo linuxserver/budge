@@ -28,6 +28,16 @@ export interface CategoryModel {
   name: string
 
   /**
+   * Inflow category flag
+   */
+  inflow: boolean
+
+  /**
+   * Locked flag
+   */
+  locked: boolean
+
+  /**
    * Datetime transaction was created
    */
   created: string

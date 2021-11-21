@@ -16,11 +16,6 @@ export interface BudgetModel {
   id: string
 
   /**
-   * User ID
-   */
-  userId: string
-
-  /**
    * Budget name
    */
   name: string
@@ -29,6 +24,11 @@ export interface BudgetModel {
    * Budget's accounts
    */
   accounts: AccountModel[]
+
+  /**
+   * Amount left to budget
+   */
+  toBeBudgeted: number
 
   /**
    * Datetime user was created

@@ -18,34 +18,34 @@ export class Transaction extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   budgetId: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   accountId: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   payeeId: string
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   transferAccountId: string
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   transferTransactionId: string
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   categoryId: string
 
-  @Column()
+  @Column({ type: 'int' })
   amount: number
 
-  @Column()
+  @Column({ type: 'datetime' })
   date: Date
 
-  @Column({ default: '' })
+  @Column({ type: 'varchar', default: '' })
   memo: string
 
-  @Column({ default: TransactionStatus.Pending })
+  @Column({ type: 'int', default: TransactionStatus.Pending })
   status: TransactionStatus
 
   @CreateDateColumn()
@@ -256,10 +256,12 @@ export class Transaction extends BaseEntity {
 
       // Category or month has changed, so reset 'original' amount
       const originalCategoryMonth = await CategoryMonth.findOne({ categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) }, { relations: ["budgetMonth"] })
-      await originalCategoryMonth.update({ activity: this.originalAmount * -1 })
-    }
 
-    await this.categoryMonth.update({ activity })
+      await originalCategoryMonth.update({ activity: this.originalAmount * -1 })
+      await this.categoryMonth.update({ activity })
+    } else {
+      await this.categoryMonth.update({ activity: this.amount - this.originalAmount })
+    }
   }
 
   @BeforeRemove()
@@ -289,6 +291,7 @@ export class Transaction extends BaseEntity {
   }
 
   public async toResponseModel(): Promise<TransactionModel> {
+    console.log(this.date)
     return {
       id: this.id,
       accountId: this.accountId,

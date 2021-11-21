@@ -9,7 +9,6 @@ import { CategoryRequest } from '../schemas/category'
 import { Category } from '../entities/Category'
 import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../schemas/category_month'
 import { CategoryMonth } from '../entities/CategoryMonth'
-import { BudgetMonth } from '../entities/BudgetMonth'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -26,6 +25,8 @@ export class CategoriesController extends Controller {
         id: 'abc123',
         budgetId: 'def456',
         name: 'Emergency Fund',
+        locked: false,
+        internal: false,
         categories: [],
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
@@ -67,6 +68,8 @@ export class CategoriesController extends Controller {
       id: 'abc123',
       budgetId: 'def456',
       name: 'Expenses',
+      locked: false,
+      internal: false,
       categories: [],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
@@ -112,6 +115,8 @@ export class CategoriesController extends Controller {
       id: 'abc123',
       budgetId: 'def456',
       name: 'Expenses',
+      locked: false,
+      internal: false,
       categories: [],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
@@ -156,6 +161,8 @@ export class CategoriesController extends Controller {
       id: 'abc123',
       categoryGroupId: 'def456',
       name: 'Expenses',
+      inflow: false,
+      locked: false,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
@@ -200,6 +207,8 @@ export class CategoriesController extends Controller {
       id: 'abc123',
       categoryGroupId: 'def456',
       name: 'Expenses',
+      inflow: false,
+      locked: false,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },

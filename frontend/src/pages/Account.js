@@ -6,7 +6,7 @@ import { createAccount, createPayee, fetchPayees } from "../redux/slices/Account
 import { createTransaction, deleteTransaction, updateTransaction } from "../redux/slices/Transactions";
 import { TableIcons } from '../utils/Table'
 import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
-import { fetchBudgetMonth, fetchBudgetMonths, fetchCategoryMonths } from "../redux/slices/Budgets";
+import { fetchBudgetMonth, fetchBudgetMonths, fetchCategoryMonths, refreshBudget } from "../redux/slices/Budgets";
 import TextField from '@mui/material/TextField';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -119,6 +119,7 @@ export default function Account(props) {
     }))
 
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
+    dispatch(refreshBudget())
     dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
     dispatch(fetchBudgetMonths())
     dispatch(fetchPayees())
@@ -161,6 +162,7 @@ export default function Account(props) {
       dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(oldData.date) }))
     }
 
+    dispatch(refreshBudget())
     dispatch(fetchBudgetMonths())
   }
 

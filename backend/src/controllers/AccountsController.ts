@@ -52,10 +52,12 @@ export class AccountsController extends Controller {
       //   const ccGroup = await CategoryGroup.findOne({ budgetId, name: CreditCardGroupName }) || CategoryGroup.create({ budgetId, name: CreditCardGroupName })
       //   await ccGroup.save()
 
+      //   // Create payment tracking category
       //   const paymentCategory = Category.create({
       //     budgetId,
       //     categoryGroupId: ccGroup.id,
       //     name: account.name,
+      //     locked: true,
       //   })
       //   await paymentCategory.save()
       // }

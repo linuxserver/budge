@@ -21,11 +21,11 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   @Index()
   email: string
 
-  @Column()
+  @Column({ type: 'varchar' })
   password: string
 
   private currentPassword: string

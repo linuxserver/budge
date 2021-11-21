@@ -46,11 +46,6 @@ export interface BudgetMonthModel {
   activity: number
 
   /**
-   * Amount left to budget
-   */
-  toBeBudgeted: number
-
-  /**
    * Date created
    */
   created: string

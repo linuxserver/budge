@@ -14,16 +14,16 @@ export class Account extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   budgetId: string
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   transferPayeeId: string
 
-  @Column()
+  @Column({ type: 'varchar' })
   name: string
 
-  @Column()
+  @Column({ type: 'int' })
   type: AccountTypes
 
   @CreateDateColumn()

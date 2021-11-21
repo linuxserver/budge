@@ -6,7 +6,6 @@ import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../schemas/budge
 import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../schemas/budget_month'
-import { getMonthString, getMonthStringFromNow } from '../utils'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -21,8 +20,8 @@ export class BudgetsController extends Controller {
     data: [
       {
         id: 'abc123',
-        userId: 'def456',
         name: 'My Budget',
+        toBeBudgeted: 0,
         accounts: [
           {
             id: "def123",
@@ -38,8 +37,8 @@ export class BudgetsController extends Controller {
       },
       {
         id: 'abc456',
-        userId: 'def456',
         name: 'Another Budget',
+        toBeBudgeted: 0,
         accounts: [],
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
@@ -67,8 +66,8 @@ export class BudgetsController extends Controller {
     message: 'success',
     data: {
       id: 'abc123',
-      userId: 'def456',
       name: 'My Budget',
+      toBeBudgeted: 0,
       accounts: [],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
@@ -83,13 +82,44 @@ export class BudgetsController extends Controller {
       budget.user = request.user
       await budget.save()
 
-      const today = getMonthString()
-      const prevMonth = getMonthStringFromNow(-1)
-      const nextMonth = getMonthStringFromNow(1)
+      return {
+        message: 'success',
+        data: await budget.toResponseModel(),
+      }
+    } catch (err) {
+      console.log(err)
+      return { message: err.message }
+    }
+  }
 
-      await Promise.all([prevMonth, today, nextMonth].map(month => {
-        return BudgetMonth.create({ budgetId: budget.id, month }).save()
-      }))
+  /**
+   * Retrieve an existing budget
+   */
+  @Security('jwtRequired')
+  @Get('{id}')
+  @Example<BudgetResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      name: 'My Budget',
+      toBeBudgeted: 0,
+      accounts: [],
+      created: '2011-10-05T14:48:00.000Z',
+      updated: '2011-10-05T14:48:00.000Z',
+    },
+  })
+  public async getBudget(
+    @Path() id: string,
+    @Request() request: ExpressRequest,
+  ): Promise<BudgetResponse | ErrorResponse> {
+    try {
+      let budget: Budget = await Budget.findOne(id)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
 
       return {
         message: 'success',
@@ -109,8 +139,8 @@ export class BudgetsController extends Controller {
     message: 'success',
     data: {
       id: 'abc123',
-      userId: 'def456',
       name: 'My Budget',
+      toBeBudgeted: 0,
       accounts: [],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
@@ -157,7 +187,6 @@ export class BudgetsController extends Controller {
         income: 0,
         activity: 0,
         budgeted: 0,
-        toBeBudgeted: 0,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       }
@@ -198,7 +227,6 @@ export class BudgetsController extends Controller {
       income: 0,
       activity: 0,
       budgeted: 0,
-      toBeBudgeted: 0,
       categories: [
         {
           id: "jkl789",

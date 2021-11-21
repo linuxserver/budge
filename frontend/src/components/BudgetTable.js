@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import MaterialTable, { MTableCell, MTableEditField, MTableEditCell } from "@material-table/core";
 import { TableIcons } from '../utils/Table'
-import { fetchBudgetMonth, updateCategoryMonth, setCurrentMonth, fetchCategoryMonths } from "../redux/slices/Budgets";
+import { fetchBudgetMonth, updateCategoryMonth, setCurrentMonth, fetchCategoryMonths, refreshBudget } from "../redux/slices/Budgets";
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -11,18 +11,24 @@ import Button from '@mui/material/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
+import Grid from '@mui/material/Grid';
 
 export default function BudgetTable(props) {
   /**
    * Redux block
    */
   const dispatch = useDispatch()
+  const budget = useSelector(state => state.budgets.activeBudget)
+  const budgetId = useSelector(state => state.budgets.activeBudget.id)
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
   const budgetMonths = useSelector(state => Object.keys(state.budgets.budgetMonths).sort())
   const categoriesMap = useSelector(
     state => state.categories.categoryGroups.reduce(
       (acc, group) => {
+        if (group.internal) {
+          return acc
+        }
         acc[group.id] = group.name
         for (const category of group.categories) {
           acc[category.id] = category.name
@@ -32,15 +38,21 @@ export default function BudgetTable(props) {
       }, {}
     )
   )
-  const data = useSelector(state => {
-    const budgetMonth = state.budgets.budgetMonths[month]
-    if (!budgetMonth) {
+  const budgetMonth = useSelector(state => {
+    if (!state.budgets.budgetMonths[month]) {
       dispatch(fetchBudgetMonth({ month }))
       return []
     }
 
+    return state.budgets.budgetMonths[month]
+  })
+  const data = useSelector(state => {
     let retval = []
     state.categories.categoryGroups.map(group => {
+      if (group.internal) {
+        return
+      }
+
       let groupRow = {
         id: group.id,
         categoryId: group.id,
@@ -178,6 +190,8 @@ export default function BudgetTable(props) {
     // const monthIndex = availableMonths.indexOf(month)
     // Fetch all months starting with the existing to get cascaded balance updates
     dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
+    dispatch(fetchBudgetMonth({ month, budgetId }))
+    dispatch(refreshBudget())
     // return Promise.all(availableMonths.slice(monthIndex).map(month => dispatch(fetchBudgetMonth({ month }))))
   }
 
@@ -228,15 +242,25 @@ export default function BudgetTable(props) {
 
   return (
     <>
-      <div className="budget-month-navigation">
-        <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
-          <ArrowBackIosNewIcon />
-        </IconButton>
-        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
-        <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
-          <ArrowForwardIosIcon />
-        </IconButton>
-      </div>
+      <Grid container spacing={2}>
+        <Grid item xs={6}>
+          <div className="budget-month-navigation">
+            <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
+              <ArrowBackIosNewIcon />
+            </IconButton>
+            {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
+            <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
+              <ArrowForwardIosIcon />
+            </IconButton>
+          </div>
+        </Grid>
+        <Grid item xs={6}>
+          <div>To Be Budgeted: {budget.toBeBudgeted}</div>
+          <div>Income: {budgetMonth.income}</div>
+          <div>Activity: {budgetMonth.activity}</div>
+          <div>Budgeted: {budgetMonth.budgeted}</div>
+        </Grid>
+      </Grid>
 
       <MaterialTable
         components={{
@@ -276,18 +300,6 @@ export default function BudgetTable(props) {
             }
           }
         }}
-        // editable={{
-        //   isEditable: rowData => rowData.groupId,
-        //   onRowAdd: async (row) => {
-        //     console.log(row)
-        //   },
-        //   onRowUpdate: async (newData, oldData) => {
-        //     await onBudgetEdit(newData, oldData)
-        //   },
-        //   // onRowDelete: async (row) => {
-        //   //   await onTransactionDelete(row)
-        //   // },
-        // }}
       />
     </>
   )

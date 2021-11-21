@@ -1,5 +1,5 @@
 import { CategoryMonthModel } from '../schemas/category_month'
-import { Entity, BeforeInsert, AfterInsert, AfterUpdate, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, AfterLoad } from 'typeorm'
+import { Entity, BeforeInsert, AfterInsert, AfterUpdate, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, AfterLoad, BeforeUpdate } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
@@ -9,25 +9,25 @@ export class CategoryMonth extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   categoryId: string
 
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   budgetMonthId: string
 
-  @Column({ nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   @Index()
   month: string
 
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   budgeted: number
 
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   activity: number
 
-  @Column({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   balance: number
 
   @CreateDateColumn()
@@ -40,13 +40,13 @@ export class CategoryMonth extends BaseEntity {
    * Belongs to a category
    */
   @ManyToOne(() => Category, category => category.categoryMonths)
-  category: Category
+  category: Promise<Category>
 
   /**
    * Belongs to a budget month
    */
   @ManyToOne(() => BudgetMonth, budgetMonth => budgetMonth.categories)
-  budgetMonth: BudgetMonth
+  budgetMonth: Promise<BudgetMonth>
 
   originalBudgeted: number = 0
 
@@ -62,6 +62,7 @@ export class CategoryMonth extends BaseEntity {
     if (!categoryMonth) {
       const budgetMonth = await BudgetMonth.findOrCreate(budgetId, month)
       categoryMonth = CategoryMonth.create({
+        budgetMonthId: budgetMonth.id,
         categoryId,
         month: month,
         // @TODO: I DON'T KNOW WHY I HAVE TO SPECIFY 0s HERE AND NOT ABOVE WHEN CREATING BUDGET MONTH!!! AHHH!!!
@@ -69,7 +70,6 @@ export class CategoryMonth extends BaseEntity {
         balance: 0,
         budgeted: 0,
       })
-      categoryMonth.budgetMonth = budgetMonth
     }
 
     return categoryMonth
@@ -98,13 +98,25 @@ export class CategoryMonth extends BaseEntity {
   @AfterUpdate()
   public async bookkeeping(): Promise<void> {
     // Update budget month activity and and budgeted
-    this.budgetMonth.budgeted = this.budgeted - this.originalBudgeted
-    this.budgetMonth.activity += this.activity - this.originalActivity
-    this.budgetMonth.save()
+    const budgetMonth = await BudgetMonth.findOne(this.budgetMonthId)
+    const budget = await budgetMonth.budget
+    const category = await Category.findOne(this.categoryId)
+    budgetMonth.budgeted += this.budgeted - this.originalBudgeted
+    budgetMonth.activity += this.activity - this.originalActivity
+
+    budget.toBeBudgeted -= this.budgeted - this.originalBudgeted
+
+    if (category.inflow) {
+      budgetMonth.income += this.activity - this.originalActivity
+      budget.toBeBudgeted += this.activity - this.originalActivity
+    }
+
+    await budgetMonth.save()
+    await budget.save()
 
     const nextMonth = getDateFromString(this.month)
     nextMonth.setMonth(nextMonth.getMonth() + 1)
-    const nextBudgetMonth = await BudgetMonth.findOne({ budgetId: this.budgetMonth.budgetId, month: formatMonthFromDateString(nextMonth) })
+    const nextBudgetMonth = await BudgetMonth.findOne({ budgetId: budgetMonth.budgetId, month: formatMonthFromDateString(nextMonth) })
     if (!nextBudgetMonth) {
       return
     }

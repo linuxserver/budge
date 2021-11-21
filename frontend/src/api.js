@@ -43,6 +43,12 @@ export default class API {
     return response.data.data
   }
 
+  static async fetchBudget(budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}`)
+
+    return response.data.data
+  }
+
   static async createAccount(name, type, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/accounts`, {
       name, type
