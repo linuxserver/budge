@@ -1,9 +1,10 @@
 import { CategoryModel } from '../schemas/category'
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, Index } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, Index, OneToOne, JoinColumn, AfterLoad } from 'typeorm'
 import { CategoryGroup } from './CategoryGroup'
 import { CategoryMonth } from './CategoryMonth'
 import { Transaction } from './Transaction'
 import { Budget } from '.'
+import { Account } from './Account'
 
 @Entity('categories')
 export class Category extends BaseEntity {
@@ -17,10 +18,13 @@ export class Category extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   categoryGroupId: string
 
+  @Column({ type: 'varchar', nullable: true })
+  trackingAccountId: string
+
   @Column({ type: 'varchar' })
   name: string
 
-  @Column({ type: 'int', default: false })
+  @Column({ type: 'boolean', default: false })
   inflow: boolean
 
   @Column({ type: 'boolean', default: false })
@@ -60,6 +64,7 @@ export class Category extends BaseEntity {
     return {
       id: this.id,
       categoryGroupId: this.categoryGroupId,
+      trackingAccountId: this.trackingAccountId,
       name: this.name,
       inflow: this.inflow,
       locked: this.locked,

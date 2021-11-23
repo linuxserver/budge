@@ -23,6 +23,11 @@ export interface CategoryModel {
   categoryGroupId: string
 
   /**
+   * ID of tracking account (for CCs)
+   */
+  trackingAccountId: string
+
+  /**
    * Name
    */
   name: string

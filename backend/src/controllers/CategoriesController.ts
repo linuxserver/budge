@@ -160,6 +160,7 @@ export class CategoriesController extends Controller {
     data: {
       id: 'abc123',
       categoryGroupId: 'def456',
+      trackingAccountId: null,
       name: 'Expenses',
       inflow: false,
       locked: false,
@@ -206,6 +207,7 @@ export class CategoriesController extends Controller {
     data: {
       id: 'abc123',
       categoryGroupId: 'def456',
+      trackingAccountId: null,
       name: 'Expenses',
       inflow: false,
       locked: false,
@@ -276,13 +278,13 @@ export class CategoriesController extends Controller {
       const budget = await Budget.findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
-        console.log('here')
         return {
           message: 'Not found',
         }
       }
 
       const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
+      console.log(categoryMonth)
       await categoryMonth.update({ budgeted: requestBody.budgeted})
 
       return {
@@ -324,7 +326,6 @@ export class CategoriesController extends Controller {
       const budget = await Budget.findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
-        console.log('here')
         return {
           message: 'Not found',
         }

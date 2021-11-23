@@ -80,15 +80,20 @@ export default function BudgetTable(props) {
 
         const budgetMonthCategory = budgetMonth.categories.filter(monthCategory => monthCategory.categoryId === category.id)
         // If no budget category, no transactions, so just build a dummy one
-        category = budgetMonthCategory[0] || defaultRow
+        const categoryMonth = budgetMonthCategory[0] || defaultRow
 
-        groupRow.budgeted += category.budgeted
-        groupRow.activity += category.activity
-        groupRow.balance += category.balance
+        groupRow.budgeted += categoryMonth.budgeted
+        groupRow.activity += categoryMonth.activity
+        groupRow.balance += categoryMonth.balance
+
+        if (category.trackingCategory) {
+          groupRow.trackingCategory = true
+        }
 
         retval.push({
-          ...category,
+          ...categoryMonth,
           groupId: group.id,
+          trackingCategory: category.trackingCategory,
         })
       }
 
@@ -119,8 +124,10 @@ export default function BudgetTable(props) {
       render: (rowData) => (
         <>
           <div style={{cursor: 'pointer', display: 'inline-block'}} onClick={() => {
+            if (rowData.trackingCategory) {
+              return
+            }
             if (rowData.groupId) {
-              console.log(rowData)
               openCategoryDialog({ name: categoriesMap[rowData.categoryId], categoryId: rowData.categoryId, categoryGroupId: rowData.groupId })
             } else {
               openCategoryGroupDialog({ name: categoriesMap[rowData.categoryId], categoryGroupId: rowData.id })
@@ -141,12 +148,13 @@ export default function BudgetTable(props) {
       ),
       editComponent: props => (
         <TextField
-        onChange={(e, value) => {
-          console.log(props)
-          props.onChange(value)
-        }}
-        label=""
-        variant="standard" />
+          onChange={(e, value) => {
+            console.log(props)
+            props.onChange(value)
+          }}
+          label=""
+          variant="standard"
+        />
       ),
     },
     { title: "Assigned", field: "budgeted", type: "currency", },
@@ -168,12 +176,22 @@ export default function BudgetTable(props) {
             return value
           }
 
-          if (rowData.balance > 0) {
+          if (rowData.trackingCategory) {
+            if (budgetMonth.underfunded > 0) {
+              return <Chip label={value} color="warning"></Chip>
+            } else if (rowData.balance === 0) {
+              return <Chip label={value}></Chip>
+            }
+
             return <Chip label={value} color="success"></Chip>
-          } else if (rowData.balance < 0) {
-            return <Chip label={value} color="error"></Chip>
           } else {
-            return <Chip label={value}></Chip>
+            if (rowData.balance > 0) {
+              return <Chip label={value} color="success"></Chip>
+            } else if (rowData.balance < 0) {
+              return <Chip label={value} color="error"></Chip>
+            } else {
+              return <Chip label={value}></Chip>
+            }
           }
         }
       },
@@ -259,6 +277,7 @@ export default function BudgetTable(props) {
           <div>Income: {budgetMonth.income}</div>
           <div>Activity: {budgetMonth.activity}</div>
           <div>Budgeted: {budgetMonth.budgeted}</div>
+          <div>Underfunded: {budgetMonth.underfunded}</div>
         </Grid>
       </Grid>
 

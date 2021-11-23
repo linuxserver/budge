@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import MaterialTable, { MTableBodyRow } from "@material-table/core";
+import MaterialTable, { MTableBodyRow, MTableEditField } from "@material-table/core";
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from "react-router";
-import { createAccount, createPayee, fetchPayees } from "../redux/slices/Accounts";
+import { createPayee, fetchAccounts, fetchPayees } from "../redux/slices/Accounts";
 import { createTransaction, deleteTransaction, updateTransaction } from "../redux/slices/Transactions";
 import { TableIcons } from '../utils/Table'
 import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
@@ -10,6 +10,9 @@ import { fetchBudgetMonth, fetchBudgetMonths, fetchCategoryMonths, refreshBudget
 import TextField from '@mui/material/TextField';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import DatePicker from '@mui/lab/DatePicker';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
 
 export default function Account(props) {
   const params = useParams()
@@ -47,50 +50,80 @@ export default function Account(props) {
 
   const filter = createFilterOptions()
   const columns = [
-    { title: "Date", field: "date", type: "date", default: formatMonthFromDateString(new Date()) },
-    { title: "Category", field: "categoryId", lookup: categoriesMap },
-    { title: "Payee", field: "payeeId", lookup: payeesMap, editComponent: props => (
-      <Autocomplete
-        sx={{ width: 300 }}
-        options={payeeIds}
-        getOptionLabel={(option) => {
-          if (payeesMap[option]) {
-            return payeesMap[option]
-          }
+    {
+      title: "Date",
+      field: "date",
+      type: "date",
+      initialEditValue: new Date(),
+      editComponent: props => (
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DatePicker
+            label=""
+            value={props.value || null}
+            onChange={props.onChange}
+            renderInput={(params) => <TextField variant="standard" {...params} />}
+          />
+        </LocalizationProvider>
+      ),
+    },
+    {
+      title: "Payee",
+      field: "payeeId",
+      lookup: payeesMap,
+      editComponent: props => (
+        <Autocomplete
+          sx={{ width: 300 }}
+          options={payeeIds}
+          getOptionLabel={(option) => {
+            if (payeesMap[option]) {
+              return payeesMap[option]
+            }
 
-          return option
-        }}
-        // renderOption={(props, option) => <li {...props}>{option.name}</li>}
-        freeSolo
-        renderInput={(params) => <TextField {...params} label="" variant="standard" />}
-        value={props.value}
-        onInputChange={(e, value) => {
-          props.onChange(value)
-        }}
-        onChange={(e, value) => {
-          props.onChange(value)
-        }}
-        filterOptions={(options, params) => {
-          const filtered = filter(options, params);
+            return option
+          }}
+          // renderOption={(props, option) => <li {...props}>{option.name}</li>}
+          freeSolo
+          renderInput={(params) => <TextField {...params} label="" variant="standard" />}
+          value={props.value}
+          onInputChange={(e, value) => {
+            props.onChange(value)
+          }}
+          onChange={(e, value) => {
+            props.onChange(value)
+          }}
+          filterOptions={(options, params) => {
+            const filtered = filter(options, params);
 
-          const { inputValue } = params;
-          if (inputValue.match(/New: /)) {
-            return filtered
-          }
+            const { inputValue } = params;
+            if (inputValue.match(/New: /)) {
+              return filtered
+            }
 
-          // Suggest the creation of a new value
-          const isExisting = options.some((option) => payeesMap[option] === inputValue);
-          if (inputValue !== '' && !isExisting) {
-            filtered.push(`New: ${inputValue}`);
-          }
+            // Suggest the creation of a new value
+            const isExisting = options.some((option) => payeesMap[option] === inputValue);
+            if (inputValue !== '' && !isExisting) {
+              filtered.push(`New: ${inputValue}`);
+            }
 
-          return filtered;
-        }}
-      />
-    )},
+            return filtered;
+          }}
+        />
+      )
+    },
+    {
+      title: "Category",
+      field: "categoryId",
+      lookup: categoriesMap,
+      editComponent: props => (
+        <MTableEditField
+          { ...props }
+          variant="standard"
+        />
+      ),
+    },
     { title: "memo", field: "memo" },
-    { title: "Inflow", field: "inflow", type: "currency" },
     { title: "Outflow", field: "outflow", type: "currency" },
+    { title: "Inflow", field: "inflow", type: "currency" },
   ]
 
   const createNewPayee = async (name) => {
@@ -123,6 +156,7 @@ export default function Account(props) {
     dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
     dispatch(fetchBudgetMonths())
     dispatch(fetchPayees())
+    dispatch(fetchAccounts())
   }
 
   const onTransactionEdit = async (newData, oldData) => {
@@ -164,6 +198,7 @@ export default function Account(props) {
 
     dispatch(refreshBudget())
     dispatch(fetchBudgetMonths())
+    dispatch(fetchAccounts())
   }
 
   const onTransactionDelete = async (transaction) => {
@@ -171,6 +206,7 @@ export default function Account(props) {
 
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(transaction.date) }))
     dispatch(fetchCategoryMonths({ categoryId: transaction.categoryId }))
+    dispatch(fetchAccounts())
   }
 
   return (

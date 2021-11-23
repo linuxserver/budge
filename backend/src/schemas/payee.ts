@@ -26,6 +26,11 @@ export interface PayeeModel {
   transferAccountId: string | null
 
   /**
+   * Flag that payee is for internal use only
+   */
+  internal: boolean
+
+  /**
    * Datetime user was created
    */
   created: string

@@ -18,8 +18,10 @@ export default function AddAccountDialog(props) {
    */
   const [name, setName] = useState('')
   const [accountType, setAccountType] = useState('')
+  const [balance, setBalance] = useState(0)
   const onNameChange = (e) => setName(e.target.value);
   const onAccountTypeChange = (e) => setAccountType(e.target.value);
+  const onBalanceChange = (e) => setBalance(e.target.value);
 
   /**
    * Redux block
@@ -29,10 +31,11 @@ export default function AddAccountDialog(props) {
   const budgetId = useSelector(state => state.budgets.activeBudget.id)
 
   const handleCreateAccount = async () => {
+    console.log('here')
     await dispatch(createAccount({
       name,
       accountType,
-      budgetId,
+      balance,
     }))
 
     // If adding a credit card, update all categories since we have added a payment category for it
@@ -78,6 +81,16 @@ export default function AddAccountDialog(props) {
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="balance"
+            label="Initial balance"
+            type="number"
+            fullWidth
+            variant="standard"
+            onChange={onBalanceChange}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCreateAccount}>Create Account</Button>

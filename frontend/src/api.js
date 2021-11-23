@@ -49,9 +49,9 @@ export default class API {
     return response.data.data
   }
 
-  static async createAccount(name, type, budgetId) {
+  static async createAccount(name, type, balance, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/accounts`, {
-      name, type
+      name, type, balance
     })
 
     return response.data.data

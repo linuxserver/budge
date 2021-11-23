@@ -15,9 +15,11 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
 import {
   Link,
+  useNavigate,
 } from "react-router-dom";
 import { useSelector } from 'react-redux'
 import { makeStyles } from '@mui/styles'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 
 const useStyles = makeStyles(theme => ({
   navigationDrawer: {
@@ -28,6 +30,8 @@ const useStyles = makeStyles(theme => ({
 const drawerWidth = 240;
 
 export default function AppDrawer(props) {
+  const navigate = useNavigate()
+
   const menuItems = [
     { name: 'Budget', path: '/'},
     // { name: 'All Accounts', path: '/accounts'},
@@ -44,13 +48,17 @@ export default function AppDrawer(props) {
    */
   const accounts = useSelector(state => state.accounts.accounts)
 
-  const listItemClicked = (name) => {
+  const listItemClicked = (name, url) => {
     if (name === 'Accounts') {
       setAccountsOpen(!accountsOpen)
       return
     }
 
     setSelectedItem(name)
+
+    if (url) {
+      navigate(url)
+    }
   }
 
   const classes = useStyles()
@@ -71,9 +79,7 @@ export default function AppDrawer(props) {
             <ListItem
               button
               key={menuItemConfig.name}
-              component={Link}
-              to={menuItemConfig.path}
-              onClick={() => listItemClicked(menuItemConfig.name)}
+              onClick={() => listItemClicked(menuItemConfig.name, menuItemConfig.path)}
               selected={selectedItem === menuItemConfig.name}
             >
               <ListItemIcon>
@@ -85,19 +91,10 @@ export default function AppDrawer(props) {
         </List>
         <Divider />
         <List dense={true}>
-          {/* {['All mail', 'Trash', 'Spam'].map((text, index) => (
-            <ListItem button key={text}>
-              <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-              </ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItem>
-          ))} */}
-
           {/* Accounts Section */}
           <ListItemButton onClick={() => listItemClicked('Accounts')}>
             <ListItemIcon>
-              <InboxIcon />
+              <AccountBalanceIcon />
             </ListItemIcon>
             <ListItemText primary="Accounts" />
             {accountsOpen ? <ExpandLess /> : <ExpandMore />}
@@ -107,15 +104,18 @@ export default function AppDrawer(props) {
               {accounts.map((account, index) => (
                 // Don't display 'payee' account types
                 account.type !== 2 &&
-                <Link to={`/accounts/${account.id}`}
+                <ListItem
                   key={`account-${account.id}`}
-                  onClick={() => listItemClicked(`account-${account.id}`)}
+                  onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
                   selected={selectedItem === `account-${account.id}`}
                 >
                   <ListItemButton sx={{ pl: 4 }}>
-                    <ListItemText primary={account.name} />
+                    <ListItemText primary={account.name} secondary={new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    }).format(account.balance)} />
                   </ListItemButton>
-                </Link>
+                </ListItem>
               ))}
             </List>
           </Collapse>

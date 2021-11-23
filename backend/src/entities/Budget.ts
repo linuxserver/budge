@@ -7,6 +7,7 @@ import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
 import { getMonthString, getMonthStringFromNow } from '../utils'
+import { Payee } from './Payee'
 
 @Entity('budgets')
 export class Budget extends BaseEntity {
@@ -94,6 +95,14 @@ export class Budget extends BaseEntity {
       })
       return internalCategory.save()
     }))
+
+    // Create special 'Starting Balance' payee
+    const startingBalancePayee = Payee.create({
+      budgetId: this.id,
+      name: "Starting Balance",
+      internal: true,
+    })
+    await startingBalancePayee.save()
   }
 
   public async toResponseModel(): Promise<BudgetModel> {

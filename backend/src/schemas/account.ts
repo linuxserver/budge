@@ -33,6 +33,21 @@ export interface AccountModel {
   type: AccountTypes
 
   /**
+   * Account balance (cleared + uncleared)
+   */
+  balance: number
+
+  /**
+   * Cleared account balance
+   */
+  cleared: number
+
+  /**
+   * Pending account balance
+   */
+  uncleared: number
+
+  /**
    * Datetime user was created
    */
   created: string
@@ -46,11 +61,25 @@ export interface AccountModel {
 /**
  * @example {
  *  "name": "My Budget",
+ *  "type": 0,
  * }
  */
 export interface AccountRequest {
   name: string,
   type: AccountTypes,
+}
+
+/**
+ * @example {
+ *  "name": "My Budget",
+ *  "type": 0,
+ *  "initialBalance": 100,
+ * }
+ */
+export interface CreateAccountRequest {
+  name: string,
+  type: AccountTypes,
+  balance: number,
 }
 
 export type AccountResponse = DataResponse<AccountModel>

@@ -52,9 +52,13 @@ export class CategoryMonth extends BaseEntity {
 
   originalActivity: number = 0
 
+  originalBalance: number = 0
+
   @AfterLoad()
   private storeOriginalValues(): void {
     this.originalBudgeted = this.budgeted
+    this.originalActivity = this.activity
+    this.originalBalance = this.balance
   }
 
   public static async findOrCreate(budgetId: string, categoryId: string, month: string ): Promise<CategoryMonth> {
@@ -97,26 +101,34 @@ export class CategoryMonth extends BaseEntity {
   @AfterInsert()
   @AfterUpdate()
   public async bookkeeping(): Promise<void> {
+    const category = await Category.findOne(this.categoryId)
+
     // Update budget month activity and and budgeted
     const budgetMonth = await BudgetMonth.findOne(this.budgetMonthId)
     const budget = await budgetMonth.budget
-    const category = await Category.findOne(this.categoryId)
+
     budgetMonth.budgeted += this.budgeted - this.originalBudgeted
     budgetMonth.activity += this.activity - this.originalActivity
-
-    budget.toBeBudgeted -= this.budgeted - this.originalBudgeted
+    budget.toBeBudgeted += this.originalBudgeted - this.budgeted
 
     if (category.inflow) {
       budgetMonth.income += this.activity - this.originalActivity
       budget.toBeBudgeted += this.activity - this.originalActivity
     }
 
-    await budgetMonth.save()
+    if (this.originalBalance < 0) {
+      budgetMonth.underfunded += this.originalBalance
+    }
+    if (this.balance < 0) {
+      budgetMonth.underfunded -= this.balance
+    }
+
     await budget.save()
+    await budgetMonth.save()
 
     const nextMonth = getDateFromString(this.month)
     nextMonth.setMonth(nextMonth.getMonth() + 1)
-    const nextBudgetMonth = await BudgetMonth.findOne({ budgetId: budgetMonth.budgetId, month: formatMonthFromDateString(nextMonth) })
+    const nextBudgetMonth = await BudgetMonth.findOne({ budgetId: category.budgetId, month: formatMonthFromDateString(nextMonth) })
     if (!nextBudgetMonth) {
       return
     }

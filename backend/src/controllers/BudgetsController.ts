@@ -28,6 +28,9 @@ export class BudgetsController extends Controller {
             budgetId: "abc123",
             name: "Checking Account",
             type: AccountTypes.Bank,
+            balance: 0,
+            cleared: 0,
+            uncleared: 0,
             created: '2011-10-05T14:48:00.000Z',
             updated: '2011-10-05T14:48:00.000Z',
           }
@@ -187,6 +190,7 @@ export class BudgetsController extends Controller {
         income: 0,
         activity: 0,
         budgeted: 0,
+        underfunded: 0,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       }
@@ -227,6 +231,7 @@ export class BudgetsController extends Controller {
       income: 0,
       activity: 0,
       budgeted: 0,
+      underfunded: 0,
       categories: [
         {
           id: "jkl789",

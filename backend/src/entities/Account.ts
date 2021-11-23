@@ -1,8 +1,10 @@
 import { AccountModel } from '../schemas/account'
-import { Entity, OneToOne, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, JoinColumn, AfterInsert, BeforeInsert } from 'typeorm'
+import { Entity, OneToOne, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, JoinColumn, AfterInsert, BeforeInsert, BeforeUpdate } from 'typeorm'
 import { Budget } from './Budget'
 import { Transaction } from './Transaction'
 import { Payee } from './Payee'
+import { Category } from './Category'
+import { CategoryGroup, CreditCardGroupName } from './CategoryGroup'
 
 export enum AccountTypes {
   Bank,
@@ -25,6 +27,15 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'int' })
   type: AccountTypes
+
+  @Column({ type: 'int' })
+  balance: number = 0
+
+  @Column({ type: 'int' })
+  cleared: number = 0
+
+  @Column({ type: 'int' })
+  uncleared: number = 0
 
   @CreateDateColumn()
   created: Date
@@ -52,6 +63,32 @@ export class Account extends BaseEntity {
   transferPayee: Promise<Payee>;
 
   @AfterInsert()
+  private async createCreditCardCategory(): Promise<void> {
+    if (this.type === AccountTypes.CreditCard) {
+      // Create CC payments category if it doesn't exist
+      const ccGroup = await CategoryGroup.findOne({
+        budgetId: this.budgetId,
+        name: CreditCardGroupName
+      }) || CategoryGroup.create({
+        budgetId: this.budgetId,
+        name: CreditCardGroupName
+      })
+
+      await ccGroup.save()
+
+      // Create payment tracking category
+      const paymentCategory = Category.create({
+        budgetId: this.budgetId,
+        categoryGroupId: ccGroup.id,
+        trackingAccountId: this.id,
+        name: this.name,
+        locked: true,
+      })
+      await paymentCategory.save()
+    }
+  }
+
+  @AfterInsert()
   private async createAccountPayee() {
     const payee = Payee.create({
       budgetId: this.budgetId,
@@ -65,12 +102,34 @@ export class Account extends BaseEntity {
     await this.save()
   }
 
+  // @AfterInsert()
+  // private async initialBalanceAndToBebudgeted(): Promise<void> {
+  //   if (this.balance === 0) {
+  //     return
+  //   }
+
+  //   if (this.type === AccountTypes.Bank) {
+  //     // If it's a 'bank' account, set initial balance to 'to be budgeted
+  //     const budget = await Budget.findOne(this.budgetId)
+  //     budget.toBeBudgeted += this.balance
+  //     await budget.save()
+  //   }
+  // }
+
+  @BeforeUpdate()
+  private async calculateBalance(): Promise<void> {
+    this.balance = this.cleared + this.uncleared
+  }
+
   public async toResponseModel(): Promise<AccountModel> {
     return {
       id: this.id,
       budgetId: this.budgetId,
       name: this.name,
       type: this.type,
+      balance: this.balance,
+      cleared: this.cleared,
+      uncleared: this.uncleared,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

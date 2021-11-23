@@ -19,6 +19,7 @@ export class PayeesController extends Controller {
       id: 'abc123',
       transferAccountId: null,
       name: 'Random Store Name',
+      internal: false,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
@@ -64,6 +65,7 @@ export class PayeesController extends Controller {
         id: 'abc123',
         transferAccountId: null,
         name: 'Random Store Name',
+        internal: false,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       }
@@ -104,6 +106,7 @@ export class PayeesController extends Controller {
       id: 'abc123',
       transferAccountId: null,
       name: 'Random Store Name',
+      internal: false,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     }

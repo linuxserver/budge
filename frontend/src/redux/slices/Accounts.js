@@ -1,12 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api';
 
-export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, budgetId }) => {
-  return await api.createAccount(name, accountType, budgetId);
+export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, balance}, { getState }) => {
+  const store = getState()
+  return await api.createAccount(name, accountType, balance, store.budgets.activeBudget.id);
 })
 
-export const fetchAccounts = createAsyncThunk('accounts/fetch', async ({ budgetId }) => {
-  return await api.fetchAcounts(budgetId);
+export const fetchAccounts = createAsyncThunk('accounts/fetch', async (_, { getState }) => {
+  const store = getState()
+  return await api.fetchAccounts(store.budgets.activeBudget.id);
 })
 
 export const createPayee = createAsyncThunk('payees/create', async ({ name, budgetId }) => {
@@ -50,6 +52,10 @@ const accountsSlice = createSlice({
 
     [fetchAccounts.fulfilled]: (state, { payload }) => {
       state.accounts = payload
+
+      payload.map(account => {
+        accountsSlice.caseReducers.mapIdToAccount(state, { payload: { accountId: account.id, account } })
+      })
     },
 
     [createPayee.fulfilled]: (state, { payload }) => {

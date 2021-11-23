@@ -3,9 +3,10 @@ import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account, AccountTypes } from '../entities/Account'
-import { AccountResponse, AccountsResponse } from '../schemas/account'
+import { AccountResponse, AccountsResponse, CreateAccountRequest } from '../schemas/account'
 import { AccountRequest } from '../schemas/account'
-import { CategoryGroup, CreditCardGroupName } from '../entities/CategoryGroup'
+import { Payee } from '../entities/Payee'
+import { Transaction } from '../entities/Transaction'
 import { Category } from '../entities/Category'
 
 @Tags('Accounts')
@@ -23,13 +24,16 @@ export class AccountsController extends Controller {
       budgetId: 'def456',
       name: 'Checking Account',
       type: AccountTypes.Bank,
+      balance: 0,
+      cleared: 0,
+      uncleared: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
   })
   public async createAccount(
     @Path() budgetId: string,
-    @Body() requestBody: AccountRequest,
+    @Body() requestBody: CreateAccountRequest,
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
@@ -47,26 +51,35 @@ export class AccountsController extends Controller {
       })
       await account.save()
 
-      // if (account.type === AccountTypes.CreditCard) {
-      //   // Create CC payments category if it doesn't exist
-      //   const ccGroup = await CategoryGroup.findOne({ budgetId, name: CreditCardGroupName }) || CategoryGroup.create({ budgetId, name: CreditCardGroupName })
-      //   await ccGroup.save()
+      // Create a transaction for the starting balance of the account
+      if (requestBody.balance !== 0) {
+        let categoryId = null
+        let amount = requestBody.balance * -1 // Inverse for CCs
+        if (account.type === AccountTypes.Bank) {
+          const inflowCategory = await Category.findOne({ inflow: true })
+          categoryId = inflowCategory.id
+          amount = requestBody.balance
+        }
 
-      //   // Create payment tracking category
-      //   const paymentCategory = Category.create({
-      //     budgetId,
-      //     categoryGroupId: ccGroup.id,
-      //     name: account.name,
-      //     locked: true,
-      //   })
-      //   await paymentCategory.save()
-      // }
+        const startingBalancePayee = await Payee.findOne({ budgetId, name: 'Starting Balance', internal: true })
+        const startingBalanceTransaction = Transaction.create({
+          budgetId,
+          accountId: account.id,
+          payeeId: startingBalancePayee.id,
+          categoryId: categoryId,
+          amount,
+          date: new Date(),
+          memo: 'Starting Balance',
+        })
+        await startingBalanceTransaction.save()
+      }
 
       return {
         message: 'success',
         data: await account.toResponseModel(),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -84,6 +97,9 @@ export class AccountsController extends Controller {
         budgetId: 'def456',
         name: 'Checking Account',
         type: AccountTypes.Bank,
+        balance: 0,
+        cleared: 0,
+        uncleared: 0,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       }
@@ -125,6 +141,9 @@ export class AccountsController extends Controller {
       budgetId: 'def456',
       name: 'Checking Account',
       type: AccountTypes.Bank,
+      balance: 0,
+      cleared: 0,
+      uncleared: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     }

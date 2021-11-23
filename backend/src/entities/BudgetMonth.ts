@@ -26,6 +26,9 @@ export class BudgetMonth extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   activity: number
 
+  @Column({ type: 'int', default: 0 })
+  underfunded: number
+
   @CreateDateColumn()
   created: Date
 
@@ -65,6 +68,7 @@ export class BudgetMonth extends BaseEntity {
       income: this.income,
       budgeted: this.budgeted,
       activity: this.activity,
+      underfunded: this.underfunded,
       created: this.created ? this.created.toISOString() : (new Date()).toISOString(),
       updated: this.updated ? this.updated.toISOString() : (new Date()).toISOString(),
     }

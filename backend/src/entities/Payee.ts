@@ -17,6 +17,9 @@ export class Payee extends BaseEntity {
   @Column({ type: 'varchar' })
   name: string
 
+  @Column({ type: 'boolean' })
+  internal: boolean = false
+
   @CreateDateColumn()
   created: Date
 
@@ -38,6 +41,7 @@ export class Payee extends BaseEntity {
       id: this.id,
       transferAccountId: this.transferAccountId,
       name: this.name,
+      internal: this.internal,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }
