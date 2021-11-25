@@ -13,6 +13,10 @@ import Box from '@mui/material/Box';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import DatePicker from '@mui/lab/DatePicker';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import IconButton from '@mui/material/IconButton';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import LockIcon from '@mui/icons-material/Lock';
 
 export default function Account(props) {
   const params = useParams()
@@ -22,6 +26,7 @@ export default function Account(props) {
    * Redux block
    */
   const dispatch = useDispatch()
+  const account = useSelector(state => state.accounts.accountById[accountId])
   const budgetId = useSelector(state => state.budgets.activeBudget.id)
   const transactions = useSelector(state => {
     if (state.transactions.transactions[accountId]) {
@@ -124,6 +129,36 @@ export default function Account(props) {
     { title: "memo", field: "memo" },
     { title: "Outflow", field: "outflow", type: "currency" },
     { title: "Inflow", field: "inflow", type: "currency" },
+    {
+      title: "Status",
+      field: "status",
+      editable: "never",
+      render: rowData => {
+        let statusIcon = <></>
+        switch (rowData.status) {
+          case 0: // pending
+            statusIcon = <AccessTimeIcon />
+            break
+          case 1: // cleared
+            statusIcon = <CheckCircleOutlineIcon />
+            break
+          case 2: // reconciled
+            statusIcon = <LockIcon />
+            break
+        }
+
+        return (
+          <IconButton
+            size="small"
+            aria-label="transaction status"
+            onClick={() => setTransactionStatus(rowData)}
+            color="inherit"
+          >
+            {statusIcon}
+          </IconButton>
+        )
+      },
+    },
   ]
 
   const createNewPayee = async (name) => {
@@ -159,14 +194,24 @@ export default function Account(props) {
     dispatch(fetchAccounts())
   }
 
+  const setTransactionStatus = (rowData) => {
+    if (rowData.status === 2) {
+      // already reconciled
+      return
+    }
+
+    onTransactionEdit({
+      ...rowData,
+      status: rowData.status === 0 ? 1 : 0,
+    }, { ...rowData })
+  }
+
   const onTransactionEdit = async (newData, oldData) => {
+    console.log(newData)
     if (!payeesMap[newData.payeeId]) {
-      console.log(payeesMap)
-      console.log(newData.payeeId)
       // @TODO: Fix : Because of the 'onInputChange' autocomplete, the edited value gets subbed out for the 'text' value. Make sure this doesn't truly already exist.
       const payee = Object.keys(payeesMap).find(key => payeesMap[key] === newData.payeeId)
       if (!payee) {
-        console.log('creating new payee')
         newData.payeeId = (await createNewPayee(newData.payeeId)).id
       } else {
         newData.payeeId = payee
@@ -182,7 +227,7 @@ export default function Account(props) {
         payeeId: newData.payeeId,
         categoryId: newData.categoryId,
         amount: newData.inflow ? newData.inflow : newData.outflow * -1,
-        status: 1,
+        status: newData.status,
       }
     }))
 
@@ -211,6 +256,9 @@ export default function Account(props) {
 
   return (
     <div style={{ maxWidth: '100%' }}>
+      <div style={{ align: 'left' }}>
+        {account.cleared} + {account.uncleared} = {account.balance}
+      </div>
       <MaterialTable
         title="Transactions"
         options={{

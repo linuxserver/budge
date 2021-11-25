@@ -87,9 +87,14 @@ export default function NewCategoryDialog(props) {
               setCategoryGroup(event.target.value)
             }}
           >
-            {categoryGroups.map(group => (
-              <MenuItem value={group.id} key={group.id}>{group.name}</MenuItem>
-            ))}
+            {categoryGroups.map(group => {
+              console.log(group)
+              if (group.locked) {
+                return
+              }
+
+              return <MenuItem value={group.id} key={group.id}>{group.name}</MenuItem>
+            })}
           </Select>
         </DialogContent>
         <DialogActions>

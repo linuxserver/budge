@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
-import MaterialTable, { MTableCell, MTableEditField, MTableEditCell } from "@material-table/core";
+import MaterialTable, { MTableCell, MTableEditCell } from "@material-table/core";
 import { TableIcons } from '../utils/Table'
 import { fetchBudgetMonth, updateCategoryMonth, setCurrentMonth, fetchCategoryMonths, refreshBudget } from "../redux/slices/Budgets";
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Chip from '@mui/material/Chip';
-import Button from '@mui/material/Button';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
@@ -22,7 +21,6 @@ export default function BudgetTable(props) {
   const budgetId = useSelector(state => state.budgets.activeBudget.id)
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
-  const budgetMonths = useSelector(state => Object.keys(state.budgets.budgetMonths).sort())
   const categoriesMap = useSelector(
     state => state.categories.categoryGroups.reduce(
       (acc, group) => {
@@ -86,14 +84,14 @@ export default function BudgetTable(props) {
         groupRow.activity += categoryMonth.activity
         groupRow.balance += categoryMonth.balance
 
-        if (category.trackingCategory) {
-          groupRow.trackingCategory = true
+        if (category.trackingAccountId) {
+          groupRow.trackingAccountId = true
         }
 
         retval.push({
           ...categoryMonth,
           groupId: group.id,
-          trackingCategory: category.trackingCategory,
+          trackingAccountId: category.trackingAccountId,
         })
       }
 
@@ -124,7 +122,7 @@ export default function BudgetTable(props) {
       render: (rowData) => (
         <>
           <div style={{cursor: 'pointer', display: 'inline-block'}} onClick={() => {
-            if (rowData.trackingCategory) {
+            if (rowData.trackingAccountId) {
               return
             }
             if (rowData.groupId) {

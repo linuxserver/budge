@@ -82,7 +82,6 @@ export default function AddAccountDialog(props) {
             ))}
           </TextField>
           <TextField
-            autoFocus
             margin="dense"
             id="balance"
             label="Initial balance"

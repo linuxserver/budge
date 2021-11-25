@@ -36,12 +36,12 @@ export default function App(props) {
       {
         initComplete && (
           <Router>
-            <AddAccountDialog isOpen={newAccountDialogOpen} close={() => setNewAccountDialogOpen(false)}/>
             <Box sx={{ display: 'flex' }}>
               <CssBaseline />
               <Header />
               <Drawer onAddAccountClick={() => setNewAccountDialogOpen(true)}/>
               <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                <AddAccountDialog isOpen={newAccountDialogOpen} close={() => setNewAccountDialogOpen(false)}/>
                 <Toolbar />
                 <Routes>
                   <Route path="/" element={<Budget/>} />
