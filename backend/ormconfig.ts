@@ -1,12 +1,12 @@
 const { join } = require('path')
 
 module.exports = {
-  type: 'sqlite',
-  host: 'localhost',
-  port: 3306,
-  username: 'test',
-  password: 'test',
-  database: './test.db',
+  type: process.env.BUDGE_DB_DRIVER || 'sqlite',
+  host: process.env.BUDGE_DB_HOST || 'localhost',
+  port: process.env.BUDGE_DB_PORT || 3306,
+  username: process.env.BUDGE_DB_USERNAME,
+  password: process.env.BUDGE_DB_PASSWORD,
+  database: process.env.BUDGE_DATABASE || './budge.sqlite',
   synchronize: true,
   logging: false,
   entities: [join(__dirname, 'src/entities/**', '*.{ts,js}')],

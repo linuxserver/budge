@@ -6,7 +6,7 @@ import { Account, AccountTypes } from '../entities/Account'
 import { AccountResponse, AccountsResponse, CreateAccountRequest } from '../schemas/account'
 import { AccountRequest } from '../schemas/account'
 import { Payee } from '../entities/Payee'
-import { Transaction } from '../entities/Transaction'
+import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
 
 @Tags('Accounts')
@@ -70,6 +70,7 @@ export class AccountsController extends Controller {
           amount,
           date: new Date(),
           memo: 'Starting Balance',
+          status: TransactionStatus.Reconciled,
         })
         await startingBalanceTransaction.save()
       }
