@@ -9,6 +9,7 @@ import { createAccount } from '../redux/slices/Accounts';
 import { useSelector, useDispatch } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem';
 import { fetchCategories } from '../redux/slices/Categories';
+import { refreshBudget } from '../redux/slices/Budgets';
 
 const accountTypes = ['Bank', 'Credit Card'];
 
@@ -31,12 +32,13 @@ export default function AddAccountDialog(props) {
   const budgetId = useSelector(state => state.budgets.activeBudget.id)
 
   const handleCreateAccount = async () => {
-    console.log('here')
     await dispatch(createAccount({
       name,
       accountType,
       balance,
     }))
+
+    dispatch(refreshBudget())
 
     // If adding a credit card, update all categories since we have added a payment category for it
     if (accountType === accountTypes[1]) {

@@ -182,7 +182,7 @@ export default function Account(props) {
         memo: newRow.memo,
         payeeId: newRow.payeeId,
         categoryId: newRow.categoryId,
-        status: 0, // @TODO: implement transaction status
+        status: 0,
       }
     }))
 
@@ -252,6 +252,7 @@ export default function Account(props) {
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(transaction.date) }))
     dispatch(fetchCategoryMonths({ categoryId: transaction.categoryId }))
     dispatch(fetchAccounts())
+    dispatch(refreshBudget())
   }
 
   return (
