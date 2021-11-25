@@ -96,6 +96,7 @@ export class BudgetMonth extends BaseEntity {
           month: getMonthStringFromNow(counter),
         })
         await newBudgetMonth.save()
+        newBudgetMonth.budget = Promise.resolve(budget)
         counter = counter + direction
       } while (newBudgetMonth.month !== month)
 

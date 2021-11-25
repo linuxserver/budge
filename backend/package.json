@@ -6,12 +6,19 @@
   "scripts": {
     "dev": "concurrently \"nodemon\" \"nodemon -x tsoa spec-and-routes\"",
     "build": "tsoa spec-and-routes && tsc",
-    "start": "node build/src/server.js"
+    "start": "node build/src/server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
+    "@babel/plugin-proposal-decorators": "^7.16.4",
+    "@babel/plugin-transform-runtime": "^7.16.4",
+    "@babel/preset-env": "^7.16.4",
+    "@babel/preset-typescript": "^7.16.0",
+    "@babel/runtime": "^7.16.3",
     "@quasar/cli": "^1.2.2",
     "@types/bcrypt": "^5.0.0",
     "@types/body-parser": "^1.19.1",
@@ -32,16 +39,17 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "got": "^11.8.2",
+    "jest": "^27.3.1",
     "nodemon": "^2.0.14",
     "prettier": "^2.4.1",
     "sqlite3": "^5.0.2",
     "ts-node": "^10.4.0",
     "ts-node-dev": "^1.1.8",
-    "tsc": "^2.0.3",
     "tslint": "^6.1.3",
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "@types/jest": "^27.0.3",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "class-validator": "^0.13.1",
@@ -55,6 +63,7 @@
     "node-geocoder": "^3.27.0",
     "reflect-metadata": "^0.1.13",
     "swagger-ui-express": "^4.1.6",
+    "ts-jest": "^27.0.7",
     "tsoa": "^3.14.0",
     "typeorm": "^0.2.38"
   }

@@ -71,7 +71,8 @@ export class Account extends BaseEntity {
         name: CreditCardGroupName
       }) || CategoryGroup.create({
         budgetId: this.budgetId,
-        name: CreditCardGroupName
+        name: CreditCardGroupName,
+        locked: true,
       })
 
       await ccGroup.save()

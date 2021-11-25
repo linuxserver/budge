@@ -9,7 +9,7 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "outDir": "dist",
+    "outDir": "build",
     "baseUrl": ".",
     "paths": {
       "*": [
@@ -19,6 +19,10 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "jest.config.js",
+    "test",
+    "babel.config.js",
+    "ormconfig.ts"
   ]
 }

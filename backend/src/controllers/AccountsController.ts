@@ -56,7 +56,7 @@ export class AccountsController extends Controller {
         let categoryId = null
         let amount = requestBody.balance * -1 // Inverse for CCs
         if (account.type === AccountTypes.Bank) {
-          const inflowCategory = await Category.findOne({ inflow: true })
+          const inflowCategory = await Category.findOne({ budgetId: account.budgetId, inflow: true })
           categoryId = inflowCategory.id
           amount = requestBody.balance
         }

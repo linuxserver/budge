@@ -3,6 +3,7 @@ import { Entity, BeforeInsert, AfterInsert, AfterUpdate, PrimaryGeneratedColumn,
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
+import { Budget } from '.'
 
 @Entity('category_months')
 export class CategoryMonth extends BaseEntity {
@@ -74,6 +75,8 @@ export class CategoryMonth extends BaseEntity {
         balance: 0,
         budgeted: 0,
       })
+      await categoryMonth.save()
+      categoryMonth.budgetMonth = Promise.resolve(budgetMonth)
     }
 
     return categoryMonth
@@ -105,7 +108,7 @@ export class CategoryMonth extends BaseEntity {
 
     // Update budget month activity and and budgeted
     const budgetMonth = await BudgetMonth.findOne(this.budgetMonthId)
-    const budget = await budgetMonth.budget
+    const budget = await Budget.findOne(budgetMonth.budgetId)
 
     budgetMonth.budgeted += this.budgeted - this.originalBudgeted
     budgetMonth.activity += this.activity - this.originalActivity
