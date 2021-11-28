@@ -1,5 +1,14 @@
 import { CategoryModel } from '../schemas/category'
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, Index, OneToOne, JoinColumn, AfterLoad } from 'typeorm'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  Index,
+} from 'typeorm'
 import { CategoryGroup } from './CategoryGroup'
 import { CategoryMonth } from './CategoryMonth'
 import { Transaction } from './Transaction'

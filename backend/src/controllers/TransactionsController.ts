@@ -13,7 +13,7 @@ export class TransactionsController extends Controller {
    * Create a transaction
    */
   @Security('jwtRequired')
-  @Post("transactions")
+  @Post('transactions')
   @Example<TransactionResponse>({
     message: 'success',
     data: {
@@ -27,7 +27,7 @@ export class TransactionsController extends Controller {
       status: TransactionStatus.Pending,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
-    }
+    },
   })
   public async createTransaction(
     @Path() budgetId: string,
@@ -64,7 +64,7 @@ export class TransactionsController extends Controller {
    * Update a transaction
    */
   @Security('jwtRequired')
-  @Put("transactions/{transactionId}")
+  @Put('transactions/{transactionId}')
   @Example<TransactionResponse>({
     message: 'success',
     data: {
@@ -78,7 +78,7 @@ export class TransactionsController extends Controller {
       status: TransactionStatus.Pending,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
-    }
+    },
   })
   public async updateTransaction(
     @Path() budgetId: string,
@@ -98,7 +98,7 @@ export class TransactionsController extends Controller {
       // Load in original transaction to check if the amount has been altered
       // and updated the category month accordingly
       // @TODO: remove relation to test db transactions
-      const transaction = await Transaction.findOne(transactionId, { relations: ["account"] })
+      const transaction = await Transaction.findOne(transactionId, { relations: ['account'] })
       await transaction.update({
         ...requestBody,
         date: new Date(requestBody.date), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
@@ -119,7 +119,7 @@ export class TransactionsController extends Controller {
    * Delete a transaction
    */
   @Security('jwtRequired')
-  @Delete("transactions/{transactionId}")
+  @Delete('transactions/{transactionId}')
   @Example<TransactionResponse>({
     message: 'success',
   })
@@ -154,7 +154,7 @@ export class TransactionsController extends Controller {
    * Find all account's transactions
    */
   @Security('jwtRequired')
-  @Get("accounts/{accountId}/transactions")
+  @Get('accounts/{accountId}/transactions')
   @Example<TransactionsResponse>({
     message: 'success',
     data: [
@@ -170,12 +170,12 @@ export class TransactionsController extends Controller {
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       },
-    ]
+    ],
   })
   public async getTransactions(
-      @Path() budgetId: string,
-      @Path() accountId: string,
-      @Request() request: ExpressRequest,
+    @Path() budgetId: string,
+    @Path() accountId: string,
+    @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
       const budget = await Budget.findOne(budgetId)
@@ -186,7 +186,7 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const account = await Account.findOne(accountId, { relations: ["transactions"] })
+      const account = await Account.findOne(accountId, { relations: ['transactions'] })
 
       return {
         message: 'success',

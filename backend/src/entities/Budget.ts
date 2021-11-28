@@ -8,7 +8,6 @@ import {
   ManyToOne,
   OneToMany,
   AfterInsert,
-  DeepPartial,
 } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'

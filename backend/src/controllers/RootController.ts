@@ -37,10 +37,7 @@ export class RootController extends Controller {
 
     const token = user.generateJWT()
 
-    this.setHeader(
-      'Set-Cookie',
-      `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`,
-    )
+    this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
 
     return {
       data: await user.toResponseModel(),
@@ -57,10 +54,7 @@ export class RootController extends Controller {
     message: 'success',
   })
   public async logout(@Request() request: ExpressRequest): Promise<LogoutResponse> {
-    this.setHeader(
-      'Set-Cookie',
-      `jwt=0; Max-Age=3600; Path=/; HttpOnly; expires=Thu, 01 Jan 1970 00:00:01 GMT`,
-    )
+    this.setHeader('Set-Cookie', `jwt=0; Max-Age=3600; Path=/; HttpOnly; expires=Thu, 01 Jan 1970 00:00:01 GMT`)
 
     return {}
   }

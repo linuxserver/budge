@@ -10,9 +10,7 @@ import {
   OneToMany,
   JoinColumn,
   AfterInsert,
-  BeforeInsert,
   BeforeUpdate,
-  DeepPartial,
 } from 'typeorm'
 import { Budget } from './Budget'
 import { Transaction } from './Transaction'
@@ -118,20 +116,6 @@ export class Account extends BaseEntity {
     this.transferPayeeId = payee.id
     await this.save()
   }
-
-  // @AfterInsert()
-  // private async initialBalanceAndToBebudgeted(): Promise<void> {
-  //   if (this.balance === 0) {
-  //     return
-  //   }
-
-  //   if (this.type === AccountTypes.Bank) {
-  //     // If it's a 'bank' account, set initial balance to 'to be budgeted
-  //     const budget = await Budget.findOne(this.budgetId)
-  //     budget.toBeBudgeted += this.balance
-  //     await budget.save()
-  //   }
-  // }
 
   @BeforeUpdate()
   private calculateBalance(): void {

@@ -65,8 +65,8 @@ export interface AccountModel {
  * }
  */
 export interface AccountRequest {
-  name: string,
-  type: AccountTypes,
+  name: string
+  type: AccountTypes
 }
 
 /**
@@ -77,9 +77,9 @@ export interface AccountRequest {
  * }
  */
 export interface CreateAccountRequest {
-  name: string,
-  type: AccountTypes,
-  balance: number,
+  name: string
+  type: AccountTypes
+  balance: number
 }
 
 export type AccountResponse = DataResponse<AccountModel>

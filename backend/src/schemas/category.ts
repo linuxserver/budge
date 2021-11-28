@@ -60,8 +60,8 @@ export interface CategoryModel {
  * }
  */
 export interface CategoryRequest {
-    categoryGroupId: string
-    name: string
+  categoryGroupId: string
+  name: string
 }
 
 export type CategoryResponse = DataResponse<CategoryModel>

@@ -47,7 +47,7 @@ export interface PayeeModel {
  * }
  */
 export interface PayeeRequest {
-  name: string,
+  name: string
 }
 
 export type PayeeResponse = DataResponse<PayeeModel>

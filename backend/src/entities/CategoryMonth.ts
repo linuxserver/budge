@@ -11,7 +11,6 @@ import {
   ManyToOne,
   Index,
   AfterLoad,
-  BeforeUpdate,
 } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'

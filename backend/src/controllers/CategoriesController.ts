@@ -1,4 +1,4 @@
-import { Get, Put, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
+import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
 import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
@@ -31,7 +31,7 @@ export class CategoriesController extends Controller {
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       },
-    ]
+    ],
   })
   public async getCategories(
     @Path() budgetId: string,
@@ -201,7 +201,7 @@ export class CategoriesController extends Controller {
    * Update a category
    */
   @Security('jwtRequired')
-  @Put("{id}")
+  @Put('{id}')
   @Example<CategoryResponse>({
     message: 'success',
     data: {
@@ -230,7 +230,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category = await Category.findOne(id, { relations: ["categoryGroup"] })
+      const category = await Category.findOne(id, { relations: ['categoryGroup'] })
 
       category.name = requestBody.name
       if (category.categoryGroupId !== requestBody.categoryGroupId) {
@@ -253,13 +253,13 @@ export class CategoriesController extends Controller {
    * Update category month
    */
   @Security('jwtRequired')
-  @Put("{categoryId}/{month}")
+  @Put('{categoryId}/{month}')
   @Example<CategoryMonthResponse>({
     message: 'success',
     data: {
-      id: "jkl789",
-      categoryId: "ghi135",
-      month: "2021-10-01",
+      id: 'jkl789',
+      categoryId: 'ghi135',
+      month: '2021-10-01',
       budgeted: 0,
       activity: 0,
       balance: 0,
@@ -285,7 +285,7 @@ export class CategoriesController extends Controller {
 
       const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
       console.log(categoryMonth)
-      await categoryMonth.update({ budgeted: requestBody.budgeted})
+      await categoryMonth.update({ budgeted: requestBody.budgeted })
 
       return {
         message: 'success',
@@ -301,14 +301,14 @@ export class CategoriesController extends Controller {
    * Get all months for a category
    */
   @Security('jwtRequired')
-  @Get("{categoryId}/months")
+  @Get('{categoryId}/months')
   @Example<CategoryMonthsResponse>({
     message: 'success',
     data: [
       {
-        id: "jkl789",
-        categoryId: "ghi135",
-        month: "2021-10-01",
+        id: 'jkl789',
+        categoryId: 'ghi135',
+        month: '2021-10-01',
         budgeted: 0,
         activity: 0,
         balance: 0,

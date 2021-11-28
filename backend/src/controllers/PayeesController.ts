@@ -32,10 +32,10 @@ export class PayeesController extends Controller {
     try {
       const budget = await Budget.findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
-          this.setStatus(404)
-          return {
+        this.setStatus(404)
+        return {
           message: 'Not found',
-          }
+        }
       }
 
       const payee = Payee.create({
@@ -68,7 +68,7 @@ export class PayeesController extends Controller {
         internal: false,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
-      }
+      },
     ],
   })
   public async getPayees(
@@ -84,7 +84,7 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payees = await Payee.find({ where: { budgetId }})
+      const payees = await Payee.find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -99,7 +99,7 @@ export class PayeesController extends Controller {
    * Find a single budget payee
    */
   @Security('jwtRequired')
-  @Get("{payeeId}")
+  @Get('{payeeId}')
   @Example<PayeeResponse>({
     message: 'success',
     data: {
@@ -109,7 +109,7 @@ export class PayeesController extends Controller {
       internal: false,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
-    }
+    },
   })
   public async getPayee(
     @Path() budgetId: string,

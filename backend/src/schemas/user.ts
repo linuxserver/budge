@@ -39,5 +39,4 @@ export interface LoginResponse extends UserResponse {
   token: string
 }
 
-export interface LogoutResponse extends UserResponse {
-}
+export interface LogoutResponse extends UserResponse {}

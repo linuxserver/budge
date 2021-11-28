@@ -103,7 +103,7 @@ export class AccountsController extends Controller {
         uncleared: 0,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
-      }
+      },
     ],
   })
   public async getAccounts(
@@ -119,7 +119,7 @@ export class AccountsController extends Controller {
         }
       }
 
-      const accounts = await Account.find({ where: { budgetId }})
+      const accounts = await Account.find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -134,7 +134,7 @@ export class AccountsController extends Controller {
    * Find a single budget account
    */
   @Security('jwtRequired')
-  @Get("{accountId}")
+  @Get('{accountId}')
   @Example<AccountResponse>({
     message: 'success',
     data: {
@@ -147,7 +147,7 @@ export class AccountsController extends Controller {
       uncleared: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
-    }
+    },
   })
   public async getAccount(
     @Path() budgetId: string,

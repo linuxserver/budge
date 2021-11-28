@@ -61,7 +61,7 @@ export interface CategoryGroupModel {
  * }
  */
 export interface CategoryGroupRequest {
-    name: string
+  name: string
 }
 
 export type CategoryGroupResponse = DataResponse<CategoryGroupModel>

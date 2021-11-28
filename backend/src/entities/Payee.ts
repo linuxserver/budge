@@ -1,4 +1,13 @@
-import { Entity, OneToOne, JoinColumn, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm'
+import {
+  Entity,
+  OneToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm'
 import { Account } from '.'
 import { PayeeModel } from '../schemas/payee'
 import { Transaction } from './Transaction'
@@ -28,7 +37,7 @@ export class Payee extends BaseEntity {
 
   @OneToOne(() => Account, account => account.transferPayee)
   @JoinColumn()
-  transferAccount: Promise<Account>;
+  transferAccount: Promise<Account>
 
   /**
    * Has many transactions

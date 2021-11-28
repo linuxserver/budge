@@ -1,5 +1,15 @@
 import { BudgetMonthModel } from '../schemas/budget_month'
-import { Entity, AfterLoad, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, Index, OneToMany, DeepPartial, AfterInsert, AfterUpdate, BeforeInsert, BeforeUpdate, LessThan, MoreThan } from 'typeorm'
+import {
+  Entity,
+  AfterLoad,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  CreateDateColumn,
+  ManyToOne,
+  Index,
+  OneToMany,
+} from 'typeorm'
 import { Budget } from './Budget'
 import { CategoryMonth } from './CategoryMonth'
 import { getMonthStringFromNow } from '../utils'
@@ -69,8 +79,8 @@ export class BudgetMonth extends BaseEntity {
       budgeted: this.budgeted,
       activity: this.activity,
       underfunded: this.underfunded,
-      created: this.created ? this.created.toISOString() : (new Date()).toISOString(),
-      updated: this.updated ? this.updated.toISOString() : (new Date()).toISOString(),
+      created: this.created ? this.created.toISOString() : new Date().toISOString(),
+      updated: this.updated ? this.updated.toISOString() : new Date().toISOString(),
     }
   }
 

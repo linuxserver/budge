@@ -1,8 +1,6 @@
 import { TransactionModel } from '../schemas/transaction'
 import {
   Entity,
-  OneToOne,
-  JoinTable,
   AfterLoad,
   AfterRemove,
   PrimaryGeneratedColumn,
@@ -23,7 +21,6 @@ import { formatMonthFromDateString } from '../utils'
 import { CategoryMonth } from './CategoryMonth'
 import { Budget } from '.'
 import { Payee } from './Payee'
-import { ConsoleTransportOptions } from 'winston/lib/winston/transports'
 
 export enum TransactionStatus {
   Pending,

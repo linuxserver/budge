@@ -1,4 +1,4 @@
-import { Get, Put, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
+import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
 import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
@@ -24,16 +24,16 @@ export class BudgetsController extends Controller {
         toBeBudgeted: 0,
         accounts: [
           {
-            id: "def123",
-            budgetId: "abc123",
-            name: "Checking Account",
+            id: 'def123',
+            budgetId: 'abc123',
+            name: 'Checking Account',
             type: AccountTypes.Bank,
             balance: 0,
             cleared: 0,
             uncleared: 0,
             created: '2011-10-05T14:48:00.000Z',
             updated: '2011-10-05T14:48:00.000Z',
-          }
+          },
         ],
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
@@ -50,7 +50,7 @@ export class BudgetsController extends Controller {
   })
   public async getBudgets(@Request() request: ExpressRequest): Promise<BudgetsResponse | ErrorResponse> {
     try {
-      const budgets = await Budget.find({ where: { userId: request.user.id }, relations: ["accounts"] })
+      const budgets = await Budget.find({ where: { userId: request.user.id }, relations: ['accounts'] })
       return {
         message: 'success',
         data: await Promise.all(budgets.map(budget => budget.toResponseModel())),
@@ -179,7 +179,7 @@ export class BudgetsController extends Controller {
    * Get all budget months
    */
   @Security('jwtRequired')
-  @Get("{budgetId}/months")
+  @Get('{budgetId}/months')
   @Example<BudgetMonthsResponse>({
     message: 'success',
     data: [
@@ -193,12 +193,12 @@ export class BudgetsController extends Controller {
         underfunded: 0,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
-      }
-    ]
+      },
+    ],
   })
   public async getBudgetMonths(
     @Path() budgetId: string,
-    @Request() request: ExpressRequest
+    @Request() request: ExpressRequest,
   ): Promise<BudgetMonthsResponse | ErrorResponse> {
     let budget: Budget = await Budget.findOne(budgetId)
 
@@ -221,7 +221,7 @@ export class BudgetsController extends Controller {
    * Get budget month
    */
   @Security('jwtRequired')
-  @Get("{budgetId}/months/{month}")
+  @Get('{budgetId}/months/{month}')
   @Example<BudgetMonthWithCategoriesResponse>({
     message: 'success',
     data: {
@@ -234,24 +234,24 @@ export class BudgetsController extends Controller {
       underfunded: 0,
       categories: [
         {
-          id: "jkl789",
-          categoryId: "ghi135",
-          month: "2021-10-01",
+          id: 'jkl789',
+          categoryId: 'ghi135',
+          month: '2021-10-01',
           budgeted: 0,
           activity: 0,
           balance: 0,
           created: '2011-10-05T14:48:00.000Z',
           updated: '2011-10-05T14:48:00.000Z',
-        }
+        },
       ],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
-    }
+    },
   })
   public async getBudgetMonth(
     @Path() budgetId: string,
     @Path() month: string,
-    @Request() request: ExpressRequest
+    @Request() request: ExpressRequest,
   ): Promise<BudgetMonthWithCategoriesResponse | ErrorResponse> {
     let budget: Budget = await Budget.findOne(budgetId)
 
@@ -276,9 +276,11 @@ export class BudgetsController extends Controller {
     return {
       message: 'success',
       data: {
-        ...await budgetMonth.toResponseModel(),
-        categories: await Promise.all((await budgetMonth.categories).map(categoryMonth => categoryMonth.toResponseModel())),
-      }
+        ...(await budgetMonth.toResponseModel()),
+        categories: await Promise.all(
+          (await budgetMonth.categories).map(categoryMonth => categoryMonth.toResponseModel()),
+        ),
+      },
     }
   }
 }

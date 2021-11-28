@@ -59,7 +59,7 @@ export interface CategoryMonthModel {
  * }
  */
 export interface CategoryMonthRequest {
-    budgeted: number
+  budgeted: number
 }
 
 export type CategoryMonthResponse = DataResponse<CategoryMonthModel>

@@ -1,8 +1,6 @@
-import { getConnectionManager } from "typeorm";
-import { UserRepository } from "./UserRepository";
+import { getConnectionManager } from 'typeorm'
+import { UserRepository } from './UserRepository'
 
-const userRepository = getConnectionManager().get("default").getRepository(UserRepository)
+const userRepository = getConnectionManager().get('default').getRepository(UserRepository)
 
-export {
-    userRepository,
-}
+export { userRepository }
