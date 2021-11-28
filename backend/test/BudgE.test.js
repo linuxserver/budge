@@ -84,7 +84,7 @@ describe("Budget Tests", () => {
 
   it("Income should add to TBB and remove on a deleted transaction", async () => {
     const budget = await Budget.findOne({ id: 'test-budget' })
-    const account = Account.create({
+    let account = Account.create({
       budgetId: budget.id,
       type: AccountTypes.Bank,
       name: "Checking",
@@ -105,13 +105,81 @@ describe("Budget Tests", () => {
     })
     await transaction.save()
 
+    await account.reload()
     await budget.reload()
 
+    expect(account.balance).toBe(100)
     expect(budget.toBeBudgeted).toBe(100)
 
     await transaction.remove()
     await budget.reload()
+    await account.reload()
 
     expect(budget.toBeBudgeted).toBe(0)
+    expect(account.balance).toBe(0)
+  })
+
+  it("Transfer transaction should not affect TBB", async () => {
+    const budget = await Budget.findOne({ id: 'test-budget' })
+    const account = Account.create({
+        budgetId: budget.id,
+      type: AccountTypes.Bank,
+      name: "Savings",
+    })
+
+    await account.save()
+
+    // Inflow category
+    const category = await Category.findOne({ budgetId: budget.id, inflow: true })
+    const payee = await Payee.findOne({ name: "Starting Balance", internal: true})
+
+    // checking account
+    const checkingAccount = await Account.findOne({ budgetId: budget.id, name: "Checking" })
+    await Transaction.create({
+      budgetId: budget.id,
+      accountId: checkingAccount.id,
+      categoryId: category.id,
+      payeeId: payee.id,
+      amount: 100,
+      date: new Date(),
+    }).save()
+
+    // create savings account
+    const savingsAccount = Account.create({
+      budgetId: budget.id,
+      type: AccountTypes.Bank,
+      name: "Savings",
+    })
+    await savingsAccount.save()
+
+    await checkingAccount.reload()
+
+    const transferTransaction = Transaction.create({
+      budgetId: budget.id,
+      accountId: checkingAccount.id,
+      categoryId: null,
+      payeeId: savingsAccount.transferPayeeId,
+      amount: -50,
+      date: new Date(),
+    })
+    transferTransaction.handleTransfers = true
+    await transferTransaction.save()
+
+    await checkingAccount.reload()
+    await savingsAccount.reload()
+    await budget.reload()
+
+    expect(budget.toBeBudgeted).toBe(100)
+    expect(checkingAccount.balance).toBe(50)
+    expect(savingsAccount.balance).toBe(50)
+
+    await (await Transaction.findOne(transferTransaction.id)).remove()
+    await checkingAccount.reload()
+    await savingsAccount.reload()
+    await budget.reload()
+
+    expect(budget.toBeBudgeted).toBe(100)
+    expect(checkingAccount.balance).toBe(100)
+    expect(savingsAccount.balance).toBe(0)
   })
 })

@@ -1,5 +1,19 @@
 import { AccountModel } from '../schemas/account'
-import { Entity, OneToOne, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, JoinColumn, AfterInsert, BeforeInsert, BeforeUpdate } from 'typeorm'
+import {
+  Entity,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  AfterInsert,
+  BeforeInsert,
+  BeforeUpdate,
+  DeepPartial,
+} from 'typeorm'
 import { Budget } from './Budget'
 import { Transaction } from './Transaction'
 import { Payee } from './Payee'
@@ -60,20 +74,22 @@ export class Account extends BaseEntity {
    */
   @OneToOne(() => Payee, payee => payee.transferAccount, { cascade: true })
   @JoinColumn()
-  transferPayee: Promise<Payee>;
+  transferPayee: Promise<Payee>
 
   @AfterInsert()
   private async createCreditCardCategory(): Promise<void> {
     if (this.type === AccountTypes.CreditCard) {
       // Create CC payments category if it doesn't exist
-      const ccGroup = await CategoryGroup.findOne({
-        budgetId: this.budgetId,
-        name: CreditCardGroupName
-      }) || CategoryGroup.create({
-        budgetId: this.budgetId,
-        name: CreditCardGroupName,
-        locked: true,
-      })
+      const ccGroup =
+        (await CategoryGroup.findOne({
+          budgetId: this.budgetId,
+          name: CreditCardGroupName,
+        })) ||
+        CategoryGroup.create({
+          budgetId: this.budgetId,
+          name: CreditCardGroupName,
+          locked: true,
+        })
 
       await ccGroup.save()
 
@@ -118,7 +134,7 @@ export class Account extends BaseEntity {
   // }
 
   @BeforeUpdate()
-  private async calculateBalance(): Promise<void> {
+  private calculateBalance(): void {
     this.balance = this.cleared + this.uncleared
   }
 

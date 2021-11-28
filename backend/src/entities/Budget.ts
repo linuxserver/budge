@@ -1,5 +1,15 @@
 import { BudgetModel } from '../schemas/budget'
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, OneToMany, AfterInsert } from 'typeorm'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  AfterInsert,
+  DeepPartial,
+} from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
 import { CategoryGroup } from './CategoryGroup'
@@ -72,9 +82,11 @@ export class Budget extends BaseEntity {
     const nextMonth = getMonthStringFromNow(1)
 
     // Create initial budget months
-    await Promise.all([prevMonth, today, nextMonth].map(month => {
-      return BudgetMonth.create({ budgetId: this.id, month }).save()
-    }))
+    await Promise.all(
+      [prevMonth, today, nextMonth].map(month => {
+        return BudgetMonth.create({ budgetId: this.id, month }).save()
+      }),
+    )
 
     // Create internal categories
     const internalCategoryGroup = CategoryGroup.create({
@@ -85,21 +97,23 @@ export class Budget extends BaseEntity {
     })
     await internalCategoryGroup.save()
 
-    await Promise.all(['To be Budgeted'].map(name => {
-      const internalCategory = Category.create({
-        budgetId: this.id,
-        name: name,
-        categoryGroupId: internalCategoryGroup.id,
-        inflow: true,
-        locked: true,
-      })
-      return internalCategory.save()
-    }))
+    await Promise.all(
+      ['To be Budgeted'].map(name => {
+        const internalCategory = Category.create({
+          budgetId: this.id,
+          name: name,
+          categoryGroupId: internalCategoryGroup.id,
+          inflow: true,
+          locked: true,
+        })
+        return internalCategory.save()
+      }),
+    )
 
     // Create special 'Starting Balance' payee
     const startingBalancePayee = Payee.create({
       budgetId: this.id,
-      name: "Starting Balance",
+      name: 'Starting Balance',
       internal: true,
     })
     await startingBalancePayee.save()

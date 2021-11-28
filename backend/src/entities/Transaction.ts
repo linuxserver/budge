@@ -1,11 +1,29 @@
 import { TransactionModel } from '../schemas/transaction'
-import { Entity, OneToOne, JoinTable, AfterLoad, AfterRemove, PrimaryGeneratedColumn, Column, BaseEntity, CreateDateColumn, ManyToOne, DeepPartial, AfterInsert, BeforeInsert, AfterUpdate, BeforeUpdate, BeforeRemove } from 'typeorm'
+import {
+  Entity,
+  OneToOne,
+  JoinTable,
+  AfterLoad,
+  AfterRemove,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  CreateDateColumn,
+  ManyToOne,
+  DeepPartial,
+  AfterInsert,
+  BeforeInsert,
+  AfterUpdate,
+  BeforeUpdate,
+  BeforeRemove,
+} from 'typeorm'
 import { Account, AccountTypes } from './Account'
 import { Category } from './Category'
 import { formatMonthFromDateString } from '../utils'
 import { CategoryMonth } from './CategoryMonth'
 import { Budget } from '.'
 import { Payee } from './Payee'
+import { ConsoleTransportOptions } from 'winston/lib/winston/transports'
 
 export enum TransactionStatus {
   Pending,
@@ -80,11 +98,9 @@ export class Transaction extends BaseEntity {
 
   handleTransfers: boolean = false
 
-  balanceUpdated: boolean = false
+  originalPayeeId: string | null = null
 
-  originalPayeeId: string|null = null
-
-  originalTransferTransactionId: string|null = null
+  originalTransferTransactionId: string | null = null
 
   categoryMonth: CategoryMonth
 
@@ -152,7 +168,7 @@ export class Transaction extends BaseEntity {
       this.categoryMonth = await CategoryMonth.findOrCreate(
         this.budgetId,
         this.categoryId,
-        formatMonthFromDateString(this.date)
+        formatMonthFromDateString(this.date),
       )
     }
   }
@@ -195,9 +211,9 @@ export class Transaction extends BaseEntity {
 
     const transferTransaction = Transaction.create({
       budgetId: this.budgetId,
-      accountId: (await this.payee).transferAccountId,
-      payeeId: (await this.account).transferPayeeId,
-      transferAccountId: (await this.account).id,
+      accountId: (await this.getPayee()).transferAccountId,
+      payeeId: (await this.getAccount()).transferPayeeId,
+      transferAccountId: (await this.getAccount()).id,
       transferTransactionId: this.id,
       amount: this.amount * -1,
       date: this.date,
@@ -206,21 +222,21 @@ export class Transaction extends BaseEntity {
 
     await transferTransaction.save()
 
-    this.payeeId = (await transferTransaction.account).transferPayeeId
-    this.transferAccountId = (await transferTransaction.account).id
+    this.payeeId = (await transferTransaction.getAccount()).transferPayeeId
+    this.transferAccountId = (await transferTransaction.getAccount()).id
     this.transferTransactionId = transferTransaction.id
 
-    await this.save()
+    // Perform update here so that the listener hooks don't get called
+    await Transaction.update(this.id, {
+      payeeId: this.payeeId,
+      transferAccountId: this.transferAccountId,
+      transferTransactionId: this.transferTransactionId,
+    })
   }
 
   @AfterInsert()
   private async updateAccountBalanceOnAdd(): Promise<void> {
-    if (this.balanceUpdated) {
-      return
-    }
-    this.balanceUpdated = true
-
-    const account = await Account.findOne(this.accountId)
+    const account = await this.getAccount()
 
     switch (this.status) {
       case TransactionStatus.Pending:
@@ -238,11 +254,6 @@ export class Transaction extends BaseEntity {
 
   @AfterUpdate()
   private async updateAccountBalanceOnUpdate(): Promise<void> {
-    if (this.balanceUpdated) {
-      return
-    }
-    this.balanceUpdated = true
-
     if (this.amount === this.originalAmount && this.status === this.originalStatus) {
       // amount and status hasn't changed, no balance update necessary
       return
@@ -278,22 +289,18 @@ export class Transaction extends BaseEntity {
 
   @AfterRemove()
   private async updateAccountBalanceOnRemove(): Promise<void> {
-    if (this.balanceUpdated) {
-      return
-    }
-    this.balanceUpdated = true
-
     // First, 'undo' the original amount / status then add in new. Easier than a bunch of if statements
-    const account = await Account.findOne(this.accountId)
+    const account = await this.getAccount()
 
-    switch (this.originalStatus) {
+    console.log(`updating account ${account.name} with ${this.amount}`)
+    switch (this.status) {
       case TransactionStatus.Pending:
-        account.uncleared -= this.originalAmount
+        account.uncleared -= this.amount
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared -= this.originalAmount
+        account.cleared -= this.amount
         break
     }
 
@@ -308,7 +315,11 @@ export class Transaction extends BaseEntity {
     this.handleTransfers = false
 
     // If the payees, dates, and amounts haven't changed, bail
-    if (this.payeeId === this.originalPayeeId && this.amount === this.originalAmount && formatMonthFromDateString(this.date) === formatMonthFromDateString(this.originalDate)) {
+    if (
+      this.payeeId === this.originalPayeeId &&
+      this.amount === this.originalAmount &&
+      formatMonthFromDateString(this.date) === formatMonthFromDateString(this.originalDate)
+    ) {
       return
     }
 
@@ -350,7 +361,10 @@ export class Transaction extends BaseEntity {
       if (account.type === AccountTypes.CreditCard) {
         // Update CC category
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
-        const originalCCMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: formatMonthFromDateString(this.originalDate) })
+        const originalCCMonth = await CategoryMonth.findOne({
+          categoryId: ccCategory.id,
+          month: formatMonthFromDateString(this.originalDate),
+        })
         await originalCCMonth.update({ activity: this.originalAmount })
 
         const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
@@ -366,19 +380,28 @@ export class Transaction extends BaseEntity {
 
     let activity = this.amount - this.originalAmount
 
-    if (this.originalCategoryId !== this.categoryId || formatMonthFromDateString(this.originalDate) !== formatMonthFromDateString(this.date)) {
+    if (
+      this.originalCategoryId !== this.categoryId ||
+      formatMonthFromDateString(this.originalDate) !== formatMonthFromDateString(this.date)
+    ) {
       // Cat or month has changed so the activity is the entirety of the transaction
       activity = this.amount
 
       // Category or month has changed, so reset 'original' amount
-      const originalCategoryMonth = await CategoryMonth.findOne({ categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) }, { relations: ["budgetMonth"] })
+      const originalCategoryMonth = await CategoryMonth.findOne(
+        { categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) },
+        { relations: ['budgetMonth'] },
+      )
 
       await originalCategoryMonth.update({ activity: this.originalAmount * -1 })
       await this.categoryMonth.update({ activity })
 
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
-        const originalCCMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: formatMonthFromDateString(this.originalDate) })
+        const originalCCMonth = await CategoryMonth.findOne({
+          categoryId: ccCategory.id,
+          month: formatMonthFromDateString(this.originalDate),
+        })
         await originalCCMonth.update({ activity: this.originalAmount })
 
         const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
@@ -397,16 +420,12 @@ export class Transaction extends BaseEntity {
 
   @BeforeRemove()
   private async deleteTransferTransaction() {
-    if (this.handleTransfers === false) {
-      return
-    }
-    this.handleTransfers = false
-
     if (this.transferTransactionId === null) {
       return
     }
 
     const transferTransaction = await Transaction.findOne({ transferTransactionId: this.id })
+    transferTransaction.transferTransactionId = null
     await transferTransaction.remove()
   }
 
@@ -425,8 +444,13 @@ export class Transaction extends BaseEntity {
       return
     }
 
-    const originalCategoryMonth = await CategoryMonth.findOne({ categoryId: this.categoryId, month: formatMonthFromDateString(this.date) }, { relations: ["budgetMonth"] })
-    await originalCategoryMonth.update({ activity: this.amount * -1 })
+    if (this.categoryId) {
+      const originalCategoryMonth = await CategoryMonth.findOne(
+        { categoryId: this.categoryId, month: formatMonthFromDateString(this.date) },
+        { relations: ['budgetMonth'] },
+      )
+      await originalCategoryMonth.update({ activity: this.amount * -1 })
+    }
 
     // Check if we need to update a CC category
     if (account.type === AccountTypes.CreditCard) {
@@ -440,14 +464,36 @@ export class Transaction extends BaseEntity {
   private async buildTransferTransaction(): Promise<Transaction> {
     return Transaction.create({
       budgetId: this.budgetId,
-      accountId: (await ((await this.payee).transferAccount)).id,
-      payeeId: (await this.account).transferPayeeId,
-      transferAccountId: (await this.account).id,
+      accountId: (await (await this.getPayee()).transferAccount).id,
+      payeeId: (await this.getAccount()).transferPayeeId,
+      transferAccountId: (await this.getAccount()).id,
       transferTransactionId: this.id,
       amount: this.amount * -1,
       date: this.date,
       status: TransactionStatus.Pending,
     })
+  }
+
+  public async getAccount(): Promise<Account> {
+    if (this.account === undefined) {
+      const account = await Account.findOne(this.accountId)
+      this.account = Promise.resolve(account)
+
+      return this.account
+    }
+
+    return this.account
+  }
+
+  public async getPayee(): Promise<Payee> {
+    if (this.payee === undefined) {
+      const payee = await Payee.findOne(this.payeeId)
+      this.payee = Promise.resolve(payee)
+
+      return payee
+    }
+
+    return this.payee
   }
 
   public async toResponseModel(): Promise<TransactionModel> {
