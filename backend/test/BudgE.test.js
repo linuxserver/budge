@@ -10,7 +10,6 @@ import { AccountTypes } from '../src/entities/Account'
 import { Transaction } from '../src/entities/Transaction'
 import { Payee } from '../src/entities/Payee'
 
-jest.useFakeTimers()
 
 beforeAll(async () => {
   await createConnection({
@@ -122,7 +121,7 @@ describe("Budget Tests", () => {
   it("Transfer transaction should not affect TBB", async () => {
     const budget = await Budget.findOne({ id: 'test-budget' })
     const account = Account.create({
-        budgetId: budget.id,
+      budgetId: budget.id,
       type: AccountTypes.Bank,
       name: "Savings",
     })
@@ -181,5 +180,69 @@ describe("Budget Tests", () => {
     expect(budget.toBeBudgeted).toBe(100)
     expect(checkingAccount.balance).toBe(100)
     expect(savingsAccount.balance).toBe(0)
+  })
+
+  it("Credit card transactions affect their category", async () => {
+    const budget = await Budget.findOne({ id: 'test-budget' })
+    const account = Account.create({
+      budgetId: budget.id,
+      type: AccountTypes.CreditCard,
+      name: "Visa",
+    })
+
+    await account.save()
+
+    const paymentCategory = await Category.findOne({ id: 'test-power' })
+
+    const payee = Payee.create({
+      budgetId: budget.id,
+      name: 'Power company',
+    })
+    await payee.save()
+
+    const ccTransaction = Transaction.create({
+      budgetId: budget.id,
+      accountId: account.id,
+      categoryId: paymentCategory.id,
+      payeeId: payee.id,
+      amount: -50,
+      date: new Date(),
+    })
+    await ccTransaction.save()
+
+    await account.reload()
+
+    const ccCategory = await Category.findOne({ trackingAccountId: account.id })
+    const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: ccTransaction.getMonth() })
+
+    expect(ccCategoryMonth.balance).toBe(50)
+    expect((await (await Account.findOne({ name: 'Visa' })).balance)).toBe(-50)
+  })
+
+  it("Credit card transfer reduces CC category", async () => {
+    const budget = await Budget.findOne({ id: 'test-budget' })
+
+    // Initial amount for Checking transfer
+    const checkingAccount = await Account.findOne({ budgetId: budget.id, name: "Checking" })
+    const ccAccount = await Account.findOne({ budgetId: budget.id, name: 'Visa' })
+
+    const transaction = await Transaction.createNew({
+      budgetId: budget.id,
+      accountId: checkingAccount.id,
+      categoryId: null,
+      payeeId: ccAccount.transferPayeeId,
+      amount: -50,
+      date: new Date(),
+      handleTransfers: true,
+    })
+
+    await checkingAccount.reload()
+    await ccAccount.reload()
+
+    const ccCategory = await Category.findOne({ trackingAccountId: ccAccount.id })
+    const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: transaction.getMonth() })
+
+    expect(ccCategoryMonth.balance).toBe(0)
+    expect(ccAccount.balance).toBe(0)
   })
 })
