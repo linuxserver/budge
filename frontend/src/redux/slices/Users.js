@@ -31,6 +31,10 @@ const userSlice = createSlice({
     [login.fulfilled]: (state, action) => {
       state.user = action.payload
     },
+
+    [login.rejected]: (state) => {
+      throw new Error()
+    }
   },
 })
 

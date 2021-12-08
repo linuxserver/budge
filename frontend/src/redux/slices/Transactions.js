@@ -6,11 +6,7 @@ export const fetchAccountTransactions = createAsyncThunk('transactions/fetchAcco
   const state = getState()
   return {
     accountId,
-    transactions: (await api.fetchAccountTransactions(accountId, state.budgets.activeBudget.id)).map(transaction => ({
-      ...transaction,
-      inflow: transaction.amount > 0 ? transaction.amount : 0,
-      outflow: transaction.amount < 0 ? transaction.amount * -1 : 0,
-    }))
+    transactions: await api.fetchAccountTransactions(accountId, state.budgets.activeBudget.id)
   };
 })
 
@@ -22,8 +18,6 @@ export const createTransaction = createAsyncThunk('transactions/createTransactio
     accountId: response.accountId,
     transaction: {
       ...response,
-      inflow: transaction.amount > 0 ? transaction.amount : 0,
-      outflow: transaction.amount < 0 ? transaction.amount * -1 : 0,
     },
   }
 })
@@ -36,8 +30,6 @@ export const updateTransaction = createAsyncThunk('transactions/updateTransactio
     accountId: response.accountId,
     transaction: {
       ...response,
-      inflow: transaction.amount > 0 ? transaction.amount : 0,
-      outflow: transaction.amount < 0 ? transaction.amount * -1 : 0,
     },
   }
 })
@@ -82,6 +74,10 @@ const transactionsSlice = createSlice({
 
         return transaction
       })
+    },
+
+    [updateTransaction.rejected]: (state) => {
+      throw new Error
     },
 
     [deleteTransaction.fulfilled]: (state, { payload: { transactionId, accountId } }) => {

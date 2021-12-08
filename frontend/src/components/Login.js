@@ -7,12 +7,13 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { setUser, login, logout, setInitComplete } from '../redux/slices/Users'
-import { createBudget, fetchBudgetMonth, fetchBudgetMonths, fetchBudgets, setActiveBudget } from '../redux/slices/Budgets'
+import { createBudget, fetchBudgetMonth, fetchBudgetMonths, fetchBudgets, setActiveBudget, getAvailableMonths } from '../redux/slices/Budgets'
 import { fetchAccountTransactions } from '../redux/slices/Transactions'
 import { fetchPayees, setAccounts } from '../redux/slices/Accounts'
 import { fetchCategories, createCategoryGroup, createCategory } from '../redux/slices/Categories'
 import api from '../api'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
+import AlertDialog from './AlertDialog'
 
 export default function Login(props) {
   /**
@@ -21,6 +22,8 @@ export default function Login(props) {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false)
+  const [alertDialogBody, setAlertDialogBody] = useState('')
 
   const onEmailChange = (e) => setEmail(e.target.value);
   const onPasswordChange = (e) => setPassword(e.target.value);
@@ -70,12 +73,17 @@ export default function Login(props) {
   }
 
   const handleLogin = async () => {
-    await dispatch(login({
-      email,
-      password,
-    }))
+    try {
+      await dispatch(login({
+        email,
+        password,
+      }))
 
-    await initUser()
+      await initUser()
+    } catch (err) {
+      setAlertDialogBody('Failed to log in')
+      setAlertDialogOpen(true)
+    }
   }
 
   const userCreation = async () => {
@@ -117,6 +125,7 @@ export default function Login(props) {
 
   return (
     <div>
+      <AlertDialog open={alertDialogOpen} body={alertDialogBody} handleClose={() => setAlertDialogOpen(false)}/>
       <Dialog open={open} disableEscapeKeyDown={true} onBackdropClick={() => false}>
         <DialogTitle>Login</DialogTitle>
         <DialogContent>

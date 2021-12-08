@@ -73,13 +73,23 @@ export interface AccountRequest {
  * @example {
  *  "name": "My Budget",
  *  "type": 0,
- *  "initialBalance": 100,
+ *  "balance": 100,
  * }
  */
 export interface CreateAccountRequest {
   name: string
   type: AccountTypes
   balance: number
+  date: string
+}
+
+/**
+ * @example {
+ *  "name": "My Budget",
+ * }
+ */
+export interface EditAccountRequest {
+  name: string
 }
 
 export type AccountResponse = DataResponse<AccountModel>

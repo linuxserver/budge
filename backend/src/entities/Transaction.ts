@@ -1,4 +1,4 @@
-import { TransactionModel } from '../schemas/transaction'
+import { TransactionModel } from '../models/Transaction'
 import {
   Entity,
   AfterLoad,
@@ -21,6 +21,10 @@ import { formatMonthFromDateString } from '../utils'
 import { CategoryMonth } from './CategoryMonth'
 import { Budget } from '.'
 import { Payee } from './Payee'
+import { Dinero } from '@dinero.js/core'
+import { add, dinero, multiply, subtract, isPositive } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { CurrencyDBTransformer } from '../models/Currency'
 
 export enum TransactionStatus {
   Pending,
@@ -51,8 +55,12 @@ export class Transaction extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   categoryId: string
 
-  @Column({ type: 'int' })
-  amount: number
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  amount: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @Column({ type: 'datetime' })
   date: Date
@@ -103,7 +111,7 @@ export class Transaction extends BaseEntity {
 
   originalCategoryId: string = ''
 
-  originalAmount: number = 0
+  originalAmount: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   originalDate: Date = new Date()
 
@@ -168,9 +176,28 @@ export class Transaction extends BaseEntity {
         formatMonthFromDateString(this.date),
       )
     }
+
+    const account = await this.getAccount()
+
+    // Create category month for CC tracking category
+    if (account.type === AccountTypes.CreditCard) {
+      // First, ensure category month exists
+      const trackingCategory = await Category.findOne({ trackingAccountId: account.id })
+      await CategoryMonth.findOrCreate(
+        this.budgetId,
+        trackingCategory.id,
+        this.getMonth(),
+      )
+    }
   }
 
   @AfterInsert()
+  private async afterInsert(): Promise<void> {
+    await this.updateAccountBalanceOnAdd()
+    await this.bookkeepingOnAdd()
+    await this.createTransferTransaction()
+  }
+
   private async bookkeepingOnAdd(): Promise<void> {
     const account = await Account.findOne({ id: this.accountId })
 
@@ -180,7 +207,7 @@ export class Transaction extends BaseEntity {
         // Update CC category
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
         const ccCategoryMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
-        await ccCategoryMonth.update({ activity: this.amount * -1 })
+        await ccCategoryMonth.update({ activity: multiply(this.amount, -1) })
       }
       return
     }
@@ -189,18 +216,27 @@ export class Transaction extends BaseEntity {
       return
     }
 
-    // Cascade category month
-    await this.categoryMonth.update({ activity: this.amount })
+    const category = await this.category
+
+    // If this is inflow and a CC, bail out - don't update budget or category months as the
+    // 'inflow' will be accounted for in the difference of the payment you allocate.
+    if (category.inflow === true && account.type === AccountTypes.CreditCard) {
+      return
+    }
+
+    if (category.inflow === false || account.type !== AccountTypes.CreditCard) {
+      // Cascade category month
+      await this.categoryMonth.update({ activity: this.amount })
+    }
 
     if (account.type === AccountTypes.CreditCard) {
       // Update CC category
       const ccCategory = await Category.findOne({ trackingAccountId: account.id })
       const ccCategoryMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
-      await ccCategoryMonth.update({ activity: this.amount * -1 })
+      await ccCategoryMonth.update({ activity: multiply(this.amount, -1) })
     }
   }
 
-  @AfterInsert()
   private async createTransferTransaction(): Promise<void> {
     if (this.transferTransactionId !== '0') {
       return
@@ -212,7 +248,7 @@ export class Transaction extends BaseEntity {
       payeeId: (await this.getAccount()).transferPayeeId,
       transferAccountId: (await this.getAccount()).id,
       transferTransactionId: this.id,
-      amount: this.amount * -1,
+      amount: multiply(this.amount, -1),
       date: this.date,
       status: TransactionStatus.Pending,
     })
@@ -231,18 +267,17 @@ export class Transaction extends BaseEntity {
     })
   }
 
-  @AfterInsert()
   private async updateAccountBalanceOnAdd(): Promise<void> {
     const account = await this.getAccount()
 
     switch (this.status) {
       case TransactionStatus.Pending:
-        account.uncleared += this.amount
+        account.uncleared = add(account.uncleared, this.amount)
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared += this.amount
+        account.cleared = add(account.cleared, this.amount)
         break
     }
 
@@ -261,23 +296,23 @@ export class Transaction extends BaseEntity {
 
     switch (this.originalStatus) {
       case TransactionStatus.Pending:
-        account.uncleared -= this.originalAmount
+        account.uncleared = subtract(account.uncleared, this.originalAmount)
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared -= this.originalAmount
+        account.cleared = subtract(account.cleared, this.originalAmount)
         break
     }
 
     switch (this.status) {
       case TransactionStatus.Pending:
-        account.uncleared += this.amount
+        account.uncleared = add(account.uncleared, this.amount)
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared += this.amount
+        account.cleared = add(account.cleared, this.amount)
         break
     }
 
@@ -289,15 +324,14 @@ export class Transaction extends BaseEntity {
     // First, 'undo' the original amount / status then add in new. Easier than a bunch of if statements
     const account = await this.getAccount()
 
-    console.log(`updating account ${account.name} with ${this.amount}`)
     switch (this.status) {
       case TransactionStatus.Pending:
-        account.uncleared -= this.amount
+        account.uncleared = subtract(account.uncleared, this.amount)
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared -= this.amount
+        account.cleared = subtract(account.cleared, this.amount)
         break
     }
 
@@ -324,7 +358,7 @@ export class Transaction extends BaseEntity {
       // Payees are the same, just update details
       const transferTransaction = await Transaction.findOne({ transferTransactionId: this.id })
       await transferTransaction.update({
-        amount: this.amount * -1,
+        amount: multiply(this.amount, -1),
         date: this.date,
       })
       return
@@ -365,17 +399,16 @@ export class Transaction extends BaseEntity {
         await originalCCMonth.update({ activity: this.originalAmount })
 
         const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
-        await currentCCMonth.update({ activity: this.amount * -1 })
+        await currentCCMonth.update({ activity: multiply(this.amount, -1) })
       }
 
       return
     }
 
-    if (!this.categoryId) {
-      return
-    }
+    const category = await this.category
+    const originalCategory = await Category.findOne(this.originalCategoryId)
 
-    let activity = this.amount - this.originalAmount
+    let activity = subtract(this.amount, this.originalAmount)
 
     if (
       this.originalCategoryId !== this.categoryId ||
@@ -384,33 +417,52 @@ export class Transaction extends BaseEntity {
       // Cat or month has changed so the activity is the entirety of the transaction
       activity = this.amount
 
-      // Category or month has changed, so reset 'original' amount
-      const originalCategoryMonth = await CategoryMonth.findOne(
-        { categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) },
-        { relations: ['budgetMonth'] },
-      )
+      if (originalCategory.inflow === false || account.type !== AccountTypes.CreditCard) {
+        // Category or month has changed, so reset 'original' amount
+        const originalCategoryMonth = await CategoryMonth.findOne(
+          { categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) },
+          { relations: ['budgetMonth'] },
+        )
 
-      await originalCategoryMonth.update({ activity: this.originalAmount * -1 })
-      await this.categoryMonth.update({ activity })
+        await originalCategoryMonth.update({ activity: multiply(this.originalAmount, -1) })
+      }
+
+      if (category.inflow === false || account.type !== AccountTypes.CreditCard) {
+        await this.categoryMonth.update({ activity })
+      }
 
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
-        const originalCCMonth = await CategoryMonth.findOne({
-          categoryId: ccCategory.id,
-          month: formatMonthFromDateString(this.originalDate),
-        })
-        await originalCCMonth.update({ activity: this.originalAmount })
 
-        const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
-        await currentCCMonth.update({ activity: this.amount * -1 })
+        /**
+         * Don't update CC months for original or current CC category month
+         * if this is inflow.
+         */
+
+        if (originalCategory.inflow === false) {
+          const originalCCMonth = await CategoryMonth.findOne({
+            categoryId: ccCategory.id,
+            month: formatMonthFromDateString(this.originalDate),
+          })
+          await originalCCMonth.update({ activity: this.originalAmount })
+        }
+
+        if (category.inflow === false) {
+          const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
+          await currentCCMonth.update({ activity: multiply(this.amount, -1) })
+        }
       }
     } else {
-      await this.categoryMonth.update({ activity: this.amount - this.originalAmount })
+      if (category.inflow === true && account.type === AccountTypes.CreditCard) {
+        return
+      }
+
+      await this.categoryMonth.update({ activity: subtract(this.amount, this.originalAmount) })
 
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
         const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
-        await currentCCMonth.update({ activity: this.amount * -1 })
+        await currentCCMonth.update({ activity: multiply(this.amount, -1) })
       }
     }
   }
@@ -428,7 +480,7 @@ export class Transaction extends BaseEntity {
 
   @AfterRemove()
   private async bookkeepingOnDelete(): Promise<void> {
-    const account = await Account.findOne(this.accountId)
+    const account = await this.getAccount()
 
     // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!!
     if (this.transferTransactionId !== null) {
@@ -441,12 +493,22 @@ export class Transaction extends BaseEntity {
       return
     }
 
+    if (!this.categoryId) {
+      return
+    }
+
+    const category = await Category.findOne(this.categoryId)
+
+    if (category.inflow === true && account.type === AccountTypes.CreditCard) {
+      return
+    }
+
     if (this.categoryId) {
       const originalCategoryMonth = await CategoryMonth.findOne(
         { categoryId: this.categoryId, month: formatMonthFromDateString(this.date) },
         { relations: ['budgetMonth'] },
       )
-      await originalCategoryMonth.update({ activity: this.amount * -1 })
+      await originalCategoryMonth.update({ activity: multiply(this.amount, -1) })
     }
 
     // Check if we need to update a CC category
@@ -465,32 +527,18 @@ export class Transaction extends BaseEntity {
       payeeId: (await this.getAccount()).transferPayeeId,
       transferAccountId: (await this.getAccount()).id,
       transferTransactionId: this.id,
-      amount: this.amount * -1,
+      amount: multiply(this.amount, -1),
       date: this.date,
       status: TransactionStatus.Pending,
     })
   }
 
   public async getAccount(): Promise<Account> {
-    if (this.account === undefined) {
-      const account = await Account.findOne(this.accountId)
-      this.account = Promise.resolve(account)
-
-      return this.account
-    }
-
-    return this.account
+    return await Account.findOne(this.accountId)
   }
 
   public async getPayee(): Promise<Payee> {
-    if (this.payee === undefined) {
-      const payee = await Payee.findOne(this.payeeId)
-      this.payee = Promise.resolve(payee)
-
-      return payee
-    }
-
-    return this.payee
+    return await Payee.findOne(this.payeeId)
   }
 
   public async toResponseModel(): Promise<TransactionModel> {
@@ -498,7 +546,7 @@ export class Transaction extends BaseEntity {
       id: this.id,
       accountId: this.accountId,
       payeeId: this.payeeId,
-      amount: this.amount,
+      amount: this.amount.toJSON().amount,
       date: this.date.toISOString(),
       memo: this.memo,
       categoryId: this.categoryId,

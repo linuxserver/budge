@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm'
 import { Account } from '.'
-import { PayeeModel } from '../schemas/payee'
+import { PayeeModel } from '../models/Payee'
 import { Transaction } from './Transaction'
 
 @Entity('payees')

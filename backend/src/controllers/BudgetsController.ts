@@ -2,10 +2,10 @@ import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request,
 import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../schemas/budget'
+import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../models/Budget'
 import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
-import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../schemas/budget_month'
+import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../models/BudgetMonth'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -56,6 +56,7 @@ export class BudgetsController extends Controller {
         data: await Promise.all(budgets.map(budget => budget.toResponseModel())),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -262,7 +263,7 @@ export class BudgetsController extends Controller {
       }
     }
 
-    let budgetMonth = await BudgetMonth.findOne({ budgetId, month }, { relations: ['categories'] })
+    let budgetMonth = await BudgetMonth.findOne({ budgetId, month })
     if (!budgetMonth) {
       // If we don't have a budget month, then no transactions were created against that month,
       // so send down an 'empty' budget month for the UI to work with
@@ -270,7 +271,7 @@ export class BudgetsController extends Controller {
         budgetId,
         month,
       })
-      budgetMonth.categories = []
+      budgetMonth.categories = Promise.resolve([])
     }
 
     return {

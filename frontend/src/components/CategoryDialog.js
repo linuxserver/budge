@@ -88,7 +88,6 @@ export default function NewCategoryDialog(props) {
             }}
           >
             {categoryGroups.map(group => {
-              console.log(group)
               if (group.locked) {
                 return
               }
@@ -99,7 +98,7 @@ export default function NewCategoryDialog(props) {
         </DialogContent>
         <DialogActions>
           <Button onClick={props.closeDialog}>Cancel</Button>
-          <Button onClick={submit}>Add</Button>
+          <Button onClick={submit}>{props.dialogState.mode === 'create' ? 'Add' : 'Edit'}</Button>
         </DialogActions>
       </Dialog>
     </div>

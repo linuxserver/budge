@@ -13,7 +13,7 @@ import {
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import config from '../config'
-import { UserModel } from '../schemas/user'
+import { UserModel } from '../models/User'
 import { Budget } from './Budget'
 
 @Entity('users')

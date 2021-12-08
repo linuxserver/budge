@@ -3,11 +3,12 @@ import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account, AccountTypes } from '../entities/Account'
-import { AccountResponse, AccountsResponse, CreateAccountRequest } from '../schemas/account'
-import { AccountRequest } from '../schemas/account'
+import { AccountResponse, AccountsResponse, CreateAccountRequest, EditAccountRequest } from '../models/Account'
 import { Payee } from '../entities/Payee'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
+import { USD } from '@dinero.js/currencies'
+import { dinero } from 'dinero.js'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')
@@ -37,8 +38,8 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
-      if (!budget || budget.userId !== request.user.id) {
+      const budget = await Budget.findOne({ id: budgetId, userId: request.user.id })
+      if (!budget) {
         this.setStatus(404)
         return {
           message: 'Not found',
@@ -47,6 +48,7 @@ export class AccountsController extends Controller {
 
       const account: Account = Account.create({
         ...requestBody,
+        balance: dinero({ amount: requestBody.balance, currency: USD }),
         budgetId,
       })
       await account.save()
@@ -67,13 +69,16 @@ export class AccountsController extends Controller {
           accountId: account.id,
           payeeId: startingBalancePayee.id,
           categoryId: categoryId,
-          amount,
-          date: new Date(),
+          amount: dinero({ amount, currency: USD }),
+          date: requestBody.date,
           memo: 'Starting Balance',
           status: TransactionStatus.Reconciled,
         })
         await startingBalanceTransaction.save()
       }
+
+      // Reload account to get the new balanace after the 'initial' transaction was created
+      await account.reload()
 
       return {
         message: 'success',
@@ -81,6 +86,60 @@ export class AccountsController extends Controller {
       }
     } catch (err) {
       console.log(err)
+      return { message: err.message }
+    }
+  }
+
+  /**
+   * Update a category group
+   */
+  @Security('jwtRequired')
+  @Put('{id}')
+  @Example<AccountResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      budgetId: 'def456',
+      name: 'Checking Account',
+      type: AccountTypes.Bank,
+      balance: 0,
+      cleared: 0,
+      uncleared: 0,
+      created: '2011-10-05T14:48:00.000Z',
+      updated: '2011-10-05T14:48:00.000Z',
+    },
+  })
+  public async updateAccount(
+    @Path() budgetId: string,
+    @Path() id: string,
+    @Body() requestBody: EditAccountRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<AccountResponse | ErrorResponse> {
+    try {
+      const budget = await Budget.findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
+      const account = await Account.findOne(id)
+      if (!account) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
+      account.name = requestBody.name
+      await account.save()
+
+      return {
+        message: 'success',
+        data: await account.toResponseModel(),
+      }
+    } catch (err) {
       return { message: err.message }
     }
   }
@@ -111,8 +170,8 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountsResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
-      if (!budget || budget.userId !== request.user.id) {
+      const budget = await Budget.findOne({ id: budgetId, userId: request.user.id })
+      if (!budget) {
         this.setStatus(404)
         return {
           message: 'Not found',
@@ -155,8 +214,8 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
-      if (!budget || budget.userId !== request.user.id) {
+      const budget = await Budget.findOne({ id: budgetId, userId: request.user.id })
+      if (!budget) {
         this.setStatus(404)
         return {
           message: 'Not found',

@@ -66,8 +66,8 @@ const budgetsSlice = createSlice({
   },
 
   extraReducers: {
-    [createBudget.fulfilled]: (state, action) => {
-      state.budgets = state.budgets.push(action.payload)
+    [createBudget.fulfilled]: (state, { payload }) => {
+      state.budgets = state.budgets.push(payload)
     },
 
     [fetchBudgets.fulfilled]: (state, action) => {

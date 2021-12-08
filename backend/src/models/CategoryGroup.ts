@@ -1,5 +1,5 @@
 import { DataResponse } from '../controllers/responses'
-import { CategoryModel } from './category'
+import { CategoryModel } from './Category'
 
 /**
  * @example {

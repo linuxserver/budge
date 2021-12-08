@@ -37,8 +37,6 @@ export default function NewCategoryDialog(props) {
     }
   }, [props.dialogState]);
 
-  console.log(props.dialogState)
-
   const submit = async () => {
     switch (props.dialogState.mode) {
       case 'create':
@@ -79,7 +77,7 @@ export default function NewCategoryDialog(props) {
         </DialogContent>
         <DialogActions>
           <Button onClick={props.closeDialog}>Cancel</Button>
-          <Button onClick={submit}>Add</Button>
+          <Button onClick={submit}>{props.dialogState.mode === 'create' ? 'Add' : 'Edit'}</Button>
         </DialogActions>
       </Dialog>
     </div>

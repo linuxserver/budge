@@ -8,3 +8,6 @@ temp/
 database.db
 public/
 .history/
+ynab_register.csv
+ynab_budget.csv
+

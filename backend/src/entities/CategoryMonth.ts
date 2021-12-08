@@ -1,4 +1,4 @@
-import { CategoryMonthModel } from '../schemas/category_month'
+import { CategoryMonthModel } from '../models/CategoryMonth'
 import {
   Entity,
   BeforeInsert,
@@ -16,6 +16,10 @@ import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
 import { Budget } from '.'
+import { Dinero } from '@dinero.js/core'
+import { add, equal, dinero, subtract, isPositive, isNegative } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { CurrencyDBTransformer } from '../models/Currency'
 
 @Entity('category_months')
 export class CategoryMonth extends BaseEntity {
@@ -34,14 +38,26 @@ export class CategoryMonth extends BaseEntity {
   @Index()
   month: string
 
-  @Column({ type: 'int', default: 0 })
-  budgeted: number
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  budgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
 
-  @Column({ type: 'int', default: 0 })
-  activity: number
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  activity: Dinero<number> = dinero({ amount: 0, currency: USD })
 
-  @Column({ type: 'int', default: 0 })
-  balance: number
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  balance: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @CreateDateColumn()
   created: Date
@@ -61,11 +77,11 @@ export class CategoryMonth extends BaseEntity {
   @ManyToOne(() => BudgetMonth, budgetMonth => budgetMonth.categories)
   budgetMonth: Promise<BudgetMonth>
 
-  originalBudgeted: number = 0
+  originalBudgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
 
-  originalActivity: number = 0
+  originalActivity: Dinero<number> = dinero({ amount: 0, currency: USD })
 
-  originalBalance: number = 0
+  originalBalance: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @AfterLoad()
   private storeOriginalValues(): void {
@@ -86,9 +102,9 @@ export class CategoryMonth extends BaseEntity {
         categoryId,
         month: month,
         // @TODO: I DON'T KNOW WHY I HAVE TO SPECIFY 0s HERE AND NOT ABOVE WHEN CREATING BUDGET MONTH!!! AHHH!!!
-        activity: 0,
-        balance: 0,
-        budgeted: 0,
+        activity: dinero({ amount: 0, currency: USD }),
+        balance: dinero({ amount: 0, currency: USD }),
+        budgeted: dinero({ amount: 0, currency: USD }),
       })
       await categoryMonth.save()
       categoryMonth.budgetMonth = Promise.resolve(budgetMonth)
@@ -108,8 +124,8 @@ export class CategoryMonth extends BaseEntity {
       categoryId: this.categoryId,
       month: formatMonthFromDateString(prevMonth),
     })
-    if (prevCategoryMonth && prevCategoryMonth.balance > 0) {
-      this.balance = prevCategoryMonth.balance + this.budgeted + this.activity
+    if (prevCategoryMonth && isPositive(prevCategoryMonth.balance)) {
+      this.balance = add(prevCategoryMonth.balance, add(this.budgeted, this.activity))
     }
   }
 
@@ -128,20 +144,23 @@ export class CategoryMonth extends BaseEntity {
     const budgetMonth = await BudgetMonth.findOne(this.budgetMonthId)
     const budget = await Budget.findOne(budgetMonth.budgetId)
 
-    budgetMonth.budgeted += this.budgeted - this.originalBudgeted
-    budgetMonth.activity += this.activity - this.originalActivity
-    budget.toBeBudgeted += this.originalBudgeted - this.budgeted
+    budgetMonth.budgeted = add(budgetMonth.budgeted, subtract(this.budgeted, this.originalBudgeted))
+    budgetMonth.activity = add(budgetMonth.activity, subtract(this.activity, this.originalActivity))
+    budget.toBeBudgeted = add(budget.toBeBudgeted, subtract(this.originalBudgeted, this.budgeted))
 
     if (category.inflow) {
-      budgetMonth.income += this.activity - this.originalActivity
-      budget.toBeBudgeted += this.activity - this.originalActivity
+      budgetMonth.income = add(budgetMonth.income, subtract(this.activity, this.originalActivity))
+      budget.toBeBudgeted = add(budget.toBeBudgeted, subtract(this.activity, this.originalActivity))
     }
 
-    if (this.originalBalance < 0) {
-      budgetMonth.underfunded += this.originalBalance
-    }
-    if (this.balance < 0) {
-      budgetMonth.underfunded -= this.balance
+    // Underfunded only counts for non-CC accounts as a negative CC value could mean cash bach for that month
+    if (!category.trackingAccountId) {
+      if (isNegative(this.originalBalance)) {
+        budgetMonth.underfunded = add(budgetMonth.underfunded, this.originalBalance)
+      }
+      if (isNegative(this.balance)) {
+        budgetMonth.underfunded = subtract(budgetMonth.underfunded, this.balance)
+      }
     }
 
     await budget.save()
@@ -157,37 +176,37 @@ export class CategoryMonth extends BaseEntity {
       return
     }
 
-    const nextCategorymonth = await CategoryMonth.findOrCreate(
+    const nextCategoryMonth = await CategoryMonth.findOrCreate(
       nextBudgetMonth.budgetId,
       this.categoryId,
       nextBudgetMonth.month,
     )
 
-    if (this.balance > 0) {
-      nextCategorymonth.balance = this.balance + nextCategorymonth.budgeted + nextCategorymonth.activity
+    if (isPositive(this.balance) || category.trackingAccountId) {
+      nextCategoryMonth.balance = add(this.balance, add(nextCategoryMonth.budgeted, nextCategoryMonth.activity))
     } else {
       // If the next month's balance already matched it's activity, no need to keep cascading
-      if (nextCategorymonth.balance === nextCategorymonth.budgeted + nextCategorymonth.activity) {
+      const calculatedNextMonth = add(nextCategoryMonth.budgeted, nextCategoryMonth.activity)
+      if (equal(nextCategoryMonth.balance, calculatedNextMonth)) {
         return
       }
 
-      nextCategorymonth.balance = nextCategorymonth.budgeted + nextCategorymonth.activity
+      nextCategoryMonth.balance = calculatedNextMonth
     }
 
-    await CategoryMonth.update(nextCategorymonth.id, {
-      balance: nextCategorymonth.balance,
-    })
+    // await CategoryMonth.update(nextCategoryMonth.id, { balance: nextCategoryMonth.balance })
+    await nextCategoryMonth.save()
   }
 
-  public async update({ activity, budgeted }: { [key: string]: number }): Promise<CategoryMonth> {
+  public async update({ activity, budgeted }: { [key: string]: Dinero<number> }): Promise<CategoryMonth> {
     if (activity !== undefined) {
-      this.activity += activity
-      this.balance += activity
+      this.activity = add(this.activity, activity)
+      this.balance = add(this.balance, activity)
     }
     if (budgeted !== undefined) {
-      const budgetedDifference = budgeted - this.budgeted
-      this.budgeted += budgetedDifference
-      this.balance += budgetedDifference
+      const budgetedDifference = subtract(budgeted, this.budgeted)
+      this.budgeted = add(this.budgeted, budgetedDifference)
+      this.balance = add(this.balance, budgetedDifference)
     }
 
     await this.save()
@@ -200,9 +219,9 @@ export class CategoryMonth extends BaseEntity {
       id: this.id,
       categoryId: this.categoryId,
       month: this.month,
-      budgeted: this.budgeted,
-      activity: this.activity,
-      balance: this.balance,
+      budgeted: this.budgeted.toJSON().amount,
+      activity: this.activity.toJSON().amount,
+      balance: this.balance.toJSON().amount,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

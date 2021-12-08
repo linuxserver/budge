@@ -3,12 +3,14 @@ import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { CategoryGroup } from '../entities/CategoryGroup'
-import { CategoryGroupRequest, CategoryGroupResponse, CategoryGroupsResponse } from '../schemas/category_group'
-import { CategoryResponse } from '../schemas/category'
-import { CategoryRequest } from '../schemas/category'
+import { CategoryGroupRequest, CategoryGroupResponse, CategoryGroupsResponse } from '../models/CategoryGroup'
+import { CategoryResponse } from '../models/Category'
+import { CategoryRequest } from '../models/Category'
 import { Category } from '../entities/Category'
-import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../schemas/category_month'
+import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../models/CategoryMonth'
 import { CategoryMonth } from '../entities/CategoryMonth'
+import { USD } from '@dinero.js/currencies'
+import { dinero } from 'dinero.js'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -284,8 +286,7 @@ export class CategoriesController extends Controller {
       }
 
       const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
-      console.log(categoryMonth)
-      await categoryMonth.update({ budgeted: requestBody.budgeted })
+      await categoryMonth.update({ budgeted: dinero({ amount: requestBody.budgeted, currency: USD }) })
 
       return {
         message: 'success',

@@ -1,4 +1,4 @@
-import { LoginResponse, LogoutResponse, UserResponse } from '../schemas/user'
+import { LoginResponse, LogoutResponse, UserResponse } from '../models/User'
 import { Get, Security, Route, Post, Body, Controller, Tags, Example, Request } from 'tsoa'
 import { User } from '../entities'
 import { LoginRequest, ExpressRequest } from './requests'

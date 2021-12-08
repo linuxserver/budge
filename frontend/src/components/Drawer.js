@@ -14,18 +14,13 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
 import {
-  Link,
   useNavigate,
 } from "react-router-dom";
 import { useSelector } from 'react-redux'
-import { makeStyles } from '@mui/styles'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-
-const useStyles = makeStyles(theme => ({
-  navigationDrawer: {
-    backgroundColor: 'dark gray',
-  }
-}))
+import { intlFormat } from '../utils/Currency'
+import LogoutIcon from '@mui/icons-material/Logout';
+import api from '../api'
 
 const drawerWidth = 240;
 
@@ -61,7 +56,12 @@ export default function AppDrawer(props) {
     }
   }
 
-  const classes = useStyles()
+  const logout = async () => {
+    await api.logout()
+    navigate('/')
+    window.location.reload(false);
+  }
+
   return (
     <Drawer
       variant="permanent"
@@ -71,8 +71,6 @@ export default function AppDrawer(props) {
         [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
       }}
     >
-      <Toolbar />
-      <Box sx={{ overflow: 'auto' }}>
         <List dense={true}>
           {/* Main Menu Options */}
           {menuItems.map((menuItemConfig, index) => (
@@ -89,7 +87,9 @@ export default function AppDrawer(props) {
             </ListItem>
           ))}
         </List>
+
         <Divider />
+
         <List dense={true}>
           {/* Accounts Section */}
           <ListItemButton onClick={() => listItemClicked('Accounts')}>
@@ -99,21 +99,19 @@ export default function AppDrawer(props) {
             <ListItemText primary="Accounts" />
             {accountsOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
+
           <Collapse in={accountsOpen} timeout="auto" unmountOnExit>
             <List dense={true} component="div" disablePadding>
               {accounts.map((account, index) => (
                 // Don't display 'payee' account types
-                account.type !== 2 &&
                 <ListItem
+                  disablePadding
                   key={`account-${account.id}`}
                   onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
                   selected={selectedItem === `account-${account.id}`}
                 >
                   <ListItemButton sx={{ pl: 4 }}>
-                    <ListItemText primary={account.name} secondary={new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    }).format(account.balance)} />
+                    <ListItemText primary={account.name} secondary={intlFormat(account.balance)} />
                   </ListItemButton>
                 </ListItem>
               ))}
@@ -123,7 +121,17 @@ export default function AppDrawer(props) {
             <ListItemText primary="Add Account" onClick={() => props.onAddAccountClick()} />
           </ListItemButton>
         </List>
-      </Box>
+
+        <List dense={true} style={{ marginTop: "auto" }}>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Log Out" onClick={logout}/>
+            </ListItemButton>
+          </ListItem>
+        </List>
     </Drawer>
   )
 }

@@ -2,7 +2,7 @@ import { Get, Route, Path, Security, Post, Body, Controller, Tags, Request, Exam
 import { Budget } from '../entities'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { PayeeRequest, PayeeResponse, PayeesResponse } from '../schemas/payee'
+import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
 import { Payee } from '../entities/Payee'
 
 @Tags('Payees')

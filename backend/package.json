@@ -1,5 +1,5 @@
 {
-  "name": "cardboard-js",
+  "name": "BudgE",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -49,12 +49,14 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "@dinero.js/currencies": "^2.0.0-alpha.8",
     "@types/jest": "^27.0.3",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "class-validator": "^0.13.1",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
+    "dinero.js": "^2.0.0-alpha.8",
     "express": "^4.17.1",
     "helmet": "^4.6.0",
     "jsonwebtoken": "^8.5.1",

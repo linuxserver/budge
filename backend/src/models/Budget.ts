@@ -1,5 +1,5 @@
 import { DataResponse } from '../controllers/responses'
-import { AccountModel } from './account'
+import { AccountModel } from './Account'
 
 /**
  * @example {

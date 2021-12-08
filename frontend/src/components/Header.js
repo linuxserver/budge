@@ -3,10 +3,17 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import LogoutIcon from '@mui/icons-material/Logout';
+import api from '../api'
+import {
+  useNavigate,
+} from "react-router-dom";
 
 export default function ButtonAppBar() {
-  const logout = () => {
-    document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  const navigate = useNavigate()
+
+  const logout = async () => {
+    await api.logout()
+    navigate('/')
     window.location.reload(false);
   }
 

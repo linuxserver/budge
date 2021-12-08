@@ -15,9 +15,18 @@ import {
 import Login from './components/Login'
 import { useDispatch, useSelector } from 'react-redux'
 import AddAccountDialog from './components/AddAccountDialog'
-// import { store } from './redux/store'
+import { useTheme, ThemeProvider, createTheme } from '@mui/material/styles';
+
+const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
 
 export default function App(props) {
+  const theme = createTheme({
+    palette: {
+      mode: 'dark'
+    },
+  })
+  const colorMode = React.useContext(ColorModeContext);
+
   /**
    * State block
    */
@@ -30,6 +39,7 @@ export default function App(props) {
 
   return (
     <div className="App">
+      <ThemeProvider theme={theme}>
       {
         !initComplete && <Login/>
       }
@@ -38,11 +48,10 @@ export default function App(props) {
           <Router>
             <Box sx={{ display: 'flex' }}>
               <CssBaseline />
-              <Header />
+              {/* <Header /> */}
               <Drawer onAddAccountClick={() => setNewAccountDialogOpen(true)}/>
-              <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+              <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
                 <AddAccountDialog isOpen={newAccountDialogOpen} close={() => setNewAccountDialogOpen(false)}/>
-                <Toolbar />
                 <Routes>
                   <Route path="/" element={<Budget/>} />
                   <Route path="/accounts/:accountId" element={<Account/>} />
@@ -52,6 +61,7 @@ export default function App(props) {
           </Router>
         )
       }
+      </ThemeProvider>
     </div>
   )
 }

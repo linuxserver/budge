@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import Button from '@mui/material/Button';
 import BudgetTable from '../components/BudgetTable'
+import BudgetDetails from '../components/BudgetDetails'
 import CategoryGroupDialog from "../components/CategoryGroupDialog";
 import CategoryDialog from "../components/CategoryDialog";
+import Grid from '@mui/material/Grid';
 
 export default function Budget(props) {
   /**
@@ -55,17 +57,20 @@ export default function Budget(props) {
 
   return (
     <div style={{ maxWidth: '100%' }}>
-      <Button aria-describedby="category-group-add" variant="contained" onClick={openCategoryGroupDialog}>
-        + Category Group
-      </Button>
-
       <CategoryDialog dialogState={dialogState} closeDialog={closeDialog}/>
       <CategoryGroupDialog dialogState={dialogState} closeDialog={closeDialog}/>
 
-      <BudgetTable
-        openCategoryDialog={openCategoryDialog}
-        openCategoryGroupDialog={openCategoryGroupDialog}
-      />
+      <Grid container spacing={2}>
+        <Grid item xs={9}>
+          <BudgetTable
+            openCategoryDialog={openCategoryDialog}
+            openCategoryGroupDialog={openCategoryGroupDialog}
+          />
+        </Grid>
+        <Grid item xs={3}>
+          <BudgetDetails />
+        </Grid>
+      </Grid>
     </div>
   )
 }

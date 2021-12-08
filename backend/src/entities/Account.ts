@@ -1,4 +1,4 @@
-import { AccountModel } from '../schemas/account'
+import { AccountModel } from '../models/Account'
 import {
   Entity,
   OneToOne,
@@ -17,6 +17,10 @@ import { Transaction } from './Transaction'
 import { Payee } from './Payee'
 import { Category } from './Category'
 import { CategoryGroup, CreditCardGroupName } from './CategoryGroup'
+import { Dinero } from '@dinero.js/core'
+import { add, dinero, toSnapshot } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { CurrencyDBTransformer } from '../models/Currency'
 
 export enum AccountTypes {
   Bank,
@@ -40,14 +44,26 @@ export class Account extends BaseEntity {
   @Column({ type: 'int' })
   type: AccountTypes
 
-  @Column({ type: 'int' })
-  balance: number = 0
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  balance: Dinero<number> = dinero({ amount: 0, currency: USD })
 
-  @Column({ type: 'int' })
-  cleared: number = 0
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  cleared: Dinero<number> = dinero({ amount: 0, currency: USD })
 
-  @Column({ type: 'int' })
-  uncleared: number = 0
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  uncleared: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @CreateDateColumn()
   created: Date
@@ -70,7 +86,7 @@ export class Account extends BaseEntity {
   /**
    * Can have one payee
    */
-  @OneToOne(() => Payee, payee => payee.transferAccount, { cascade: true })
+  @OneToOne(() => Payee, payee => payee.transferAccount)
   @JoinColumn()
   transferPayee: Promise<Payee>
 
@@ -119,7 +135,7 @@ export class Account extends BaseEntity {
 
   @BeforeUpdate()
   private calculateBalance(): void {
-    this.balance = this.cleared + this.uncleared
+    this.balance = add(this.cleared, this.uncleared)
   }
 
   public async toResponseModel(): Promise<AccountModel> {
@@ -128,9 +144,9 @@ export class Account extends BaseEntity {
       budgetId: this.budgetId,
       name: this.name,
       type: this.type,
-      balance: this.balance,
-      cleared: this.cleared,
-      uncleared: this.uncleared,
+      balance: this.balance.toJSON().amount,
+      cleared: this.cleared.toJSON().amount,
+      uncleared: this.uncleared.toJSON().amount,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

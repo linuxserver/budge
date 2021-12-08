@@ -1,4 +1,4 @@
-import { CategoryGroupModel } from '../schemas/category_group'
+import { CategoryGroupModel } from '../models/CategoryGroup'
 import {
   Entity,
   PrimaryGeneratedColumn,

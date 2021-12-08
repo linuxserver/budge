@@ -1,9 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api';
 
-export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, balance}, { getState }) => {
+export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, balance, date}, { getState }) => {
   const store = getState()
-  return await api.createAccount(name, accountType, balance, store.budgets.activeBudget.id);
+  return await api.createAccount(name, accountType, balance, date, store.budgets.activeBudget.id);
+})
+
+export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name }, { getState }) => {
+  const store = getState()
+  return await api.updateAccount(id, name, store.budgets.activeBudget.id)
 })
 
 export const fetchAccounts = createAsyncThunk('accounts/fetch', async (_, { getState }) => {
@@ -48,6 +53,17 @@ const accountsSlice = createSlice({
     [createAccount.fulfilled]: (state, { payload }) => {
       state.accounts.push(payload)
       state.accountById[payload.id] = payload
+    },
+
+    [editAccount.fulfilled]: (state, { payload }) => {
+      state.accountById[payload.id] = payload
+      state.accounts = state.accounts.map(account => {
+        if (account.id !== payload.id) {
+          return account
+        }
+
+        return payload
+      })
     },
 
     [fetchAccounts.fulfilled]: (state, { payload }) => {

@@ -1,4 +1,4 @@
-import { BudgetModel } from '../schemas/budget'
+import { BudgetModel } from '../models/Budget'
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -17,6 +17,10 @@ import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
 import { getMonthString, getMonthStringFromNow } from '../utils'
 import { Payee } from './Payee'
+import { Dinero } from '@dinero.js/core'
+import { dinero } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { CurrencyDBTransformer } from '../models/Currency'
 
 @Entity('budgets')
 export class Budget extends BaseEntity {
@@ -29,8 +33,12 @@ export class Budget extends BaseEntity {
   @Column({ type: 'varchar' })
   name: string
 
-  @Column({ type: 'int', default: 0 })
-  toBeBudgeted: number
+  @Column({
+    type: 'int',
+    default: 0,
+    transformer: new CurrencyDBTransformer(),
+  })
+  toBeBudgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @CreateDateColumn()
   created: Date
@@ -122,7 +130,7 @@ export class Budget extends BaseEntity {
     return {
       id: this.id,
       name: this.name,
-      toBeBudgeted: this.toBeBudgeted,
+      toBeBudgeted: this.toBeBudgeted.toJSON().amount,
       accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),

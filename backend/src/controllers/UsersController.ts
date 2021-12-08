@@ -1,4 +1,4 @@
-import { UserResponse } from '../schemas/user'
+import { UserResponse } from '../models/User'
 import { Get, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
 import { User } from '../entities'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'

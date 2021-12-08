@@ -4,7 +4,9 @@ import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account } from '../entities/Account'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
-import { TransactionRequest, TransactionResponse, TransactionsResponse } from '../schemas/transaction'
+import { TransactionRequest, TransactionResponse, TransactionsResponse } from '../models/Transaction'
+import { dinero } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
@@ -46,6 +48,7 @@ export class TransactionsController extends Controller {
       const transaction = await Transaction.createNew({
         budgetId,
         ...requestBody,
+        amount: dinero({ amount: requestBody.amount, currency: USD }),
         date: new Date(requestBody.date),
         handleTransfers: true,
       })
@@ -101,6 +104,7 @@ export class TransactionsController extends Controller {
       const transaction = await Transaction.findOne(transactionId, { relations: ['account'] })
       await transaction.update({
         ...requestBody,
+        amount: dinero({ amount: requestBody.amount, currency: USD }),
         date: new Date(requestBody.date), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
         handleTransfers: true,
       })

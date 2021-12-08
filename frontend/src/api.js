@@ -1,4 +1,5 @@
 import Axios from 'axios'
+import { FromAPI, ToAPI } from './utils/Currency'
 
 const axios = Axios.create({
   withCredentials: true
@@ -29,38 +30,52 @@ export default class API {
     return response.data.data
   }
 
+  static async logout() {
+    const response = await axios.get('/api/logout')
+
+    return response.data.data
+  }
+
   static async createBudget(name) {
     const response = await axios.post(`/api/budgets`, {
       name,
     })
 
-    return response.data.data
+    return FromAPI.transformBudget(response.data.data)
   }
 
   static async fetchBudgets() {
     const response = await axios.get('/api/budgets')
 
-    return response.data.data
+    return response.data.data.map(budget => FromAPI.transformBudget(budget))
   }
 
   static async fetchBudget(budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}`)
 
-    return response.data.data
+    return FromAPI.transformBudget(response.data.data)
   }
 
-  static async createAccount(name, type, balance, budgetId) {
+  static async createAccount(name, type, balance, date, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/accounts`, {
-      name, type, balance
+      name, type, balance: balance.toJSON().amount, date
     })
 
-    return response.data.data
+    return FromAPI.transformAccount(response.data.data)
+  }
+
+  static async updateAccount(id, name, budgetId) {
+    const response = await axios.put(`/api/budgets/${budgetId}/accounts/${id}`, {
+      name,
+    })
+
+    return FromAPI.transformAccount(response.data.data)
   }
 
   static async fetchAccounts(budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/accounts`)
 
-    return response.data.data
+    return response.data.data.map(account => FromAPI.transformAccount(account))
   }
 
   static async createPayee(name, budgetId) {
@@ -78,19 +93,19 @@ export default class API {
   static async fetchAccountTransactions(accountId, budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/accounts/${accountId}/transactions`)
 
-    return response.data.data
+    return response.data.data.map(transaction => FromAPI.transformTransaction(transaction))
   }
 
   static async createTransaction(transaction, budgetId) {
-    const response = await axios.post(`/api/budgets/${budgetId}/transactions`, transaction)
+    const response = await axios.post(`/api/budgets/${budgetId}/transactions`, ToAPI.transformTransaction(transaction))
 
-    return response.data.data
+    return FromAPI.transformTransaction(response.data.data)
   }
 
   static async updateTransaction(transaction, budgetId) {
-    const response = await axios.put(`/api/budgets/${budgetId}/transactions/${transaction.id}`, transaction)
+    const response = await axios.put(`/api/budgets/${budgetId}/transactions/${transaction.id}`, ToAPI.transformTransaction(transaction))
 
-    return response.data.data
+    return FromAPI.transformTransaction(response.data.data)
   }
 
   static async deleteTransaction(transactionId, budgetId) {
@@ -138,26 +153,26 @@ export default class API {
   static async fetchBudgetMonth(budgetId, month) {
     const response = await axios.get(`/api/budgets/${budgetId}/months/${month}`)
 
-    return response.data.data
+    return FromAPI.transformBudgetMonth(response.data.data)
   }
 
   static async fetchBudgetMonths(budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/months`)
 
-    return response.data.data
+    return response.data.data.map(budgetMonth => FromAPI.transformBudgetMonth(budgetMonth))
   }
 
   static async fetchCategoryMonths(categoryId, budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/categories/${categoryId}/months`)
 
-    return response.data.data
+    return response.data.data.map(categoryMonth => FromAPI.transformCategoryMonth(categoryMonth))
   }
 
   static async updateCategoryMonth(budgetId, categoryId, month, budgeted) {
     const response = await axios.put(`/api/budgets/${budgetId}/categories/${categoryId}/${month}`, {
-      budgeted,
+      budgeted: budgeted.toJSON().amount,
     })
 
-    return response.data.data
+    return FromAPI.transformCategoryMonth(response.data.data)
   }
 }

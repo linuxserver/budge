@@ -6,19 +6,29 @@ import { fetchBudgetMonth, updateCategoryMonth, setCurrentMonth, fetchCategoryMo
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
+import AddIcon from '@mui/icons-material/Add';
 import Chip from '@mui/material/Chip';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
 import Grid from '@mui/material/Grid';
+import { dinero, add, equal, isPositive, isNegative, isZero, toUnit } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { inputToDinero, intlFormat } from '../utils/Currency'
+import BudgetMonthPicker from "./BudgetMonthPicker";
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import { useTheme } from '@mui/styles'
 
 export default function BudgetTable(props) {
+  const theme = useTheme()
+
   /**
    * Redux block
    */
   const dispatch = useDispatch()
   const budget = useSelector(state => state.budgets.activeBudget)
-  const budgetId = useSelector(state => state.budgets.activeBudget.id)
+  const budgetId = budget.id
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
   const categoriesMap = useSelector(
@@ -55,9 +65,9 @@ export default function BudgetTable(props) {
         id: group.id,
         categoryId: group.id,
         month,
-        budgeted: 0,
-        activity: 0,
-        balance: 0,
+        budgeted: dinero({ amount: 0, currency: USD }),
+        activity: dinero({ amount: 0, currency: USD }),
+        balance: dinero({ amount: 0, currency: USD }),
       }
 
       for (let category of group.categories) {
@@ -66,9 +76,9 @@ export default function BudgetTable(props) {
           groupId: group.id,
           categoryId: category.id,
           month,
-          budgeted: 0,
-          activity: 0,
-          balance: 0,
+          budgeted: dinero({ amount: 0, currency: USD }),
+          activity: dinero({ amount: 0, currency: USD }),
+          balance: dinero({ amount: 0, currency: USD }),
         }
 
         if (!budgetMonth.categories) {
@@ -80,9 +90,9 @@ export default function BudgetTable(props) {
         // If no budget category, no transactions, so just build a dummy one
         const categoryMonth = budgetMonthCategory[0] || defaultRow
 
-        groupRow.budgeted += categoryMonth.budgeted
-        groupRow.activity += categoryMonth.activity
-        groupRow.balance += categoryMonth.balance
+        groupRow.budgeted = add(groupRow.budgeted, categoryMonth.budgeted)
+        groupRow.activity = add(groupRow.activity, categoryMonth.activity)
+        groupRow.balance = add(groupRow.balance, categoryMonth.balance)
 
         if (category.trackingAccountId) {
           groupRow.trackingAccountId = true
@@ -104,6 +114,8 @@ export default function BudgetTable(props) {
   /**
   * State block
   */
+ const [monthPickerOpen, setMonthPickerOpen] = useState(false)
+ const [monthPickerAnchor, setMonthPickerAnchor] = useState(null)
 
   /**
   * Dynamic variables
@@ -120,7 +132,7 @@ export default function BudgetTable(props) {
       editable: "never",
       align: "left",
       render: (rowData) => (
-        <>
+        <Grid container>
           <div style={{cursor: 'pointer', display: 'inline-block'}} onClick={() => {
             if (rowData.trackingAccountId) {
               return
@@ -135,28 +147,29 @@ export default function BudgetTable(props) {
           </div>
           {
             !rowData.groupId && (
-              <IconButton aria-label="add" size="small" onClick={(event) => {
+              <IconButton style={{padding: 0}} aria-label="add" size="small" onClick={(event) => {
                 openCategoryDialog({ categoryGroupId: rowData.id })
               }}>
                 <AddCircleIcon fontSize="small" />
               </IconButton>
             )
           }
-        </>
-      ),
-      editComponent: props => (
-        <TextField
-          onChange={(e, value) => {
-            console.log(props)
-            props.onChange(value)
-          }}
-          label=""
-          variant="standard"
-        />
+        </Grid>
       ),
     },
-    { title: "Assigned", field: "budgeted", type: "currency", },
-    { title: "Activity", field: "activity", type: "currency", editable: "never" },
+    {
+      title: "Assigned",
+      field: "budgeted",
+      type: "currency",
+      render: rowData => intlFormat(rowData.budgeted),
+    },
+    {
+      title: "Activity",
+      field: "activity",
+      type: "currency",
+      editable: "never",
+      render: rowData => intlFormat(rowData.activity),
+    },
     {
         title: "Balance",
         field: "balance",
@@ -164,39 +177,38 @@ export default function BudgetTable(props) {
         align: "right",
         editable: "never",
         render: (rowData) => {
-          const value = new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-          }).format(rowData.balance !== undefined ? rowData.balance : 0);
+          const value = intlFormat(rowData.balance)
 
           if (!rowData.groupId) {
-            // @TODO: can we use the getCurrencyValue from MTableCell somehow? or the default in general?
             return value
           }
 
-          if (rowData.trackingCategory) {
-            if (budgetMonth.underfunded > 0) {
-              return <Chip label={value} color="warning"></Chip>
-            } else if (rowData.balance === 0) {
-              return <Chip label={value}></Chip>
-            }
-
-            return <Chip label={value} color="success"></Chip>
-          } else {
-            if (rowData.balance > 0) {
-              return <Chip label={value} color="success"></Chip>
-            } else if (rowData.balance < 0) {
-              return <Chip label={value} color="error"></Chip>
+          let color = "default"
+          if (rowData.trackingAccountId) {
+            if (isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)) {
+              color = "warning"
+            } else if (isZero(rowData.balance) || isNegative(rowData.balance)) {
+              color = "default"
             } else {
-              return <Chip label={value}></Chip>
+              color = "success"
+            }
+          } else {
+            if (isZero(rowData.balance)) {
+              color = "default"
+            } else if (isNegative(rowData.balance)) {
+              color = "error"
+            } else {
+              color = "success"
             }
           }
+
+          return <Chip size="small" label={value} color={color}></Chip>
         }
       },
   ]
 
   const onBudgetEdit = async (newRow, oldRow) => {
-    if (newRow.budgeted === oldRow.budgeted) {
+    if (equal(newRow.budgeted, oldRow.budgeted)) {
       // Only update if the amount budgeted was changed
       return
     }
@@ -215,13 +227,13 @@ export default function BudgetTable(props) {
     let children = <></>
     const childProps = {
       ...props,
-      onCellEditStarted: (rowData, columnDef) => {
+      onCellEditStarted: (row, column) => {
         if (cellEditing === true) {
           return
         }
 
         cellEditing = true
-        props.onCellEditStarted(rowData, columnDef)
+        props.onCellEditStarted(row, column)
       },
     }
 
@@ -244,8 +256,27 @@ export default function BudgetTable(props) {
     const monthDate = new Date(Date.UTC(...month.split('-')))
     monthDate.setDate(1)
     monthDate.setMonth(monthDate.getMonth() + direction)
-    console.log(monthDate)
     dispatch(setCurrentMonth(monthDate))
+  }
+
+  const setMonth = async (month) => {
+    setMonthPickerOpen(false)
+
+    if (!month) {
+      return
+    }
+
+    await dispatch(setCurrentMonth(month))
+  }
+
+  const openMonthPicker = event => {
+    if (monthPickerOpen) {
+      setMonthPickerOpen(false)
+      return
+    }
+
+    setMonthPickerOpen(true)
+    setMonthPickerAnchor(event.currentTarget)
   }
 
   const nextMonth = getDateFromString(month)
@@ -258,36 +289,91 @@ export default function BudgetTable(props) {
 
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <div className="budget-month-navigation">
-            <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
-              <ArrowBackIosNewIcon />
-            </IconButton>
-            {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
-            <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
-              <ArrowForwardIosIcon />
-            </IconButton>
-          </div>
-        </Grid>
-        <Grid item xs={6}>
-          <div>To Be Budgeted: {budget.toBeBudgeted}</div>
-          <div>Income: {budgetMonth.income}</div>
-          <div>Activity: {budgetMonth.activity}</div>
-          <div>Budgeted: {budgetMonth.budgeted}</div>
-          <div>Underfunded: {budgetMonth.underfunded}</div>
-        </Grid>
-      </Grid>
-
       <MaterialTable
+        style={{
+          display: "grid",
+          gridTemplateColums: "1fr",
+          gridTemplateRows: "auto 1fr auto",
+          height: "100vh"
+        }}
         components={{
+          Toolbar: props => {
+            return (
+              <>
+                <Grid sx={{ p: 2 }} container spacing={2}>
+                  <Grid item>
+                    <BudgetMonthPicker
+                      open={monthPickerOpen}
+                      currentMonth={month}
+                      minDate={availableMonths[0]}
+                      maxDate={availableMonths[availableMonths.length - 1]}
+                      anchorEl={monthPickerAnchor}
+                      onClose={setMonth}
+                    />
+                    <div className="budget-month-navigation">
+                      <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
+                        <ArrowBackIosNewIcon />
+                      </IconButton>
+                      <Button onClick={openMonthPicker}>
+                        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
+                      </Button>
+                      <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
+                        <ArrowForwardIosIcon />
+                      </IconButton>
+                    </div>
+                  </Grid>
+                  <Grid item>
+                    <Button aria-describedby="category-group-add" variant="outlined" size="small" onClick={openCategoryGroupDialog}>
+                      + Category Group
+                    </Button>
+                  </Grid>
+                </Grid>
+                <Grid container spacing={2} sx={{ p: 2 }}>
+
+                </Grid>
+              </>
+            )
+          },
           Cell: budgetTableCell,
-          EditCell: props => (
-            <MTableEditCell {...props} onCellEditFinished={(rowData, columnDef) => {
-              cellEditing = false
-              props.onCellEditFinished(rowData, columnDef)
-            }}></MTableEditCell>
-          )
+          EditCell: props => {
+            return (
+              <MTableEditCell
+                {...props}
+                onCellEditFinished={(rowData, columnDef) => {
+                  cellEditing = false
+                  props.onCellEditFinished(rowData, columnDef)
+                }}ƒ
+              ></MTableEditCell>
+            )
+          },
+          EditField: props => {
+            const childProps = { ...props }
+            delete childProps.columnDef
+            delete childProps.rowData
+            return (
+              <TextField
+                { ...childProps }
+                style={{ float: "right" }}
+                type="number"
+                variant="standard"
+                value={props.value instanceof Object ? toUnit(props.value, { digits: 2 }) : props.value}
+                onChange={(event) => {
+                  try {
+                    return props.onChange(event.target.value)
+                  } catch (e) {}
+                }}
+                InputProps={{
+                  style: {
+                    fontSize: 13,
+                    textAlign: "right",
+                  },
+                }}
+                inputProps={{
+                  "aria-label": props.columnDef.title,
+                }}
+              />
+            )
+          }
         }}
         options={{
           padding: "dense",
@@ -295,6 +381,13 @@ export default function BudgetTable(props) {
           search: false,
           defaultExpanded: true,
           showTitle: false,
+          // toolbar: false,
+          draggable: false,
+          sorting: false,
+          rowStyle: rowData => ({
+            ...!rowData.groupId && {backgroundColor: theme.palette.action.hover}
+          }),
+          // headerStyle: { position: 'sticky', top: 0 }
         }}
         icons={TableIcons}
         columns={columns}
@@ -304,7 +397,6 @@ export default function BudgetTable(props) {
         })}
         cellEditable={{
           onCellEditApproved: async (newValue, oldValue, rowData, columnDef) => {
-            // await onBudgetEdit()
             const newData = {
               ...rowData,
               [columnDef.field]: newValue,
@@ -312,6 +404,7 @@ export default function BudgetTable(props) {
 
             switch (columnDef.field) {
               case 'budgeted':
+                newData['budgeted'] = inputToDinero(newData['budgeted'])
                 onBudgetEdit(newData, rowData)
                 break
             }

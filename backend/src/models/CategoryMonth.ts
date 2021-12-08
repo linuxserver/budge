@@ -1,6 +1,4 @@
-import { AccountTypes } from '../entities/Account'
 import { DataResponse } from '../controllers/responses'
-import { TransactionStatus } from '../entities/Transaction'
 
 /**
  * @example {
