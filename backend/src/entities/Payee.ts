@@ -7,10 +7,13 @@ import {
   BaseEntity,
   CreateDateColumn,
   OneToMany,
+  PrimaryColumn,
+  BeforeInsert,
 } from 'typeorm'
 import { Account } from '.'
 import { PayeeModel } from '../models/Payee'
 import { Transaction } from './Transaction'
+import { Base } from './Base'
 
 @Entity('payees')
 export class Payee extends BaseEntity {
@@ -42,7 +45,7 @@ export class Payee extends BaseEntity {
   /**
    * Has many transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.account)
+  @OneToMany(() => Transaction, transaction => transaction.account, { cascade: true })
   transactions: Promise<Transaction[]>
 
   public async toResponseModel(): Promise<PayeeModel> {

@@ -6,7 +6,7 @@ import helmet from 'helmet'
 import config from './config'
 import morgan from 'morgan'
 import swaggerUi from 'swagger-ui-express'
-import { RegisterRoutes } from '../build/routes'
+import { RegisterRoutes } from '../routes'
 import { logger, stream } from './config/winston'
 import { ValidateError } from 'tsoa'
 
@@ -64,7 +64,7 @@ app.use(function errorHandler(err: unknown, req: Request, res: Response, next: N
 })
 
 app.use('/docs', swaggerUi.serve, async (_req: Request, res: Response) => {
-  return res.send(swaggerUi.generateHTML(await import('../build/swagger.json')))
+  return res.send(swaggerUi.generateHTML(await import('../swagger.json')))
 })
 
 export { app }

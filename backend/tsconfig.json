@@ -19,7 +19,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
+    "src/**/*.ts",
     "jest.config.js",
     "test",
     "babel.config.js",

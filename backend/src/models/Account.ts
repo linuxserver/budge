@@ -23,6 +23,11 @@ export interface AccountModel {
   budgetId: string
 
   /**
+   * ID of payee for account transfers
+   */
+  transferPayeeId: string
+
+  /**
    * Budget name
    */
   name: string
@@ -86,10 +91,12 @@ export interface CreateAccountRequest {
 /**
  * @example {
  *  "name": "My Budget",
+ *  "balance": 100,
  * }
  */
 export interface EditAccountRequest {
-  name: string
+  name?: string
+  balance?: number
 }
 
 export type AccountResponse = DataResponse<AccountModel>

@@ -18,13 +18,14 @@ import { Payee } from './Payee'
 import { Category } from './Category'
 import { CategoryGroup, CreditCardGroupName } from './CategoryGroup'
 import { Dinero } from '@dinero.js/core'
-import { add, dinero, toSnapshot } from 'dinero.js'
+import { add, dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
 
 export enum AccountTypes {
   Bank,
   CreditCard,
+  Tracking,
 }
 
 @Entity('accounts')
@@ -80,7 +81,7 @@ export class Account extends BaseEntity {
   /**
    * Has many transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.account)
+  @OneToMany(() => Transaction, transaction => transaction.account, { cascade: true })
   transactions: Promise<Transaction[]>
 
   /**
@@ -142,6 +143,7 @@ export class Account extends BaseEntity {
     return {
       id: this.id,
       budgetId: this.budgetId,
+      transferPayeeId: this.transferPayeeId,
       name: this.name,
       type: this.type,
       balance: this.balance.toJSON().amount,

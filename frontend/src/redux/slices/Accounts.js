@@ -6,9 +6,9 @@ export const createAccount = createAsyncThunk('accounts/create', async ({ name, 
   return await api.createAccount(name, accountType, balance, date, store.budgets.activeBudget.id);
 })
 
-export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name }, { getState }) => {
+export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name, balance }, { getState }) => {
   const store = getState()
-  return await api.updateAccount(id, name, store.budgets.activeBudget.id)
+  return await api.updateAccount(id, name, balance, store.budgets.activeBudget.id)
 })
 
 export const fetchAccounts = createAsyncThunk('accounts/fetch', async (_, { getState }) => {

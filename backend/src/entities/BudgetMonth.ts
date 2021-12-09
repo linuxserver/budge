@@ -11,6 +11,7 @@ import {
   OneToMany,
   BeforeInsert,
   BeforeUpdate,
+  PrimaryColumn,
 } from 'typeorm'
 import { Budget } from './Budget'
 import { CategoryMonth } from './CategoryMonth'
@@ -19,6 +20,7 @@ import { Dinero, toSnapshot } from '@dinero.js/core'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
+import { Base } from './Base'
 
 @Entity('budget_months')
 export class BudgetMonth extends BaseEntity {
@@ -76,7 +78,7 @@ export class BudgetMonth extends BaseEntity {
   /**
    * Has man category months
    */
-  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.budgetMonth)
+  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.budgetMonth, { cascade: true })
   categories: Promise<CategoryMonth[]>
 
   originalIncome: Dinero<number> = dinero({ amount: 0, currency: USD })

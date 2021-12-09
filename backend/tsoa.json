@@ -1,20 +1,13 @@
 {
   "entryFile": "src/server.ts",
   "noImplicitAdditionalProperties": "throw-on-extras",
-  "controllerPathGlobs": ["src/**/*Controller.ts"],
+  "controllerPathGlobs": ["src/controllers/*.ts"],
   "spec": {
-    "outputDirectory": "build",
-    "specVersion": 3,
-    "securityDefinitions": {
-      "jwt": {
-        "type": "apiKey",
-        "name": "x-access-token",
-        "in": "header"
-      }
-    }
+    "outputDirectory": ".",
+    "specVersion": 3
   },
   "routes": {
-    "routesDir": "build",
+    "routesDir": ".",
     "authenticationModule": "src/middleware/authentication.ts"
   }
 }

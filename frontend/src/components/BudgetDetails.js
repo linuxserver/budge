@@ -24,10 +24,6 @@ export default function BudgetDetails(props) {
 
   const rows = [
     {
-      field: 'To Be Budgeted',
-      value: intlFormat(toBeBudgeted),
-    },
-    {
       field: 'Income',
       value: intlFormat(income),
     },

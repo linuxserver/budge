@@ -12,7 +12,7 @@ import { fetchCategories } from '../redux/slices/Categories';
 import { refreshBudget } from '../redux/slices/Budgets';
 import { inputToDinero } from '../utils/Currency'
 
-const accountTypes = ['Bank', 'Credit Card'];
+const accountTypes = ['Bank', 'Credit Card', 'Tracking Account'];
 
 export default function AddAccountDialog(props) {
   /**

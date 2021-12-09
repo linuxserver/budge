@@ -1,6 +1,5 @@
 import { DeepPartial, EntityRepository, Repository } from 'typeorm'
 import { Transaction } from '../entities/Transaction'
-import { BudgetMonth } from '../entities/BudgetMonth'
 import { formatMonthFromDateString } from '../utils'
 import { CategoryMonth } from '../entities/CategoryMonth'
 

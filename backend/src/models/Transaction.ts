@@ -28,6 +28,11 @@ export interface TransactionModel {
   payeeId: string
 
   /**
+   * Category ID
+   */
+  categoryId: string | null
+
+  /**
    * Transaction amount
    */
   amount: number
@@ -41,11 +46,6 @@ export interface TransactionModel {
    * Transaction notes / memo
    */
   memo: string
-
-  /**
-   * Category ID
-   */
-  categoryId: string | null
 
   /**
    * Transaction status

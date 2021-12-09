@@ -21,18 +21,18 @@ export class RootController extends Controller {
     },
     token: '1234abcd',
   })
-  public async login(@Body() requestBody: LoginRequest, @Request() request: ExpressRequest): Promise<LoginResponse> {
+  public async login(@Body() requestBody: LoginRequest, @Request() request: ExpressRequest): Promise<LoginResponse|ErrorResponse> {
     const { email, password } = requestBody
     const user: User = await User.findOne({ email })
 
     if (!user) {
       this.setStatus(403)
-      return
+      return { message: '' }
     }
 
     if (!password || !user.checkPassword(password)) {
       this.setStatus(403)
-      return
+      return { message: '' }
     }
 
     const token = user.generateJWT()
@@ -56,7 +56,7 @@ export class RootController extends Controller {
   public async logout(@Request() request: ExpressRequest): Promise<LogoutResponse> {
     this.setHeader('Set-Cookie', `jwt=0; Max-Age=3600; Path=/; HttpOnly; expires=Thu, 01 Jan 1970 00:00:01 GMT`)
 
-    return {}
+    return { message: '' }
   }
 
   /**

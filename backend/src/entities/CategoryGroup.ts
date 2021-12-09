@@ -8,9 +8,12 @@ import {
   ManyToOne,
   OneToMany,
   Index,
+  PrimaryColumn,
+  BeforeInsert,
 } from 'typeorm'
 import { Budget } from './Budget'
 import { Category } from './Category'
+import { Base } from './Base'
 
 export const CreditCardGroupName = 'Credit Card Payments'
 
@@ -47,7 +50,7 @@ export class CategoryGroup extends BaseEntity {
   /**
    * Has many categories
    */
-  @OneToMany(() => Category, category => category.categoryGroup, { eager: true })
+  @OneToMany(() => Category, category => category.categoryGroup, { cascade: true, eager: true })
   categories: Promise<Category[]>
 
   public async toResponseModel(): Promise<CategoryGroupModel> {

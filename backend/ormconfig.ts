@@ -1,11 +1,13 @@
+import { ConnectionOptions } from "typeorm"
+
 const { join } = require('path')
 
-module.exports = {
-  type: process.env.BUDGE_DB_DRIVER || 'sqlite',
-  host: process.env.BUDGE_DB_HOST || 'localhost',
-  port: process.env.BUDGE_DB_PORT || 3306,
-  username: process.env.BUDGE_DB_USERNAME,
-  password: process.env.BUDGE_DB_PASSWORD,
+const config: ConnectionOptions = {
+  type: 'sqlite',
+  // host: process.env.BUDGE_DB_HOST || 'localhost',
+  // port: parseInt(process.env.BUDGE_DB_PORT) || 3306,
+  // username: process.env.BUDGE_DB_USERNAME,
+  // password: process.env.BUDGE_DB_PASSWORD,
   database: process.env.BUDGE_DATABASE || './budge.sqlite',
   synchronize: true,
   logging: false,
@@ -18,3 +20,5 @@ module.exports = {
     subscribersDir: 'src/subscribers',
   },
 }
+
+export = config

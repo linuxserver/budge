@@ -8,12 +8,14 @@ import {
   ManyToOne,
   OneToMany,
   Index,
+  PrimaryColumn,
+  BeforeInsert,
 } from 'typeorm'
 import { CategoryGroup } from './CategoryGroup'
 import { CategoryMonth } from './CategoryMonth'
 import { Transaction } from './Transaction'
 import { Budget } from '.'
-import { Account } from './Account'
+import { Base } from './Base'
 
 @Entity('categories')
 export class Category extends BaseEntity {
@@ -60,13 +62,13 @@ export class Category extends BaseEntity {
   /**
    * Has many months
    */
-  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.category)
+  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.category, { cascade: true })
   categoryMonths: CategoryMonth[]
 
   /**
    * Has many transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.category)
+  @OneToMany(() => Transaction, transaction => transaction.category, { cascade: true })
   transactions: Transaction[]
 
   public async toResponseModel(): Promise<CategoryModel> {

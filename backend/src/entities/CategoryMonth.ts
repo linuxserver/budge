@@ -11,6 +11,7 @@ import {
   ManyToOne,
   Index,
   AfterLoad,
+  PrimaryColumn,
 } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
@@ -20,6 +21,7 @@ import { Dinero } from '@dinero.js/core'
 import { add, equal, dinero, subtract, isPositive, isNegative } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
+import { Base } from './Base'
 
 @Entity('category_months')
 export class CategoryMonth extends BaseEntity {

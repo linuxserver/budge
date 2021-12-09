@@ -12,7 +12,7 @@ export interface UserModel {
   /**
    * Unique id
    */
-  id?: string
+  id: string
 
   /**
    * User's email

@@ -14,6 +14,7 @@ import {
   AfterUpdate,
   BeforeUpdate,
   BeforeRemove,
+  PrimaryColumn,
 } from 'typeorm'
 import { Account, AccountTypes } from './Account'
 import { Category } from './Category'
@@ -25,6 +26,7 @@ import { Dinero } from '@dinero.js/core'
 import { add, dinero, multiply, subtract, isPositive } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
+import { Base } from './Base'
 
 export enum TransactionStatus {
   Pending,
@@ -201,8 +203,16 @@ export class Transaction extends BaseEntity {
   private async bookkeepingOnAdd(): Promise<void> {
     const account = await Account.findOne({ id: this.accountId })
 
-    // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!
-    if (this.transferTransactionId !== null) {
+    // No bookkeeping necessary for tracking accounts
+    if (account.type === AccountTypes.Tracking) {
+      return
+    }
+
+    const payee = await Payee.findOne(this.payeeId)
+    const transferAccount = payee.transferAccountId ? await Account.findOne(payee.transferAccountId) : null
+
+    // If this is a transfer to a budget account, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!
+    if (this.transferTransactionId !== null && transferAccount.type !== AccountTypes.Tracking) {
       if (account.type === AccountTypes.CreditCard) {
         // Update CC category
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
@@ -387,6 +397,13 @@ export class Transaction extends BaseEntity {
   private async bookkeepingOnUpdate(): Promise<void> {
     const account = await this.account
 
+    // No bookkeeping necessary for tracking accounts
+    if (account.type === AccountTypes.Tracking) {
+      return
+    }
+
+    // @TODO: hanle update of transactions when going to / from a transfer to / from a non-transfer
+
     if (this.transferTransactionId !== null) {
       // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!!
       if (account.type === AccountTypes.CreditCard) {
@@ -417,47 +434,64 @@ export class Transaction extends BaseEntity {
       // Cat or month has changed so the activity is the entirety of the transaction
       activity = this.amount
 
-      if (originalCategory.inflow === false || account.type !== AccountTypes.CreditCard) {
-        // Category or month has changed, so reset 'original' amount
-        const originalCategoryMonth = await CategoryMonth.findOne(
-          { categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) },
-          { relations: ['budgetMonth'] },
-        )
+      // Revert original category, if set
+      if (this.originalCategoryId) {
+        if (originalCategory && originalCategory.inflow === false || account.type !== AccountTypes.CreditCard) {
+          // Category or month has changed, so reset 'original' amount
+          const originalCategoryMonth = await CategoryMonth.findOne(
+            { categoryId: this.originalCategoryId, month: formatMonthFromDateString(this.originalDate) },
+            { relations: ['budgetMonth'] },
+          )
 
-        await originalCategoryMonth.update({ activity: multiply(this.originalAmount, -1) })
-      }
-
-      if (category.inflow === false || account.type !== AccountTypes.CreditCard) {
-        await this.categoryMonth.update({ activity })
-      }
-
-      if (account.type === AccountTypes.CreditCard) {
-        const ccCategory = await Category.findOne({ trackingAccountId: account.id })
-
-        /**
-         * Don't update CC months for original or current CC category month
-         * if this is inflow.
-         */
-
-        if (originalCategory.inflow === false) {
-          const originalCCMonth = await CategoryMonth.findOne({
-            categoryId: ccCategory.id,
-            month: formatMonthFromDateString(this.originalDate),
-          })
-          await originalCCMonth.update({ activity: this.originalAmount })
+          await originalCategoryMonth.update({ activity: multiply(this.originalAmount, -1) })
         }
 
-        if (category.inflow === false) {
-          const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
-          await currentCCMonth.update({ activity: multiply(this.amount, -1) })
+        if (account.type === AccountTypes.CreditCard) {
+          const ccCategory = await Category.findOne({ trackingAccountId: account.id })
+
+          /**
+           * Don't update CC months for original or current CC category month
+           * if this is inflow.
+           */
+
+          if (originalCategory.inflow === false) {
+            const originalCCMonth = await CategoryMonth.findOne({
+              categoryId: ccCategory.id,
+              month: formatMonthFromDateString(this.originalDate),
+            })
+            await originalCCMonth.update({ activity: this.originalAmount })
+          }
+        }
+      }
+
+      // Apply to new category
+      if (this.categoryId) {
+        if (category.inflow === false || account.type !== AccountTypes.CreditCard) {
+          await this.categoryMonth.update({ activity })
+        }
+
+        if (account.type === AccountTypes.CreditCard) {
+          const ccCategory = await Category.findOne({ trackingAccountId: account.id })
+
+          /**
+           * Don't update CC months for original or current CC category month
+           * if this is inflow.
+           */
+
+          if (category && category.inflow === false) {
+            const currentCCMonth = await CategoryMonth.findOrCreate(this.budgetId, ccCategory.id, this.getMonth())
+            await currentCCMonth.update({ activity: multiply(this.amount, -1) })
+          }
         }
       }
     } else {
-      if (category.inflow === true && account.type === AccountTypes.CreditCard) {
+      if (!this.categoryId) {
         return
       }
 
-      await this.categoryMonth.update({ activity: subtract(this.amount, this.originalAmount) })
+      if (category.inflow === true && account.type === AccountTypes.CreditCard) {
+        return
+      }
 
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
@@ -482,8 +516,16 @@ export class Transaction extends BaseEntity {
   private async bookkeepingOnDelete(): Promise<void> {
     const account = await this.getAccount()
 
+    // No bookkeeping necessary for tracking accounts
+    if (account.type === AccountTypes.Tracking) {
+      return
+    }
+
+    const payee = await Payee.findOne(this.payeeId)
+    const transferAccount = payee.transferAccountId ? await Account.findOne(payee.transferAccountId) : null
+
     // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!!
-    if (this.transferTransactionId !== null) {
+    if (this.transferTransactionId !== null && transferAccount.type !== AccountTypes.Tracking) {
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await Category.findOne({ trackingAccountId: account.id })
         const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: this.getMonth() })

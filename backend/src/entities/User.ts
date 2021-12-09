@@ -9,12 +9,14 @@ import {
   Index,
   CreateDateColumn,
   OneToMany,
+  PrimaryColumn,
 } from 'typeorm'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import config from '../config'
 import { UserModel } from '../models/User'
 import { Budget } from './Budget'
+import { Base } from './Base'
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -30,7 +32,7 @@ export class User extends BaseEntity {
 
   private currentPassword: string
 
-  @OneToMany(() => Budget, budget => budget.user)
+  @OneToMany(() => Budget, budget => budget.user, { cascade: true })
   budgets: Budget[]
 
   @CreateDateColumn()

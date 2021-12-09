@@ -26,6 +26,7 @@ export class BudgetsController extends Controller {
           {
             id: 'def123',
             budgetId: 'abc123',
+            transferPayeeId: 'xyz789',
             name: 'Checking Account',
             type: AccountTypes.Bank,
             balance: 0,

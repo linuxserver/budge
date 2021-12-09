@@ -8,7 +8,7 @@ import { Payee } from '../entities/Payee'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
 import { USD } from '@dinero.js/currencies'
-import { dinero } from 'dinero.js'
+import { dinero, isZero, subtract } from 'dinero.js'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')
@@ -23,6 +23,7 @@ export class AccountsController extends Controller {
     data: {
       id: 'abc123',
       budgetId: 'def456',
+      transferPayeeId: 'xyz789',
       name: 'Checking Account',
       type: AccountTypes.Bank,
       balance: 0,
@@ -56,11 +57,16 @@ export class AccountsController extends Controller {
       // Create a transaction for the starting balance of the account
       if (requestBody.balance !== 0) {
         let categoryId = null
-        let amount = requestBody.balance * -1 // Inverse for CCs
-        if (account.type === AccountTypes.Bank) {
-          const inflowCategory = await Category.findOne({ budgetId: account.budgetId, inflow: true })
-          categoryId = inflowCategory.id
-          amount = requestBody.balance
+
+        let amount = requestBody.balance
+        switch (account.type) {
+          case AccountTypes.CreditCard:
+            amount = amount * -1 // Inverse balance for CCs
+            break
+          case AccountTypes.Bank:
+            const inflowCategory = await Category.findOne({ budgetId: account.budgetId, inflow: true })
+            categoryId = inflowCategory.id
+            break
         }
 
         const startingBalancePayee = await Payee.findOne({ budgetId, name: 'Starting Balance', internal: true })
@@ -91,7 +97,8 @@ export class AccountsController extends Controller {
   }
 
   /**
-   * Update a category group
+   * Update an account's name or balance. Updating a balance will result in a possible
+   * reconciled transaction.
    */
   @Security('jwtRequired')
   @Put('{id}')
@@ -100,6 +107,7 @@ export class AccountsController extends Controller {
     data: {
       id: 'abc123',
       budgetId: 'def456',
+      transferPayeeId: 'xyz789',
       name: 'Checking Account',
       type: AccountTypes.Bank,
       balance: 0,
@@ -132,14 +140,46 @@ export class AccountsController extends Controller {
         }
       }
 
-      account.name = requestBody.name
-      await account.save()
+      if (requestBody.name !== account.name) {
+        account.name = requestBody.name
+        await account.save()
+      }
+
+      if (requestBody.balance) {
+        // Reconcile the account
+        const difference = subtract(dinero({ amount: requestBody.balance, currency: USD }), account.cleared)
+        if (!isZero(difference)) {
+          const reconciliationPayee = await Payee.findOne({ budgetId, name: 'Reconciliation Balance Adjustment', internal: true })
+          const inflowCategory = await Category.findOne({ budgetId: account.budgetId, inflow: true })
+          const startingBalanceTransaction = Transaction.create({
+            budgetId,
+            accountId: account.id,
+            payeeId: reconciliationPayee.id,
+            categoryId: inflowCategory.id,
+            amount: difference,
+            date: new Date(),
+            memo: 'Reconciliation Transaction',
+            status: TransactionStatus.Reconciled,
+          })
+          await startingBalanceTransaction.save()
+        }
+
+        const clearedTransactions = await Transaction.find({ accountId: account.id, status: TransactionStatus.Cleared })
+        console.log(clearedTransactions)
+        for (const transaction of clearedTransactions) {
+          transaction.status = TransactionStatus.Reconciled
+          await transaction.save()
+        }
+
+        await account.reload()
+      }
 
       return {
         message: 'success',
         data: await account.toResponseModel(),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -155,6 +195,7 @@ export class AccountsController extends Controller {
       {
         id: 'abc123',
         budgetId: 'def456',
+        transferPayeeId: 'xyz789',
         name: 'Checking Account',
         type: AccountTypes.Bank,
         balance: 0,
@@ -199,6 +240,7 @@ export class AccountsController extends Controller {
     data: {
       id: 'abc123',
       budgetId: 'def456',
+      transferPayeeId: 'xyz789',
       name: 'Checking Account',
       type: AccountTypes.Bank,
       balance: 0,

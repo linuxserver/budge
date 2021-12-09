@@ -17,25 +17,32 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import LockIcon from '@mui/icons-material/Lock';
 import { inputToDinero, intlFormat } from '../utils/Currency'
-import { dinero, toUnit, isZero, multiply } from "dinero.js";
+import { dinero, toUnit, isZero, isPositive, isNegative, multiply } from "dinero.js";
 import { toSnapshot } from "@dinero.js/core";
 import Tooltip from '@mui/material/Tooltip'
 import { Icon } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover'
-import {
+import PopupState, {
   usePopupState,
   bindTrigger,
   bindPopover,
 } from 'material-ui-popup-state/hooks'
+import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/styles'
+import ReconcileForm from '../components/ReconcileForm'
+import CategoryForm from '../components/CategoryForm'
 
 export default function Account(props) {
+  const theme = useTheme()
   const params = useParams()
   const accountId = params.accountId
 
   const account = useSelector(state => state.accounts.accountById[accountId])
+  const accounts = useSelector(state => state.accounts.accounts)
 
   const [showReconciled, setShowReconciled] = useState(false)
   const [accountName, setAccountName] = useState(account.name)
@@ -43,6 +50,11 @@ export default function Account(props) {
   const editAccountPopupState = usePopupState({
     variant: 'popover',
     popupId: 'editAccount',
+  })
+
+  const reconcilePopupState = usePopupState({
+    variant: 'popover',
+    popupId: 'reconcile-popup',
   })
 
   const dispatch = useDispatch()
@@ -61,7 +73,7 @@ export default function Account(props) {
       (acc, category) => {
         acc[category.id] = category.name
         return acc
-      }, {}
+      }, { '0': 'Category Not Needed' }
     )
   )
   const payeesMap = useSelector(
@@ -122,7 +134,22 @@ export default function Account(props) {
             props.onChange(value)
           }}
           onChange={(e, value) => {
-            props.onChange(value)
+            const transferAccount = accounts.filter(account => account.transferPayeeId === value)
+            const updateProps = {}
+            console.log(transferAccount)
+            if (transferAccount.length === 1 && transferAccount[0].type !== 2) {
+              updateProps.categoryId = '0'
+            } else if (props.rowData.categoryId === '0') {
+              updateProps.categoryId = Object.keys(categoriesMap)[1]
+            }
+
+            const newRow = {
+              ...props.rowData,
+              payeeId: value,
+              ...updateProps,
+            }
+
+            return props.onRowDataChange(newRow)
           }}
           filterOptions={(options, params) => {
             const filtered = filter(options, params);
@@ -155,17 +182,26 @@ export default function Account(props) {
         </Tooltip>
       )
     },
-    {
+    ...(account.type !== 2 ? [{
       title: "Category",
       field: "categoryId",
       lookup: categoriesMap,
-      editComponent: props => (
-        <MTableEditField
-          { ...props }
-          variant="standard"
-        />
-      ),
-    },
+      editComponent: function (props) {
+        const disabled = props.rowData.categoryId === '0'
+        props.columnDef.lookup = {...categoriesMap}
+        if (disabled === false) {
+          delete props.columnDef.lookup['0']
+        }
+
+        return (
+          <MTableEditField
+            { ...props }
+            variant="standard"
+            disabled={disabled}
+          />
+        )
+      },
+    }] : []),
     {
       title: "Memo",
       field: "memo",
@@ -251,18 +287,18 @@ export default function Account(props) {
     {
       title: "Status",
       field: "status",
-      editable: "never",
+      editComponent: props => (<></>), // Doing this so that the button isn't available to click when in edit mode
       render: rowData => {
         let statusIcon = <></>
         switch (rowData.status) {
           case 0: // pending
-            statusIcon = <AccessTimeIcon fontSize="small" />
+            statusIcon = <AccessTimeIcon color="disabled" fontSize="small" />
             break
           case 1: // cleared
-            statusIcon = <CheckCircleOutlineIcon fontSize="small" />
+            statusIcon = <CheckCircleOutlineIcon color="success" fontSize="small" />
             break
           case 2: // reconciled
-            statusIcon = <LockIcon fontSize="small" />
+            statusIcon = <LockIcon color="success" fontSize="small" />
             break
         }
 
@@ -271,7 +307,10 @@ export default function Account(props) {
             size="small"
             style={{padding: 0}}
             aria-label="transaction status"
-            onClick={() => setTransactionStatus(rowData)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setTransactionStatus(rowData)
+            }}
             color="inherit"
           >
             {statusIcon}
@@ -310,7 +349,7 @@ export default function Account(props) {
         date: newRow.date,
         memo: newRow.memo,
         payeeId: newRow.payeeId,
-        categoryId: newRow.categoryId,
+        categoryId: newRow.categoryId === '0' ? null : newRow.categoryId,
         status: 0,
       }
     }))
@@ -332,6 +371,9 @@ export default function Account(props) {
     onTransactionEdit({
       ...rowData,
       status: rowData.status === 0 ? 1 : 0,
+      amount: toSnapshot(rowData.amount),
+      inflow: toSnapshot(rowData.inflow),
+      outflow: toSnapshot(rowData.outflow),
     }, { ...rowData })
   }
 
@@ -362,7 +404,7 @@ export default function Account(props) {
         date: newRow.date,
         memo: newRow.memo,
         payeeId: newRow.payeeId,
-        categoryId: newRow.categoryId,
+        categoryId: newRow.categoryId === '0' ? null : newRow.categoryId,
         amount,
         status: newRow.status,
       }
@@ -401,6 +443,14 @@ export default function Account(props) {
     dispatch(editAccount({ id: account.id, name: accountName }))
   }
 
+  const getBalanceColor = (amount) => {
+    if (isNegative(amount)) {
+      return theme.palette.error.main
+    }
+
+    return theme.palette.success.main
+  }
+
   return (
     <div style={{ maxWidth: '100%' }}>
       <MaterialTable
@@ -412,47 +462,129 @@ export default function Account(props) {
         }}
         title={(
           <>
-            <div>
-              <h3 style={{cursor: 'pointer', display: 'inline-block'}} {...bindTrigger(editAccountPopupState)}>
-                {account.name}
-              </h3>
-              <Popover
-                {...bindPopover(editAccountPopupState)}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'center',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'center',
-                }}
-              >
-                <Box sx={{p: 2}}>
-                  <TextField
-                    autoFocus
-                    margin="dense"
-                    id="account-name"
-                    label="Account Name"
-                    type="text"
-                    fullWidth
-                    variant="standard"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                  />
-                  <Button sx={{ p: 1 }} onClick={editAccountName}>Save</Button>
-                </Box>
-              </Popover>
-            </div>
+            <Stack
+              direction="row"
+              justifyContent="center"
+              alignItems="center"
+              spacing={2}
+            >
+              <div>
+                <h3 style={{cursor: 'pointer', display: 'inline-block'}} {...bindTrigger(editAccountPopupState)}>
+                  {account.name}
+                </h3>
+                <Popover
+                  {...bindPopover(editAccountPopupState)}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                >
+                  <Box sx={{ p: 2 }}>
+                    <TextField
+                      autoFocus
+                      margin="dense"
+                      id="account-name"
+                      label="Account Name"
+                      type="text"
+                      fullWidth
+                      variant="standard"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                    />
+                    <Stack
+                      direction="row"
+                      justifyContent="flex-end"
+                      alignItems="center"
+                      spacing={2}
+                    >
+                      <Button sx={{ p: 1 }} onClick={editAccountName}>Save</Button>
+                    </Stack>
+                  </Box>
+                </Popover>
+              </div>
 
-            <div style={{ align: 'left' }}>
-              {intlFormat(account.cleared)} + {intlFormat(account.uncleared)} = {intlFormat(account.balance)}
-            </div>
+              <div>
+                <Stack
+                  direction="column"
+                  justifyContent="center"
+                  alignItems="center"
+                  // spacing={2}
+                >
+                  <Typography
+                    style={{
+                      color: getBalanceColor(account.cleared),
+                      fontWeight: "bold",
+                    }}
+                  >{intlFormat(account.cleared)}</Typography>
+                  <Typography variant="caption">Cleared</Typography>
+                </Stack>
+              </div>
+
+              <div>+</div>
+
+              <div>
+                <Stack
+                  direction="column"
+                  justifyContent="center"
+                  alignItems="center"
+                  // spacing={2}
+                >
+                  <Typography
+                    style={{
+                      color: getBalanceColor(account.uncleared),
+                      fontWeight: "bold",
+                    }}
+                  >{intlFormat(account.uncleared)}</Typography>
+                  <Typography variant="caption">Uncleared</Typography>
+                </Stack>
+              </div>
+
+              <div>=</div>
+
+              <div>
+                <Stack
+                  direction="column"
+                  justifyContent="center"
+                  alignItems="center"
+                  // spacing={2}
+                >
+                  <Typography
+                    style={{
+                      color: getBalanceColor(account.balance),
+                      fontWeight: "bold",
+                    }}
+                  >{intlFormat(account.balance)}</Typography>
+                  <Typography variant="caption">Working Balance</Typography>
+                </Stack>
+              </div>
+
+              <div>
+                <Button
+                  {...bindTrigger(reconcilePopupState)}
+                  variant="outlined"
+                  size="small"
+                >
+                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                    Reconcile
+                  </Typography>
+                </Button>
+                <ReconcileForm
+                  key={account.cleared}
+                  popupState={reconcilePopupState}
+                  accountId={account.id}
+                  balance={account.cleared}
+                />
+              </div>
+            </Stack>
           </>
         )}
         options={{
           padding: "dense",
-          pageSize: 100,
+          pageSize: 20,
           addRowPosition: 'first',
+          rowStyle: rowData => ({
+            fontSize: theme.typography.subtitle2.fontSize,
+          }),
         }}
         components={{
           Row: props => (

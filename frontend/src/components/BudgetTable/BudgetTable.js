@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
 import MaterialTable, { MTableCell, MTableEditCell } from "@material-table/core";
-import { TableIcons } from '../utils/Table'
-import { fetchBudgetMonth, updateCategoryMonth, setCurrentMonth, fetchCategoryMonths, refreshBudget } from "../redux/slices/Budgets";
+import { TableIcons } from '../../utils/Table'
+import { fetchBudgetMonth, updateCategoryMonth, fetchCategoryMonths, refreshBudget } from "../../redux/slices/Budgets";
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import AddIcon from '@mui/icons-material/Add';
 import Chip from '@mui/material/Chip';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { formatMonthFromDateString, getDateFromString } from "../utils/Date";
 import Grid from '@mui/material/Grid';
 import { dinero, add, equal, isPositive, isNegative, isZero, toUnit } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
-import { inputToDinero, intlFormat } from '../utils/Currency'
-import BudgetMonthPicker from "./BudgetMonthPicker";
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
+import { inputToDinero, intlFormat } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
+import BudgetTableHeader from './BudgetTableHeader'
+import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state'
+import CategoryGroupForm from '../CategoryGroupForm'
+import CategoryForm from '../CategoryForm'
 
 export default function BudgetTable(props) {
   const theme = useTheme()
@@ -112,12 +109,6 @@ export default function BudgetTable(props) {
   })
 
   /**
-  * State block
-  */
- const [monthPickerOpen, setMonthPickerOpen] = useState(false)
- const [monthPickerAnchor, setMonthPickerAnchor] = useState(null)
-
-  /**
   * Dynamic variables
   */
   let cellEditing = false
@@ -133,25 +124,72 @@ export default function BudgetTable(props) {
       align: "left",
       render: (rowData) => (
         <Grid container>
-          <div style={{cursor: 'pointer', display: 'inline-block'}} onClick={() => {
-            if (rowData.trackingAccountId) {
-              return
-            }
-            if (rowData.groupId) {
-              openCategoryDialog({ name: categoriesMap[rowData.categoryId], categoryId: rowData.categoryId, categoryGroupId: rowData.groupId })
-            } else {
-              openCategoryGroupDialog({ name: categoriesMap[rowData.categoryId], categoryGroupId: rowData.id })
-            }
-          }}>
-            {categoriesMap[rowData.categoryId]}
-          </div>
+          <PopupState
+            variant="popover"
+            popupId={`popover-${rowData.categoryId}`}
+          >
+            {(popupState) => (
+              <div>
+                <div
+                  style={{
+                    display: 'inline-block',
+                    paddingRight: '5px',
+                    ...!rowData.trackingAccountId && {
+                      cursor: 'pointer',
+                    }
+                  }}
+                  {...!rowData.trackingAccountId && bindTrigger(popupState)}
+                >
+                  {categoriesMap[rowData.categoryId]}
+                </div>
+                {
+                  !rowData.groupId && (
+                    <CategoryGroupForm
+                      popupState={popupState}
+                      mode={'edit'}
+                      name={categoriesMap[rowData.categoryId]}
+                      categoryId={rowData.categoryId}
+                    />
+                  )
+                }
+                {
+                  rowData.groupId && (
+                    <CategoryForm
+                      popupState={popupState}
+                      mode={'edit'}
+                      name={categoriesMap[rowData.categoryId]}
+                      categoryId={rowData.categoryId}
+                      categoryGroupId={rowData.groupId}
+                    />
+                  )
+                }
+              </div>
+            )}
+          </PopupState>
           {
-            !rowData.groupId && (
-              <IconButton style={{padding: 0}} aria-label="add" size="small" onClick={(event) => {
-                openCategoryDialog({ categoryGroupId: rowData.id })
-              }}>
-                <AddCircleIcon fontSize="small" />
-              </IconButton>
+            !rowData.groupId && !rowData.trackingAccountId && (
+              <PopupState
+                variant="popover"
+                popupId={`popover-${rowData.categoryId}`}
+              >
+                {(popupState) => (
+                  <div>
+                    <IconButton
+                      {...bindTrigger(popupState)}
+                      style={{padding: 0}}
+                      aria-label="add"
+                      size="small"
+                    >
+                      <AddCircleIcon fontSize="small" />
+                    </IconButton>
+                    <CategoryForm
+                      popupState={popupState}
+                      mode={'create'}
+                      categoryGroupId={rowData.id}
+                    />
+                  </div>
+                )}
+              </PopupState>
             )
           }
         </Grid>
@@ -252,41 +290,6 @@ export default function BudgetTable(props) {
     )
   }
 
-  const navigateMonth = (direction) => {
-    const monthDate = new Date(Date.UTC(...month.split('-')))
-    monthDate.setDate(1)
-    monthDate.setMonth(monthDate.getMonth() + direction)
-    dispatch(setCurrentMonth(monthDate))
-  }
-
-  const setMonth = async (month) => {
-    setMonthPickerOpen(false)
-
-    if (!month) {
-      return
-    }
-
-    await dispatch(setCurrentMonth(month))
-  }
-
-  const openMonthPicker = event => {
-    if (monthPickerOpen) {
-      setMonthPickerOpen(false)
-      return
-    }
-
-    setMonthPickerOpen(true)
-    setMonthPickerAnchor(event.currentTarget)
-  }
-
-  const nextMonth = getDateFromString(month)
-  nextMonth.setMonth(nextMonth.getMonth() + 1)
-  const nextMonthDisabled = !availableMonths.includes(formatMonthFromDateString(nextMonth))
-
-  const prevMonth = getDateFromString(month)
-  prevMonth.setMonth(prevMonth.getMonth() - 1)
-  const prevMonthDisabled = !availableMonths.includes(formatMonthFromDateString(prevMonth))
-
   return (
     <>
       <MaterialTable
@@ -299,39 +302,12 @@ export default function BudgetTable(props) {
         components={{
           Toolbar: props => {
             return (
-              <>
-                <Grid sx={{ p: 2 }} container spacing={2}>
-                  <Grid item>
-                    <BudgetMonthPicker
-                      open={monthPickerOpen}
-                      currentMonth={month}
-                      minDate={availableMonths[0]}
-                      maxDate={availableMonths[availableMonths.length - 1]}
-                      anchorEl={monthPickerAnchor}
-                      onClose={setMonth}
-                    />
-                    <div className="budget-month-navigation">
-                      <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
-                        <ArrowBackIosNewIcon />
-                      </IconButton>
-                      <Button onClick={openMonthPicker}>
-                        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long'})}
-                      </Button>
-                      <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
-                        <ArrowForwardIosIcon />
-                      </IconButton>
-                    </div>
-                  </Grid>
-                  <Grid item>
-                    <Button aria-describedby="category-group-add" variant="outlined" size="small" onClick={openCategoryGroupDialog}>
-                      + Category Group
-                    </Button>
-                  </Grid>
-                </Grid>
-                <Grid container spacing={2} sx={{ p: 2 }}>
-
-                </Grid>
-              </>
+              <BudgetTableHeader
+                month={month}
+                availableMonths={availableMonths}
+                budget={budget}
+                openCategoryGroupDialog={openCategoryGroupDialog}
+              />
             )
           },
           Cell: budgetTableCell,
@@ -384,8 +360,13 @@ export default function BudgetTable(props) {
           // toolbar: false,
           draggable: false,
           sorting: false,
+          headerStyle: { position: 'sticky', top: 0 },
           rowStyle: rowData => ({
-            ...!rowData.groupId && {backgroundColor: theme.palette.action.hover}
+            ...!rowData.groupId && {
+              backgroundColor: theme.palette.action.hover,
+              fontWeight: 'bold',
+            },
+            fontSize: theme.typography.subtitle2.fontSize,
           }),
           // headerStyle: { position: 'sticky', top: 0 }
         }}

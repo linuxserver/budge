@@ -8,6 +8,8 @@ import {
   ManyToOne,
   OneToMany,
   AfterInsert,
+  PrimaryColumn,
+  BeforeInsert,
 } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
@@ -21,6 +23,7 @@ import { Dinero } from '@dinero.js/core'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
+import { Base } from './Base'
 
 @Entity('budgets')
 export class Budget extends BaseEntity {
@@ -55,31 +58,31 @@ export class Budget extends BaseEntity {
   /**
    * Has many accounts
    */
-  @OneToMany(() => Account, account => account.budget)
+  @OneToMany(() => Account, account => account.budget, { cascade: true })
   accounts: Promise<Account[]>
 
   /**
    * Has many categories
    */
-  @OneToMany(() => Category, category => category.budget)
+  @OneToMany(() => Category, category => category.budget, { cascade: true })
   categories: Promise<Category[]>
 
   /**
    * Has many category groups
    */
-  @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget)
+  @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget, { cascade: true })
   categoryGroups: Promise<CategoryGroup[]>
 
   /**
    * Has many budget months
    */
-  @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget)
+  @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget, { cascade: true })
   months: Promise<BudgetMonth[]>
 
   /**
    * Has many budget transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.budget)
+  @OneToMany(() => Transaction, transaction => transaction.budget, { cascade: true })
   transactions: Promise<Transaction[]>
 
   @AfterInsert()
@@ -124,6 +127,13 @@ export class Budget extends BaseEntity {
       internal: true,
     })
     await startingBalancePayee.save()
+
+    const reconciliationPayee = Payee.create({
+      budgetId: this.id,
+      name: 'Reconciliation Balance Adjustment',
+      internal: true,
+    })
+    await reconciliationPayee.save()
   }
 
   public async toResponseModel(): Promise<BudgetModel> {
