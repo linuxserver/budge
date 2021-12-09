@@ -1,0 +1,20 @@
+{
+  "name": "ynab_import",
+  "version": "1.0.0",
+  "description": "",
+  "main": "import.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@dinero.js/currencies": "^2.0.0-alpha.8",
+    "csv-parse": "^4.16.3",
+    "dinero.js": "^2.0.0-alpha.8",
+    "got": "^11.8.3",
+    "prompt": "^1.2.0"
+  },
+  "type": "module"
+}

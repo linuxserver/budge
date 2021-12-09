@@ -1,9 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api';
+import { fetchAccountTransactions } from './Transactions'
 
-export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, balance, date}, { getState }) => {
+export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, balance, date}, { getState, dispatch }) => {
   const store = getState()
-  return await api.createAccount(name, accountType, balance, date, store.budgets.activeBudget.id);
+  const account = await api.createAccount(name, accountType, balance, date, store.budgets.activeBudget.id);
+
+  dispatch(fetchAccountTransactions({ accountId: account.id }))
+
+  return account
 })
 
 export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name, balance }, { getState }) => {
