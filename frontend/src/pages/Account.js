@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import MaterialTable, { MTableBodyRow, MTableEditField } from "@material-table/core";
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from "react-router";
@@ -17,14 +17,12 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import LockIcon from '@mui/icons-material/Lock';
 import { inputToDinero, intlFormat } from '../utils/Currency'
-import { dinero, toUnit, isZero, isPositive, isNegative, multiply } from "dinero.js";
+import { dinero, toUnit, isZero, isNegative, multiply } from "dinero.js";
 import { toSnapshot } from "@dinero.js/core";
 import Tooltip from '@mui/material/Tooltip'
-import { Icon } from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover'
-import PopupState, {
+import {
   usePopupState,
   bindTrigger,
   bindPopover,
@@ -34,7 +32,6 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/styles'
 import ReconcileForm from '../components/ReconcileForm'
-import CategoryForm from '../components/CategoryForm'
 
 export default function Account(props) {
   const theme = useTheme()
@@ -290,31 +287,37 @@ export default function Account(props) {
       editComponent: props => (<></>), // Doing this so that the button isn't available to click when in edit mode
       render: rowData => {
         let statusIcon = <></>
+        let tooltipText = ''
         switch (rowData.status) {
           case 0: // pending
+            tooltipText = "Pending"
             statusIcon = <AccessTimeIcon color="disabled" fontSize="small" />
             break
           case 1: // cleared
+            tooltipText = "Cleared"
             statusIcon = <CheckCircleOutlineIcon color="success" fontSize="small" />
             break
           case 2: // reconciled
+            tooltipText = "Reconciled"
             statusIcon = <LockIcon color="success" fontSize="small" />
             break
         }
 
         return (
-          <IconButton
-            size="small"
-            style={{padding: 0}}
-            aria-label="transaction status"
-            onClick={(e) => {
-              e.stopPropagation()
-              setTransactionStatus(rowData)
-            }}
-            color="inherit"
-          >
-            {statusIcon}
-          </IconButton>
+          <Tooltip title={tooltipText}>
+            <IconButton
+              size="small"
+              style={{padding: 0}}
+              aria-label="transaction status"
+              onClick={(e) => {
+                e.stopPropagation()
+                setTransactionStatus(rowData)
+              }}
+              color="inherit"
+            >
+              {statusIcon}
+            </IconButton>
+          </Tooltip>
         )
       },
     },
@@ -618,7 +621,13 @@ export default function Account(props) {
         }}
         actions={[
           {
-            icon: () => (<LockIcon></LockIcon>),
+            icon: () => (
+              <LockIcon
+                style={{
+                  color: showReconciled ? theme.palette.text.primary : theme.palette.text.disabled,
+                }}
+              />
+            ),
             tooltip: 'Show reconciled transactions',
             isFreeAction: true,
             onClick: (event) => setShowReconciled(!showReconciled)

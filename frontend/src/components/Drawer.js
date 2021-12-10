@@ -205,7 +205,7 @@ export default function AppDrawer(props) {
             selected={selectedItem === menuItemConfig.name}
           >
             <ListItemIcon style={{minWidth: '40px'}}>
-              {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+              {index % 2 === 0 ? <AccountBalanceIcon /> : <MailIcon />}
             </ListItemIcon>
             <ListItemText primary={menuItemConfig.name} />
           </ListItemButton>

@@ -16,6 +16,7 @@ import BudgetTableHeader from './BudgetTableHeader'
 import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
 import CategoryForm from '../CategoryForm'
+import Tooltip from '@mui/material/Tooltip'
 
 export default function BudgetTable(props) {
   const theme = useTheme()
@@ -240,6 +241,15 @@ export default function BudgetTable(props) {
             }
           }
 
+          // Tooltip for CC warning
+          if (rowData.trackingAccountId && color === 'warning') {
+            return (
+              <Tooltip title="Month is underfunded, this amount may not be accurate">
+                <Chip size="small" label={value} color={color}></Chip>
+              </Tooltip>
+            )
+          }
+
           return <Chip size="small" label={value} color={color}></Chip>
         }
       },
@@ -324,8 +334,11 @@ export default function BudgetTable(props) {
           },
           EditField: props => {
             const childProps = { ...props }
+
+            // This prevents console errors, can't pass these to the DOM
             delete childProps.columnDef
             delete childProps.rowData
+
             return (
               <TextField
                 { ...childProps }
