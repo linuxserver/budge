@@ -23,8 +23,8 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'varchar', unique: true })
-  @Index()
+  @Column({ type: 'varchar' })
+  @Index({ unique: true })
   email: string
 
   @Column({ type: 'varchar' })
