@@ -389,12 +389,12 @@ class YNAB {
       description: 'Budget CSV Location',
       name: 'budget',
       required: true,
-      default: "/config/budget.csv",
+      default: "budget.csv",
     }, {
       description: 'Register CSV Location',
       name: 'register',
       required: true,
-      default: "/config/register.csv",
+      default: "register.csv",
     }]
   ))
   const ynab = new YNAB('', '', fileInfo.register, fileInfo.budget)
@@ -404,19 +404,7 @@ class YNAB {
     process.exit(1)
   }
 
-  let category_groups = await ynab.getCategories()
-  for (let category_group of category_groups) {
-    // Skip auto-generated  CC group / categories
-    if (category_group.name === 'Credit Card Payments') {
-      continue
-    }
-
-    const categoryGroup = await budge.findOrCreateCategoryGroup(category_group.name)
-    for (let ynab_category of category_group['categories']) {
-      const category = await budge.findOrCreateCategory(ynab_category.name, categoryGroup.id)
-    }
-  }
-
+  const importMap = []
   let ynab_accounts = await ynab.getAccounts()
   for (let ynab_account of ynab_accounts) {
     const run = (await prompt.get({
@@ -444,8 +432,8 @@ class YNAB {
         newAccountType = (await prompt.get({
           name: 'accounttype',
           message: 'Account type is unknown, specify the account type: 0 = Bank, 1 = Credit Card, 2 = Tracking',
-          validator: /0|1|2|skip/,
-          warning: 'Must respond 0, 1, 2 or skip',
+          validator: /0|1|2/,
+          warning: 'Must respond 0, 1, or 2',
           default: 0,
         })).accounttype
         break
@@ -454,12 +442,40 @@ class YNAB {
         continue
     }
 
-    if (!newAccountType || newAccountType === 'skip') {
+    const transfer = (await prompt.get({
+      name: 'transfer',
+      message: `Run transfers for account ${ynab_account.name}?`,
+      validator: /y[es]*|n[o]?/,
+      warning: 'Must respond yes or no',
+      default: 'no'
+    })).transfer
+
+    importMap.push({
+      ...ynab_account,
+      run_transfers: transfer,
+      new_account_type: newAccountType,
+    })
+  }
+
+  let category_groups = await ynab.getCategories()
+  for (let category_group of category_groups) {
+    // Skip auto-generated  CC group / categories
+    if (category_group.name === 'Credit Card Payments') {
       continue
     }
 
-    const transactions = await ynab.getTransactions()
+    const categoryGroup = await budge.findOrCreateCategoryGroup(category_group.name)
+    for (let ynab_category of category_group['categories']) {
+      const category = await budge.findOrCreateCategory(ynab_category.name, categoryGroup.id)
+    }
+  }
 
+  const transactions = (await ynab.getTransactions()).sort(function(a,b){
+    return a.date - b.date
+  })
+
+  // Have to create all accounts before importing transactions because we handle transfers too
+  for (const ynab_account of importMap) {
     let account = null
 
     // Create account with starting balance
@@ -467,13 +483,17 @@ class YNAB {
       if (transaction.payee_name == "Starting Balance" && transaction.account_name === ynab_account.name) {
         console.log(`Setting starting balance of account ${ynab_account.name} to ${toUnit(transaction.amount)}`)
 
-        if (newAccountType == 1) {
-          account = await budge.findOrCreateAccount(ynab_account.name, newAccountType, multiply(transaction.amount, -1), transaction.date)
+        if (ynab_account.new_account_type == 1) {
+          account = await budge.findOrCreateAccount(ynab_account.name, ynab_account.new_account_type, multiply(transaction.amount, -1), transaction.date)
         } else {
-          account = await budge.findOrCreateAccount(ynab_account.name, newAccountType, transaction.amount, transaction.date)
+          account = await budge.findOrCreateAccount(ynab_account.name, ynab_account.new_account_type, transaction.amount, transaction.date)
         }
       }
     }
+  }
+
+  for (const ynab_account of importMap) {
+    const account = await budge.findOrCreateAccount(ynab_account.name)
 
     // Pull in transactions, but skip transfers until all accounts are in
     for (let transaction of transactions) {
@@ -505,61 +525,47 @@ class YNAB {
         status: transaction.status,
       })
     }
-  }
-
-  for (let ynab_account of ynab_accounts) {
-    const run = (await prompt.get({
-      name: 'yesno',
-      message: `Run transfers for account ${ynab_account.name}?`,
-      validator: /y[es]*|n[o]?/,
-      warning: 'Must respond yes or no',
-      default: 'no'
-    })).yesno
-
-    if (run === 'no') {
-      continue
-    }
-
-    const transactions = await ynab.getTransactions()
-
-    const account = await budge.findOrCreateAccount(ynab_account.name)
 
     // Pull in transfer transactions
-    for (let transaction of transactions) {
-      if (transaction.account_name !== ynab_account.name) {
-        continue
-      }
+    if (ynab_account.run_transfers === 'yes') {
+      for (let transaction of transactions) {
+        if (transaction.account_name !== ynab_account.name) {
+          continue
+        }
 
-      if (!transaction.payee_name.match(/Transfer : /)) {
-        continue
-      }
+        if (!transaction.payee_name.match(/Transfer : /)) {
+          continue
+        }
 
-      console.log(`Importing transaction: ${transaction.payee_name}, ${toUnit(transaction.amount)}, ${transaction.date.toISOString().split('T')[0]}`)
-      let category = null
-      if (transaction.category_name === 'Ready to Assign') {
-        transaction.category_name = 'To be Budgeted'
-      }
-      if (transaction.category_name) {
-        category = await budge.findOrCreateCategory(transaction.category_name)
-      }
+        console.log(`Importing transaction: ${transaction.payee_name}, ${toUnit(transaction.amount)}, ${transaction.date.toISOString().split('T')[0]}`)
+        let category = null
+        if (transaction.category_name === 'Ready to Assign') {
+          transaction.category_name = 'To be Budgeted'
+        }
+        if (transaction.category_name) {
+          category = await budge.findOrCreateCategory(transaction.category_name)
+        }
 
-      const payee = await budge.findOrCreatePayee(transaction.payee_name)
-      await budge.postTransaciton({
-        accountId: account.id,
-        payeeId: payee.id,
-        amount: transaction.amount.toJSON().amount,
-        date: transaction.date.toISOString().split('T')[0],
-        memo: transaction.memo,
-        categoryId: category ? category.id : null,
-        status: transaction.status,
-      })
+        const payee = await budge.findOrCreatePayee(transaction.payee_name)
+        await budge.postTransaciton({
+          accountId: account.id,
+          payeeId: payee.id,
+          amount: transaction.amount.toJSON().amount,
+          date: transaction.date.toISOString().split('T')[0],
+          memo: transaction.memo,
+          categoryId: category ? category.id : null,
+          status: transaction.status,
+        })
+      }
     }
   }
 
   const categoryMonths = await ynab.getCategoryMonths()
   for (const categoryMonth of categoryMonths) {
-    const category = await budge.findOrCreateCategory(categoryMonth.name)
-    console.log(`Updating category month ${category.name} - ${categoryMonth.month}: ${categoryMonth.budgeted}`)
-    await budge.updateCategoryMonth(category.id, categoryMonth.month, categoryMonth.budgeted)
+    if (parseInt(categoryMonth.budgeted) !== 0) {
+      const category = await budge.findOrCreateCategory(categoryMonth.name)
+      console.log(`Updating category month ${category.name} - ${categoryMonth.month}: ${categoryMonth.budgeted}`)
+      await budge.updateCategoryMonth(category.id, categoryMonth.month, categoryMonth.budgeted)
+    }
   }
 })()

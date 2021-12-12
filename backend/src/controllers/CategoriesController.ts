@@ -11,6 +11,8 @@ import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } f
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { USD } from '@dinero.js/currencies'
 import { dinero } from 'dinero.js'
+import { getCustomRepository, getRepository } from 'typeorm'
+import { CategoryMonths } from '../repositories/CategoryMonths'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -40,7 +42,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryGroupsResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -48,7 +50,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroups: CategoryGroup[] = await CategoryGroup.find({ where: { budgetId } })
+      const categoryGroups: CategoryGroup[] = await getRepository(CategoryGroup).find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -83,7 +85,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryGroupResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -91,11 +93,11 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroup: CategoryGroup = CategoryGroup.create({
+      const categoryGroup: CategoryGroup = getRepository(CategoryGroup).create({
         ...requestBody,
         budgetId,
       })
-      await categoryGroup.save()
+      await getRepository(CategoryGroup).save(categoryGroup)
 
       return {
         message: 'success',
@@ -131,7 +133,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryGroupResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -139,9 +141,9 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroup = await CategoryGroup.findOne(id)
+      const categoryGroup = await getRepository(CategoryGroup).findOne(id)
       categoryGroup.name = requestBody.name
-      await categoryGroup.save()
+      await getRepository(CategoryGroup).update(categoryGroup.id, categoryGroup)
 
       return {
         message: 'success',
@@ -176,7 +178,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -184,11 +186,11 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category: Category = Category.create({
+      const category: Category = getRepository(Category).create({
         ...requestBody,
         budgetId,
       })
-      await category.save()
+      await getRepository(Category).save(category)
 
       return {
         message: 'success',
@@ -224,7 +226,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -232,7 +234,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category = await Category.findOne(id, { relations: ['categoryGroup'] })
+      const category = await getRepository(Category).findOne(id, { relations: ['categoryGroup'] })
 
       category.name = requestBody.name
       if (category.categoryGroupId !== requestBody.categoryGroupId) {
@@ -240,13 +242,14 @@ export class CategoriesController extends Controller {
         category.categoryGroupId = requestBody.categoryGroupId
       }
 
-      await category.save()
+      await getRepository(Category).update(category.id, category)
 
       return {
         message: 'success',
         data: await category.toResponseModel(),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -277,7 +280,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryMonthResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -285,8 +288,9 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
-      await categoryMonth.update({ budgeted: dinero({ amount: requestBody.budgeted, currency: USD }) })
+      const categoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, categoryId, month)
+      categoryMonth.update({ budgeted: dinero({ amount: requestBody.budgeted, currency: USD }) })
+      await getRepository(CategoryMonth).save(categoryMonth)
 
       return {
         message: 'success',
@@ -324,7 +328,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryMonthsResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -332,7 +336,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryMonths = await CategoryMonth.find({ categoryId })
+      const categoryMonths = await getRepository(CategoryMonth).find({ categoryId })
 
       return {
         message: 'success',

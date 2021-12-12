@@ -3,6 +3,7 @@ import { Get, Route, Path, Security, Post, Patch, Body, Controller, Tags, Reques
 import { User } from '../entities'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
+import { getManager, getRepository } from 'typeorm'
 
 @Tags('Users')
 @Route('users')
@@ -23,15 +24,19 @@ export class UsersController extends Controller {
   public async createUser(@Body() requestBody: UserCreateRequest): Promise<UserResponse | ErrorResponse> {
     const { email } = requestBody
 
-    const emailCheck: User = await User.findOne({ email })
+    const emailCheck: User = await getRepository(User).findOne({ email })
     if (emailCheck) {
       this.setStatus(400)
       return { message: 'Email already exists' }
     }
 
     try {
-      const newUser: User = User.create({ ...requestBody })
-      await newUser.save()
+      const newUser = await getManager().transaction(async transactionalEntityManager => {
+        const newUser: User = transactionalEntityManager.getRepository(User).create({ ...requestBody })
+        await transactionalEntityManager.getRepository(User).save(newUser)
+        return newUser
+      });
+
       return {
         message: 'success',
         data: await newUser.toResponseModel(),
@@ -60,7 +65,7 @@ export class UsersController extends Controller {
   })
   public async getUserByEmail(@Path() email: string): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await User.findOne({ email })
+      const user: User = await getRepository(User).findOne({ email })
 
       return {
         data: await user.toResponseModel(),
@@ -119,8 +124,8 @@ export class UsersController extends Controller {
     delete requestBody.currentPassword
 
     try {
-      let user: User = await User.findOne(request.user.id)
-      user = await User.merge(user, { ...requestBody })
+      let user: User = await getRepository(User).findOne(request.user.id)
+      user = await getRepository(User).merge(user, { ...requestBody })
       return {
         data: await user.toResponseModel(),
         message: 'success',

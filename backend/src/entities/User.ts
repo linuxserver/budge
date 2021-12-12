@@ -19,7 +19,7 @@ import { Budget } from './Budget'
 import { Base } from './Base'
 
 @Entity('users')
-export class User extends BaseEntity {
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string
 

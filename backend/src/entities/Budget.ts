@@ -3,13 +3,10 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   CreateDateColumn,
   ManyToOne,
   OneToMany,
   AfterInsert,
-  PrimaryColumn,
-  BeforeInsert,
 } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
@@ -26,7 +23,7 @@ import { CurrencyDBTransformer } from '../models/Currency'
 import { Base } from './Base'
 
 @Entity('budgets')
-export class Budget extends BaseEntity {
+export class Budget {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -84,57 +81,6 @@ export class Budget extends BaseEntity {
    */
   @OneToMany(() => Transaction, transaction => transaction.budget, { cascade: true })
   transactions: Promise<Transaction[]>
-
-  @AfterInsert()
-  private async initialBudgetSetup(): Promise<void> {
-    const today = getMonthString()
-    const prevMonth = getMonthStringFromNow(-1)
-    const nextMonth = getMonthStringFromNow(1)
-
-    // Create initial budget months
-    await Promise.all(
-      [prevMonth, today, nextMonth].map(month => {
-        return BudgetMonth.create({ budgetId: this.id, month }).save()
-      }),
-    )
-
-    // Create internal categories
-    const internalCategoryGroup = CategoryGroup.create({
-      budgetId: this.id,
-      name: 'Internal Category',
-      internal: true,
-      locked: true,
-    })
-    await internalCategoryGroup.save()
-
-    await Promise.all(
-      ['To be Budgeted'].map(name => {
-        const internalCategory = Category.create({
-          budgetId: this.id,
-          name: name,
-          categoryGroupId: internalCategoryGroup.id,
-          inflow: true,
-          locked: true,
-        })
-        return internalCategory.save()
-      }),
-    )
-
-    // Create special 'Starting Balance' payee
-    const startingBalancePayee = Payee.create({
-      budgetId: this.id,
-      name: 'Starting Balance',
-      internal: true,
-    })
-    await startingBalancePayee.save()
-
-    const reconciliationPayee = Payee.create({
-      budgetId: this.id,
-      name: 'Reconciliation Balance Adjustment',
-      internal: true,
-    })
-    await reconciliationPayee.save()
-  }
 
   public async toResponseModel(): Promise<BudgetModel> {
     return {

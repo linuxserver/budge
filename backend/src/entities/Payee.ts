@@ -16,7 +16,7 @@ import { Transaction } from './Transaction'
 import { Base } from './Base'
 
 @Entity('payees')
-export class Payee extends BaseEntity {
+export class Payee extends Base {
   @PrimaryGeneratedColumn('uuid')
   id: string
 

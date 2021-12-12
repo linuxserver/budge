@@ -9,6 +9,11 @@ import dbConfig from '../ormconfig'
     // await sleep(5000)
   }
 
+  process.on('unhandledRejection', error => {
+    // Won't execute
+    console.log('unhandledRejection', error);
+  });
+
   await createConnection(dbConfig)
 
   const server = app.listen(<number>config.port, '0.0.0.0', () => {

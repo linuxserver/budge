@@ -3,6 +3,7 @@ import { Request } from 'express'
 import { User } from '../entities'
 import config from '../config'
 import { logger } from '../config/winston'
+import { getRepository } from 'typeorm'
 
 export async function expressAuthentication(
   request: Request,
@@ -23,7 +24,7 @@ export async function expressAuthentication(
       jwtPayload = jwt.verify(token, config.jwtSecret) as any
       const { userId, email } = jwtPayload
 
-      user = await User.findOne(userId)
+      user = await getRepository(User).findOne(userId)
     } catch (err) {}
   }
 

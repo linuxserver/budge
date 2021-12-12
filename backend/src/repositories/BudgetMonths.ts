@@ -1,0 +1,44 @@
+import { Budget } from "../entities";
+import { EntityRepository, EntityTarget, Repository } from "typeorm";
+import { BudgetMonth } from "../entities/BudgetMonth";
+import { formatMonthFromDateString } from "../utils";
+
+@EntityRepository(BudgetMonth)
+export class BudgetMonths extends Repository<BudgetMonth> {
+  async findOrCreate(budgetId: string, month: string): Promise<BudgetMonth> {
+    let budgetMonth: BudgetMonth = await this.findOne({ budgetId, month })
+    if (!budgetMonth) {
+      const budget = await this.manager.getRepository(Budget).findOne(budgetId)
+      const months = await budget.getMonths()
+
+      let newBudgetMonth
+      let counter = 1
+      let direction = 1
+      let monthFrom = new Date()
+      monthFrom.setDate(1)
+
+      if (month < months[0]) {
+        monthFrom = new Date(`${months[0]}T12:00:00`)
+        direction = -1
+        counter = -1
+      } else if (month > months[months.length - 1]) {
+        monthFrom = new Date(`${months[months.length - 1]}T12:00:00`)
+      }
+
+      // iterate over all months until we hit the first budget month
+      do {
+        monthFrom.setMonth(monthFrom.getMonth() + counter)
+        newBudgetMonth = this.create({
+          budgetId,
+          month: formatMonthFromDateString(monthFrom),
+        })
+        await this.save(newBudgetMonth)
+        newBudgetMonth.budget = Promise.resolve(budget)
+      } while (newBudgetMonth.month !== month)
+
+      return newBudgetMonth
+    }
+
+    return budgetMonth
+  }
+}

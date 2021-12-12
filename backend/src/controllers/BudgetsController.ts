@@ -6,6 +6,7 @@ import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../models/Budget
 import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../models/BudgetMonth'
+import { getRepository } from 'typeorm'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -51,7 +52,7 @@ export class BudgetsController extends Controller {
   })
   public async getBudgets(@Request() request: ExpressRequest): Promise<BudgetsResponse | ErrorResponse> {
     try {
-      const budgets = await Budget.find({ where: { userId: request.user.id }, relations: ['accounts'] })
+      const budgets = await getRepository(Budget).find({ where: { userId: request.user.id }, relations: ['accounts'] })
       return {
         message: 'success',
         data: await Promise.all(budgets.map(budget => budget.toResponseModel())),
@@ -83,9 +84,9 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      const budget: Budget = Budget.create({ ...requestBody })
+      const budget: Budget = getRepository(Budget).create({ ...requestBody })
       budget.user = request.user
-      await budget.save()
+      await getRepository(Budget).save(budget)
 
       return {
         message: 'success',
@@ -118,7 +119,7 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      let budget: Budget = await Budget.findOne(id)
+      let budget: Budget = await getRepository(Budget).findOne(id)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -157,7 +158,7 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      let budget: Budget = await Budget.findOne(id)
+      let budget: Budget = await getRepository(Budget).findOne(id)
 
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
@@ -166,7 +167,7 @@ export class BudgetsController extends Controller {
         }
       }
 
-      budget = await Budget.merge(budget, { ...requestBody })
+      budget = await getRepository(Budget).merge(budget, { ...requestBody })
 
       return {
         message: 'success',
@@ -202,7 +203,7 @@ export class BudgetsController extends Controller {
     @Path() budgetId: string,
     @Request() request: ExpressRequest,
   ): Promise<BudgetMonthsResponse | ErrorResponse> {
-    let budget: Budget = await Budget.findOne(budgetId)
+    let budget: Budget = await getRepository(Budget).findOne(budgetId)
 
     if (!budget || budget.userId !== request.user.id) {
       this.setStatus(404)
@@ -211,7 +212,7 @@ export class BudgetsController extends Controller {
       }
     }
 
-    const budgetMonths = await BudgetMonth.find({ budgetId })
+    const budgetMonths = await getRepository(BudgetMonth).find({ budgetId })
 
     return {
       message: 'success',
@@ -255,7 +256,7 @@ export class BudgetsController extends Controller {
     @Path() month: string,
     @Request() request: ExpressRequest,
   ): Promise<BudgetMonthWithCategoriesResponse | ErrorResponse> {
-    let budget: Budget = await Budget.findOne(budgetId)
+    let budget: Budget = await getRepository(Budget).findOne(budgetId)
 
     if (!budget || budget.userId !== request.user.id) {
       this.setStatus(404)
@@ -264,11 +265,11 @@ export class BudgetsController extends Controller {
       }
     }
 
-    let budgetMonth = await BudgetMonth.findOne({ budgetId, month })
+    let budgetMonth = await getRepository(BudgetMonth).findOne({ budgetId, month })
     if (!budgetMonth) {
       // If we don't have a budget month, then no transactions were created against that month,
       // so send down an 'empty' budget month for the UI to work with
-      budgetMonth = BudgetMonth.create({
+      budgetMonth = getRepository(BudgetMonth).create({
         budgetId,
         month,
       })

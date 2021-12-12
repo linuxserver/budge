@@ -3,13 +3,10 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   CreateDateColumn,
   ManyToOne,
   OneToMany,
   Index,
-  PrimaryColumn,
-  BeforeInsert,
 } from 'typeorm'
 import { CategoryGroup } from './CategoryGroup'
 import { CategoryMonth } from './CategoryMonth'
@@ -18,7 +15,7 @@ import { Budget } from '.'
 import { Base } from './Base'
 
 @Entity('categories')
-export class Category extends BaseEntity {
+export class Category extends Base {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -29,6 +26,7 @@ export class Category extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   categoryGroupId: string
 
+  @Index({ unique: true })
   @Column({ type: 'varchar', nullable: true })
   trackingAccountId: string
 

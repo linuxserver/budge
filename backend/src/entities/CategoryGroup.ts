@@ -18,7 +18,7 @@ import { Base } from './Base'
 export const CreditCardGroupName = 'Credit Card Payments'
 
 @Entity('category_groups')
-export class CategoryGroup extends BaseEntity {
+export class CategoryGroup extends Base {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
