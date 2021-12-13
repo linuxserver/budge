@@ -359,10 +359,12 @@ export default function Account(props) {
 
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
     dispatch(refreshBudget())
-    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
     dispatch(fetchBudgetMonths())
     dispatch(fetchPayees())
     dispatch(fetchAccounts())
+    if (newRow.categoryId && newRow.categoryId !== '0') {
+      dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
+    }
   }
 
   const setTransactionStatus = (rowData) => {

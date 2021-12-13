@@ -1,6 +1,6 @@
 import { LoginResponse, LogoutResponse, UserResponse } from '../models/User'
 import { Get, Security, Route, Post, Body, Controller, Tags, Example, Request } from 'tsoa'
-import { User } from '../entities'
+import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getRepository } from 'typeorm'

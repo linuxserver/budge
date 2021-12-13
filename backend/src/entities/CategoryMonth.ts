@@ -14,7 +14,6 @@ import { Dinero } from '@dinero.js/core'
 import { add, dinero, subtract } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
-import { Base } from './Base'
 
 export type CategoryMonthOriginalValues = {
   budgeted: Dinero<number>
@@ -22,8 +21,34 @@ export type CategoryMonthOriginalValues = {
   balance: Dinero<number>
 }
 
+export class CategoryMonthCache {
+  static cache: { [key: string]: CategoryMonthOriginalValues } = {}
+
+  static transfers: string[] = []
+
+  public static get(id: string): CategoryMonthOriginalValues | null {
+    if (CategoryMonthCache.cache[id]) {
+      return CategoryMonthCache.cache[id]
+    }
+
+    return {
+      budgeted: dinero({ amount: 0, currency: USD }),
+      activity: dinero({ amount: 0, currency: USD }),
+      balance: dinero({ amount: 0, currency: USD }),
+    }
+  }
+
+  public static set(categoryMonth: CategoryMonth) {
+    CategoryMonthCache.cache[categoryMonth.id] = {
+      budgeted: {...categoryMonth.budgeted},
+      activity: {...categoryMonth.activity},
+      balance: {...categoryMonth.balance},
+    }
+  }
+}
+
 @Entity('category_months')
-export class CategoryMonth extends Base {
+export class CategoryMonth {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -78,17 +103,21 @@ export class CategoryMonth extends Base {
   @ManyToOne(() => BudgetMonth, budgetMonth => budgetMonth.categories)
   budgetMonth: Promise<BudgetMonth>
 
-  original: CategoryMonthOriginalValues = {
-    budgeted: dinero({ amount: 0, currency: USD }),
-    activity: dinero({ amount: 0, currency: USD }),
-    balance: dinero({ amount: 0, currency: USD }),
-  }
-
   @AfterLoad()
   private storeOriginalValues(): void {
-    this.original.budgeted = { ...this.budgeted }
-    this.original.activity = { ...this.activity }
-    this.original.balance = { ...this.balance }
+    CategoryMonthCache.set(this)
+  }
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      categoryId: this.categoryId,
+      budgetMonthId: this.budgetMonthId,
+      month: this.month,
+      budgeted: this.budgeted,
+      activity: this.activity,
+      balance: this.balance,
+    }
   }
 
   public update({ activity, budgeted }: { [key: string]: Dinero<number> }) {

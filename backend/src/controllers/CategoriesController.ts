@@ -1,5 +1,5 @@
 import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { CategoryGroup } from '../entities/CategoryGroup'
@@ -31,6 +31,7 @@ export class CategoriesController extends Controller {
         name: 'Emergency Fund',
         locked: false,
         internal: false,
+        order: 0,
         categories: [],
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
@@ -74,6 +75,7 @@ export class CategoriesController extends Controller {
       name: 'Expenses',
       locked: false,
       internal: false,
+      order: 0,
       categories: [],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
@@ -97,7 +99,7 @@ export class CategoriesController extends Controller {
         ...requestBody,
         budgetId,
       })
-      await getRepository(CategoryGroup).save(categoryGroup)
+      await getRepository(CategoryGroup).insert(categoryGroup)
 
       return {
         message: 'success',
@@ -121,6 +123,7 @@ export class CategoriesController extends Controller {
       name: 'Expenses',
       locked: false,
       internal: false,
+      order: 0,
       categories: [],
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
@@ -143,7 +146,34 @@ export class CategoriesController extends Controller {
 
       const categoryGroup = await getRepository(CategoryGroup).findOne(id)
       categoryGroup.name = requestBody.name
-      await getRepository(CategoryGroup).update(categoryGroup.id, categoryGroup)
+
+      if (categoryGroup.order !== requestBody.order) {
+        // re-order category groups
+        categoryGroup.order = requestBody.order
+        console.log(categoryGroup.order)
+
+        let categoryGroups = (await getRepository(CategoryGroup).find({ budgetId })).map(group => {
+          if (group.id === categoryGroup.id) {
+            return categoryGroup
+          }
+
+          return group
+        })
+        categoryGroups = categoryGroups.sort((a, b) => {
+          if (a.order === b.order) {
+            return a.name > b.name ? -1 : 1
+          }
+          return a.order < b.order ? -1 : 1
+        })
+        categoryGroups = categoryGroups.map((group, index) => {
+          group.order = index
+          return group
+        })
+
+        await getRepository(CategoryGroup).save(categoryGroups)
+      } else {
+        await getRepository(CategoryGroup).update(categoryGroup.id, categoryGroup.getUpdatePayload())
+      }
 
       return {
         message: 'success',
@@ -168,6 +198,7 @@ export class CategoriesController extends Controller {
       name: 'Expenses',
       inflow: false,
       locked: false,
+      order: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
@@ -190,7 +221,7 @@ export class CategoriesController extends Controller {
         ...requestBody,
         budgetId,
       })
-      await getRepository(Category).save(category)
+      await getRepository(Category).insert(category)
 
       return {
         message: 'success',
@@ -215,6 +246,7 @@ export class CategoriesController extends Controller {
       name: 'Expenses',
       inflow: false,
       locked: false,
+      order: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
@@ -236,13 +268,36 @@ export class CategoriesController extends Controller {
 
       const category = await getRepository(Category).findOne(id, { relations: ['categoryGroup'] })
 
-      category.name = requestBody.name
-      if (category.categoryGroupId !== requestBody.categoryGroupId) {
-        delete category.categoryGroup
-        category.categoryGroupId = requestBody.categoryGroupId
-      }
+      const originalCategoryGroupId = category.categoryGroupId
+      const updateOrder = category.categoryGroupId !== requestBody.categoryGroupId || category.order !== requestBody.order
 
-      await getRepository(Category).update(category.id, category)
+      category.name = requestBody.name
+      category.order = requestBody.order
+      delete category.categoryGroup
+      category.categoryGroupId = requestBody.categoryGroupId
+
+      if (updateOrder === true) {
+        let categories = await getRepository(Category).find({ categoryGroupId: category.categoryGroupId })
+        if (originalCategoryGroupId !== category.categoryGroupId) {
+          categories.push(category)
+        } else {
+          categories = categories.map(oldCategory => oldCategory.id === category.id ? category : oldCategory)
+        }
+
+        categories.sort((a, b) => {
+          if (a.order === b.order) {
+            return a.name < b.name ? -1 : 1
+          }
+          return a.order < b.order ? -1 : 1
+        })
+        categories = categories.map((cat, index) => {
+          cat.order = index
+          return cat
+        })
+        await getRepository(Category).save(categories)
+      } else {
+        await getRepository(Category).update(category.id, category.getUpdatePayload())
+      }
 
       return {
         message: 'success',
@@ -290,7 +345,7 @@ export class CategoriesController extends Controller {
 
       const categoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, categoryId, month)
       categoryMonth.update({ budgeted: dinero({ amount: requestBody.budgeted, currency: USD }) })
-      await getRepository(CategoryMonth).save(categoryMonth)
+      await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
 
       return {
         message: 'success',

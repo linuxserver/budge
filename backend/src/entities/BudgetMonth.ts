@@ -1,18 +1,16 @@
 import { BudgetMonthModel } from '../models/BudgetMonth'
 import {
   Entity,
-  AfterLoad,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   ManyToOne,
   Index,
   OneToMany,
-  BeforeUpdate,
 } from 'typeorm'
 import { Budget } from './Budget'
 import { CategoryMonth } from './CategoryMonth'
-import { Dinero, toSnapshot } from '@dinero.js/core'
+import { Dinero } from '@dinero.js/core'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
@@ -73,8 +71,20 @@ export class BudgetMonth {
   /**
    * Has man category months
    */
-  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.budgetMonth, { cascade: true })
+  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.budgetMonth)
   categories: Promise<CategoryMonth[]>
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      month: this.month,
+      income: {...this.income},
+      budgeted: {...this.budgeted},
+      activity: {...this.activity},
+      underfunded: {...this.underfunded},
+    }
+  }
 
   public async toResponseModel(): Promise<BudgetMonthModel> {
     return {

@@ -1,7 +1,4 @@
-import { Budget } from "../entities/Budget";
-import { EntitySubscriberInterface, EventSubscriber, getManager, InsertEvent, UpdateEvent } from "typeorm";
-import { getMonthString, getMonthStringFromNow } from "../utils";
-import { BudgetMonth } from "../entities/BudgetMonth";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
 import { CategoryGroup, CreditCardGroupName } from "../entities/CategoryGroup";
 import { Category } from "../entities/Category";
 import { Payee } from "../entities/Payee";
@@ -11,12 +8,14 @@ import { add } from "dinero.js";
 @EventSubscriber()
 export class AccountSubscriber implements EntitySubscriberInterface<Account> {
   listenTo() {
-      return Account;
+    return Account;
   }
 
   async afterInsert(event: InsertEvent<Account>) {
-    await this.createCreditCardCategory(event)
-    await this.createAccountPayee(event)
+    await Promise.all([
+      this.createCreditCardCategory(event),
+      this.createAccountPayee(event),
+    ])
   }
 
   private async createAccountPayee(event: InsertEvent<Account>) {
@@ -30,9 +29,9 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
     })
 
     // @TODO: I wish there was a better way around this
-    await manager.save(Payee, payee)
+    await manager.insert(Payee, payee)
     account.transferPayeeId = payee.id
-    await manager.save(Account, account)
+    await manager.update(Account, account.id, account.getUpdatePayload())
   }
 
   private async createCreditCardCategory(event: InsertEvent<Account>) {
@@ -62,7 +61,7 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
         name: account.name,
         locked: true,
       })
-      await manager.save(Category, paymentCategory)
+      await manager.insert(Category, paymentCategory)
     }
   }
 

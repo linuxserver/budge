@@ -1,7 +1,7 @@
-import { Budget } from "../entities";
-import { EntityRepository, EntityTarget, Repository } from "typeorm";
-import { BudgetMonth } from "../entities/BudgetMonth";
-import { formatMonthFromDateString } from "../utils";
+import { Budget } from "../entities/Budget"
+import { EntityRepository, Repository } from "typeorm"
+import { BudgetMonth } from "../entities/BudgetMonth"
+import { formatMonthFromDateString } from "../utils"
 
 @EntityRepository(BudgetMonth)
 export class BudgetMonths extends Repository<BudgetMonth> {
@@ -32,7 +32,7 @@ export class BudgetMonths extends Repository<BudgetMonth> {
           budgetId,
           month: formatMonthFromDateString(monthFrom),
         })
-        await this.save(newBudgetMonth)
+        await this.insert(newBudgetMonth)
         newBudgetMonth.budget = Promise.resolve(budget)
       } while (newBudgetMonth.month !== month)
 

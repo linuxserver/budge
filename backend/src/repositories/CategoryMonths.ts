@@ -23,19 +23,10 @@ export class CategoryMonths extends Repository<CategoryMonth> {
         balance: dinero({ amount: 0, currency: USD }),
         budgeted: dinero({ amount: 0, currency: USD }),
       })
-      await this.save(categoryMonth)
+      await this.insert(categoryMonth)
       categoryMonth.budgetMonth = Promise.resolve(budgetMonth)
     }
 
     return categoryMonth
-  }
-
-  async update(categoryMonth: CategoryMonth): Promise<UpdateResult> {
-    const originalValues = categoryMonth.original
-    delete categoryMonth.original
-    const result = await this.manager.getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth)
-    categoryMonth.original = originalValues
-
-    return result
   }
 }

@@ -122,13 +122,13 @@ export default class API {
   }
 
   static async createCategoryGroup(name, budgetId) {
-    const response = await axios.post(`/api/budgets/${budgetId}/categories/groups`, { name })
+    const response = await axios.post(`/api/budgets/${budgetId}/categories/groups`, { name, order: 0 })
 
     return response.data.data
   }
 
-  static async updateCategoryGroup(categoryGroupId, name, budgetId) {
-    const response = await axios.put(`/api/budgets/${budgetId}/categories/groups/${categoryGroupId}`, { name })
+  static async updateCategoryGroup(categoryGroupId, name, order, budgetId) {
+    const response = await axios.put(`/api/budgets/${budgetId}/categories/groups/${categoryGroupId}`, { name, order })
 
     return response.data.data
   }
@@ -136,16 +136,18 @@ export default class API {
   static async createCategory(name, categoryGroupId, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/categories`, {
       name,
-      categoryGroupId
+      order: 0,
+      categoryGroupId,
     })
 
     return response.data.data
   }
 
-  static async updateCategory(categoryId, name, categoryGroupId, budgetId) {
+  static async updateCategory(categoryId, name, order, categoryGroupId, budgetId) {
     const response = await axios.put(`/api/budgets/${budgetId}/categories/${categoryId}`, {
       name,
-      categoryGroupId
+      order,
+      categoryGroupId,
     })
 
     return response.data.data

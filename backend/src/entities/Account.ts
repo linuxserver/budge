@@ -76,7 +76,7 @@ export class Account {
   /**
    * Has many transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.account, { cascade: true })
+  @OneToMany(() => Transaction, transaction => transaction.account)
   transactions: Promise<Transaction[]>
 
   /**
@@ -85,6 +85,19 @@ export class Account {
   @OneToOne(() => Payee, payee => payee.transferAccount)
   @JoinColumn()
   transferPayee: Promise<Payee>
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      transferPayeeId: this.transferPayeeId,
+      name: this.name,
+      type: this.type,
+      balance: {...this.balance},
+      cleared: {...this.cleared},
+      uncleared: {...this.uncleared},
+    }
+  }
 
   public async toResponseModel(): Promise<AccountModel> {
     return {

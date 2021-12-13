@@ -1,6 +1,6 @@
 import { UserResponse } from '../models/User'
 import { Get, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { User } from '../entities'
+import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getManager, getRepository } from 'typeorm'
@@ -33,7 +33,7 @@ export class UsersController extends Controller {
     try {
       const newUser = await getManager().transaction(async transactionalEntityManager => {
         const newUser: User = transactionalEntityManager.getRepository(User).create({ ...requestBody })
-        await transactionalEntityManager.getRepository(User).save(newUser)
+        await transactionalEntityManager.getRepository(User).insert(newUser)
         return newUser
       });
 

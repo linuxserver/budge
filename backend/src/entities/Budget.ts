@@ -6,7 +6,6 @@ import {
   CreateDateColumn,
   ManyToOne,
   OneToMany,
-  AfterInsert,
 } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
@@ -14,13 +13,10 @@ import { CategoryGroup } from './CategoryGroup'
 import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
-import { getMonthString, getMonthStringFromNow } from '../utils'
-import { Payee } from './Payee'
 import { Dinero } from '@dinero.js/core'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
-import { Base } from './Base'
 
 @Entity('budgets')
 export class Budget {
@@ -55,32 +51,41 @@ export class Budget {
   /**
    * Has many accounts
    */
-  @OneToMany(() => Account, account => account.budget, { cascade: true })
+  @OneToMany(() => Account, account => account.budget)
   accounts: Promise<Account[]>
 
   /**
    * Has many categories
    */
-  @OneToMany(() => Category, category => category.budget, { cascade: true })
+  @OneToMany(() => Category, category => category.budget)
   categories: Promise<Category[]>
 
   /**
    * Has many category groups
    */
-  @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget, { cascade: true })
+  @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget)
   categoryGroups: Promise<CategoryGroup[]>
 
   /**
    * Has many budget months
    */
-  @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget, { cascade: true })
+  @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget)
   months: Promise<BudgetMonth[]>
 
   /**
    * Has many budget transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.budget, { cascade: true })
+  @OneToMany(() => Transaction, transaction => transaction.budget)
   transactions: Promise<Transaction[]>
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      userId: this.userId,
+      name: this.name,
+      toBeBudgeted: {...this.toBeBudgeted},
+    }
+  }
 
   public async toResponseModel(): Promise<BudgetModel> {
     return {

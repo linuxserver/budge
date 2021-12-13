@@ -1,30 +1,16 @@
 import { Budget } from "../entities/Budget";
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, getManager, InsertEvent, Repository, UpdateEvent } from "typeorm";
-import { formatMonthFromDateString, getDateFromString, getMonthString, getMonthStringFromNow } from "../utils";
+import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
+import { formatMonthFromDateString, getDateFromString } from "../utils";
 import { BudgetMonth } from "../entities/BudgetMonth";
-import { CategoryGroup, CreditCardGroupName } from "../entities/CategoryGroup";
 import { Category } from "../entities/Category";
-import { Payee } from "../entities/Payee";
-import { Account, AccountTypes } from "../entities/Account";
-import { add, equal, isNegative, isPositive, subtract } from "dinero.js";
-import { CategoryMonth, CategoryMonthOriginalValues } from "../entities/CategoryMonth";
+import { add, isZero, isNegative, isPositive, subtract, equal } from "dinero.js";
+import { CategoryMonth, CategoryMonthCache } from "../entities/CategoryMonth";
 import { CategoryMonths } from "../repositories/CategoryMonths";
-
-let originalValues: CategoryMonthOriginalValues
 
 @EventSubscriber()
 export class CategoryMonthSubscriber implements EntitySubscriberInterface<CategoryMonth> {
   listenTo() {
       return CategoryMonth;
-  }
-
-  storeTransientValues(entity: CategoryMonth) {
-    originalValues = entity.original
-    delete entity.original
-  }
-
-  restoreTransientValues(entity: CategoryMonth) {
-    entity.original = originalValues
   }
 
   /**
@@ -43,23 +29,13 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     if (prevCategoryMonth && isPositive(prevCategoryMonth.balance)) {
       categoryMonth.balance = add(prevCategoryMonth.balance, add(categoryMonth.budgeted, categoryMonth.activity))
     }
-
-    this.storeTransientValues(event.entity)
-  }
-
-  async beforeUpdate(event: UpdateEvent<CategoryMonth>) {
-    this.storeTransientValues(event.entity as CategoryMonth)
   }
 
   async afterInsert(event: InsertEvent<CategoryMonth>) {
-    this.restoreTransientValues(event.entity)
-
     await this.bookkeeping(event.entity as CategoryMonth, event.manager)
   }
 
   async afterUpdate(event: UpdateEvent<CategoryMonth>) {
-    this.restoreTransientValues(event.entity as CategoryMonth)
-
     await this.bookkeeping(event.entity as CategoryMonth, event.manager)
   }
 
@@ -71,39 +47,51 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
    */
   private async bookkeeping(categoryMonth: CategoryMonth, manager: EntityManager) {
     const category = await manager.findOne(Category, categoryMonth.categoryId)
+    const originalCategoryMonth = CategoryMonthCache.get(categoryMonth.id)
 
     // Update budget month activity and and budgeted
     const budgetMonth = await manager.findOne(BudgetMonth, categoryMonth.budgetMonthId)
-    const budget = await manager.findOne(Budget, budgetMonth.budgetId)
 
-    budgetMonth.budgeted = add(budgetMonth.budgeted, subtract(categoryMonth.budgeted, categoryMonth.original.budgeted))
-    budgetMonth.activity = add(budgetMonth.activity, subtract(categoryMonth.activity, categoryMonth.original.activity))
-    budget.toBeBudgeted = add(budget.toBeBudgeted, subtract(categoryMonth.original.budgeted, categoryMonth.budgeted))
+    budgetMonth.budgeted = add(budgetMonth.budgeted, subtract(categoryMonth.budgeted, originalCategoryMonth.budgeted))
+    budgetMonth.activity = add(budgetMonth.activity, subtract(categoryMonth.activity, originalCategoryMonth.activity))
+
+    const budgetedDifference = subtract(originalCategoryMonth.budgeted, categoryMonth.budgeted)
+    const activityDifference = subtract(categoryMonth.activity, originalCategoryMonth.activity)
+    if (!isZero(budgetedDifference) || !isZero(activityDifference)) {
+      const budget = await manager.findOne(Budget, budgetMonth.budgetId)
+      budget.toBeBudgeted = add(budget.toBeBudgeted, budgetedDifference)
+
+      if (category.inflow) {
+        budget.toBeBudgeted = add(budget.toBeBudgeted, activityDifference)
+      }
+
+      await manager.update(Budget, budget.id, budget.getUpdatePayload())
+    }
 
     if (category.inflow) {
-      budgetMonth.income = add(budgetMonth.income, subtract(categoryMonth.activity, categoryMonth.original.activity))
-      budget.toBeBudgeted = add(budget.toBeBudgeted, subtract(categoryMonth.activity, categoryMonth.original.activity))
+      budgetMonth.income = add(budgetMonth.income, subtract(categoryMonth.activity, originalCategoryMonth.activity))
     }
 
     // Underfunded only counts for non-CC accounts as a negative CC value could mean cash bach for that month
     if (!category.trackingAccountId) {
-      if (isNegative(categoryMonth.original.balance)) {
-        budgetMonth.underfunded = add(budgetMonth.underfunded, categoryMonth.original.balance)
+      if (isNegative(originalCategoryMonth.balance)) {
+        budgetMonth.underfunded = add(budgetMonth.underfunded, originalCategoryMonth.balance)
       }
       if (isNegative(categoryMonth.balance)) {
         budgetMonth.underfunded = subtract(budgetMonth.underfunded, categoryMonth.balance)
       }
     }
 
-    await manager.save(Budget, budget)
-    await manager.save(BudgetMonth, budgetMonth)
+    await manager.update(BudgetMonth, budgetMonth.id, budgetMonth.getUpdatePayload())
 
     const nextMonth = getDateFromString(categoryMonth.month)
     nextMonth.setMonth(nextMonth.getMonth() + 1)
+
     const nextBudgetMonth = await manager.findOne(BudgetMonth, {
       budgetId: category.budgetId,
       month: formatMonthFromDateString(nextMonth),
     })
+
     if (!nextBudgetMonth) {
       return
     }
@@ -127,6 +115,6 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     }
 
     // await CategoryMonth.update(nextCategoryMonth.id, { balance: nextCategoryMonth.balance })
-    await manager.save(CategoryMonth, nextCategoryMonth)
+    await manager.update(CategoryMonth, nextCategoryMonth.id, nextCategoryMonth.getUpdatePayload())
   }
 }

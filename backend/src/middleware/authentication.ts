@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { Request } from 'express'
-import { User } from '../entities'
+import { User } from '../entities/User'
 import config from '../config'
 import { logger } from '../config/winston'
 import { getRepository } from 'typeorm'

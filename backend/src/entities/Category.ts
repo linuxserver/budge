@@ -11,11 +11,10 @@ import {
 import { CategoryGroup } from './CategoryGroup'
 import { CategoryMonth } from './CategoryMonth'
 import { Transaction } from './Transaction'
-import { Budget } from '.'
-import { Base } from './Base'
+import { Budget } from './Budget'
 
 @Entity('categories')
-export class Category extends Base {
+export class Category {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -39,6 +38,9 @@ export class Category extends Base {
   @Column({ type: 'boolean', default: false })
   locked: boolean
 
+  @Column({ type: 'int', default: 0 })
+  order: number = 0
+
   @CreateDateColumn()
   created: Date
 
@@ -60,14 +62,27 @@ export class Category extends Base {
   /**
    * Has many months
    */
-  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.category, { cascade: true })
+  @OneToMany(() => CategoryMonth, categoryMonth => categoryMonth.category)
   categoryMonths: CategoryMonth[]
 
   /**
    * Has many transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.category, { cascade: true })
+  @OneToMany(() => Transaction, transaction => transaction.category)
   transactions: Transaction[]
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      categoryGroupId: this.categoryGroupId,
+      trackingAccountId: this.trackingAccountId,
+      name: this.name,
+      inflow: this.inflow,
+      locked: this.locked,
+      order: this.order,
+    }
+  }
 
   public async toResponseModel(): Promise<CategoryModel> {
     return {
@@ -77,6 +92,7 @@ export class Category extends Base {
       name: this.name,
       inflow: this.inflow,
       locked: this.locked,
+      order: this.order,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

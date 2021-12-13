@@ -1,13 +1,13 @@
 import { Get, Put, Delete, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account } from '../entities/Account'
-import { Transaction, TransactionStatus } from '../entities/Transaction'
+import { Transaction, TransactionCache, TransactionStatus } from '../entities/Transaction'
 import { TransactionRequest, TransactionResponse, TransactionsResponse } from '../models/Transaction'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
-import { getCustomRepository, getManager, getRepository } from 'typeorm'
+import { getManager, getRepository } from 'typeorm'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
@@ -53,8 +53,8 @@ export class TransactionsController extends Controller {
           amount: dinero({ amount: requestBody.amount, currency: USD }),
           date: new Date(requestBody.date),
         })
-        transaction.setHandleTransfers(true)
-        await transactionalEntityManager.getRepository(Transaction).save(transaction)
+        TransactionCache.enableTransfers(transaction.id)
+        await transactionalEntityManager.getRepository(Transaction).insert(transaction)
 
         return transaction
       })
@@ -107,14 +107,18 @@ export class TransactionsController extends Controller {
       // Load in original transaction to check if the amount has been altered
       // and updated the category month accordingly
       // @TODO: remove relation to test db transactions
-      const transaction = await getRepository(Transaction).findOne(transactionId, { relations: ['account'] })
-      transaction.update({
-        ...requestBody,
-        amount: dinero({ amount: requestBody.amount, currency: USD }),
-        date: new Date(requestBody.date), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
+      const transaction = await getManager().transaction(async transactionalEntityManager => {
+        const transaction = await transactionalEntityManager.getRepository(Transaction).findOne(transactionId, { relations: ['account'] })
+        transaction.update({
+          ...requestBody,
+          amount: dinero({ amount: requestBody.amount, currency: USD }),
+          ...requestBody.date && { date: new Date(requestBody.date) }, // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
+        })
+        TransactionCache.enableTransfers(transaction.id)
+        await transactionalEntityManager.getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())
+
+        return transaction
       })
-      transaction.setHandleTransfers(true)
-      await getRepository(Transaction).update(transaction.id, transaction)
 
       return {
         message: 'success',
@@ -149,7 +153,7 @@ export class TransactionsController extends Controller {
       }
 
       const transaction = await getRepository(Transaction).findOne(transactionId)
-      transaction.setHandleTransfers(true)
+      TransactionCache.enableTransfers(transactionId)
       await getRepository(Transaction).remove(transaction)
 
       return {

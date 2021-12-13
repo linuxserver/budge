@@ -2,43 +2,27 @@ import { TransactionModel } from '../models/Transaction'
 import {
   Entity,
   AfterLoad,
-  AfterRemove,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   CreateDateColumn,
   ManyToOne,
   DeepPartial,
-  AfterInsert,
-  BeforeInsert,
-  AfterUpdate,
-  BeforeUpdate,
-  BeforeRemove,
-  PrimaryColumn,
-  getRepository,
   Index,
 } from 'typeorm'
-import { Account, AccountTypes } from './Account'
+import { Account } from './Account'
 import { Category } from './Category'
 import { formatMonthFromDateString } from '../utils'
-import { CategoryMonth } from './CategoryMonth'
-import { Budget } from '.'
+import { Budget } from './Budget'
 import { Payee } from './Payee'
 import { Dinero } from '@dinero.js/core'
-import { add, dinero, multiply, subtract, isPositive } from 'dinero.js'
+import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
-import { Base } from './Base'
 
 export enum TransactionStatus {
   Pending,
   Cleared,
   Reconciled,
-}
-
-export type TransactionFlags = {
-  handleTransfers: boolean
-  eventsEnabled: boolean
 }
 
 export type TransactionOriginalValues = {
@@ -49,8 +33,55 @@ export type TransactionOriginalValues = {
   status: TransactionStatus
 }
 
+export class TransactionCache {
+  static cache: { [key: string]: TransactionOriginalValues } = {}
+
+  static transfers: string[] = []
+
+  public static get(id: string): TransactionOriginalValues | null {
+    if (TransactionCache.cache[id]) {
+      return TransactionCache.cache[id]
+    }
+
+    return null
+  }
+
+  public static set(transaction: Transaction) {
+    TransactionCache.cache[transaction.id] = {
+      payeeId: transaction.payeeId,
+      categoryId: transaction.categoryId,
+      amount: {...transaction.amount},
+      date: new Date(transaction.date.getTime()),
+      status: transaction.status,
+    }
+  }
+
+  public static enableTransfers(id: string) {
+    const index = TransactionCache.transfers.indexOf(id);
+    if (index === -1) {
+      TransactionCache.transfers.push(id)
+    }
+  }
+
+  public static disableTransfers(id: string) {
+    const index = TransactionCache.transfers.indexOf(id);
+    if (index > -1) {
+      TransactionCache.transfers.splice(index, 1);
+    }
+  }
+
+  public static transfersEnabled(id: string): boolean {
+    const index = TransactionCache.transfers.indexOf(id);
+    if (index > -1) {
+      return true
+    }
+
+    return false
+  }
+}
+
 @Entity('transactions')
-export class Transaction extends Base {
+export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -119,46 +150,29 @@ export class Transaction extends Base {
   @ManyToOne(() => Category, category => category.transactions)
   category: Promise<Category>
 
-  flags: TransactionFlags = {
-    handleTransfers: false,
-    eventsEnabled: true,
-  }
-
-  original: TransactionOriginalValues = {
-    payeeId: '',
-    categoryId: '',
-    amount: dinero({ amount: 0, currency: USD }),
-    date: new Date(),
-    status: 0,
-  }
-
   @AfterLoad()
   private storeOriginalValues() {
-    this.original.payeeId = this.payeeId
-    this.original.categoryId = this.categoryId
-    this.original.amount = { ...this.amount }
-    this.original.date = { ...this.date }
-    this.original.status = this.status
-  }
-
-  public getHandleTransfers(): boolean {
-    return this.flags.handleTransfers
-  }
-
-  public setHandleTransfers(enabled: boolean) {
-    this.flags.handleTransfers = enabled
-  }
-
-  public getEventsEnabled(): boolean {
-    return this.flags.eventsEnabled
-  }
-
-  public setEventsEnabled(enabled: boolean) {
-    this.flags.eventsEnabled = enabled
+    TransactionCache.set(this)
   }
 
   public update(partial: DeepPartial<Transaction>) {
     Object.assign(this, partial)
+  }
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      accountId: this.accountId,
+      payeeId: this.payeeId,
+      transferAccountId: this.transferAccountId,
+      transferTransactionId: this.transferTransactionId,
+      categoryId: this.categoryId,
+      amount: this.amount,
+      date: this.date,
+      memo: this.memo,
+      status: this.status,
+    }
   }
 
   public async toResponseModel(): Promise<TransactionModel> {
@@ -176,7 +190,7 @@ export class Transaction extends Base {
     }
   }
 
-  public getMonth(): string {
-    return formatMonthFromDateString(this.date)
+  public static getMonth(date: Date): string {
+    return formatMonthFromDateString(date)
   }
 }

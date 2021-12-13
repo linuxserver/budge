@@ -3,22 +3,18 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   CreateDateColumn,
   ManyToOne,
   OneToMany,
   Index,
-  PrimaryColumn,
-  BeforeInsert,
 } from 'typeorm'
 import { Budget } from './Budget'
 import { Category } from './Category'
-import { Base } from './Base'
 
 export const CreditCardGroupName = 'Credit Card Payments'
 
 @Entity('category_groups')
-export class CategoryGroup extends Base {
+export class CategoryGroup {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -35,6 +31,9 @@ export class CategoryGroup extends Base {
   @Column({ type: 'boolean', default: false })
   locked: boolean
 
+  @Column({ type: 'int', default: 0 })
+  order: number = 0
+
   @CreateDateColumn()
   created: Date
 
@@ -50,8 +49,19 @@ export class CategoryGroup extends Base {
   /**
    * Has many categories
    */
-  @OneToMany(() => Category, category => category.categoryGroup, { cascade: true, eager: true })
+  @OneToMany(() => Category, category => category.categoryGroup, { eager: true })
   categories: Promise<Category[]>
+
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      budgetId: this.budgetId,
+      name: this.name,
+      internal: this.internal,
+      locked: this.locked,
+      order: this.order,
+    }
+  }
 
   public async toResponseModel(): Promise<CategoryGroupModel> {
     return {
@@ -60,6 +70,7 @@ export class CategoryGroup extends Base {
       name: this.name,
       internal: this.internal,
       locked: this.locked,
+      order: this.order,
       categories: await Promise.all((await this.categories).map(category => category.toResponseModel())),
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),

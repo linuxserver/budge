@@ -4,19 +4,15 @@ import {
   JoinColumn,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   CreateDateColumn,
   OneToMany,
-  PrimaryColumn,
-  BeforeInsert,
 } from 'typeorm'
-import { Account } from '.'
+import { Account } from './Account'
 import { PayeeModel } from '../models/Payee'
 import { Transaction } from './Transaction'
-import { Base } from './Base'
 
 @Entity('payees')
-export class Payee extends Base {
+export class Payee {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -45,7 +41,7 @@ export class Payee extends Base {
   /**
    * Has many transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.account, { cascade: true })
+  @OneToMany(() => Transaction, transaction => transaction.account)
   transactions: Promise<Transaction[]>
 
   public async toResponseModel(): Promise<PayeeModel> {

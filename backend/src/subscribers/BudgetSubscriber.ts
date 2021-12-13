@@ -1,5 +1,5 @@
 import { Budget } from "../entities/Budget";
-import { EntitySubscriberInterface, EventSubscriber, getManager, InsertEvent } from "typeorm";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
 import { getMonthString, getMonthStringFromNow } from "../utils";
 import { BudgetMonth } from "../entities/BudgetMonth";
 import { CategoryGroup } from "../entities/CategoryGroup";
@@ -23,7 +23,7 @@ export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
     // Create initial budget months
     for (const month of [prevMonth, today, nextMonth]) {
       const newBudgetMonth = manager.create(BudgetMonth, { budgetId: budget.id, month })
-      await manager.save(BudgetMonth, newBudgetMonth)
+      await manager.insert(BudgetMonth, newBudgetMonth)
     }
 
     // Create internal categories
@@ -33,7 +33,7 @@ export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
       internal: true,
       locked: true,
     })
-    await manager.save(CategoryGroup, internalCategoryGroup)
+    await manager.insert(CategoryGroup, internalCategoryGroup)
 
     await Promise.all(
       ['To be Budgeted'].map(name => {
@@ -44,7 +44,7 @@ export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
           inflow: true,
           locked: true,
         })
-        return manager.save(Category, internalCategory)
+        return manager.insert(Category, internalCategory)
       }),
     )
 
@@ -54,13 +54,13 @@ export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
       name: 'Starting Balance',
       internal: true,
     })
-    await manager.save(Payee, startingBalancePayee)
+    await manager.insert(Payee, startingBalancePayee)
 
     const reconciliationPayee = manager.create(Payee, {
       budgetId: budget.id,
       name: 'Reconciliation Balance Adjustment',
       internal: true,
     })
-    await manager.save(Payee, reconciliationPayee)
+    await manager.insert(Payee, reconciliationPayee)
   }
 }

@@ -1,14 +1,11 @@
-import { Budget } from "../entities/Budget";
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, getManager, getRepository, InsertEvent, RemoveEvent, Repository, UpdateEvent } from "typeorm";
-import { formatMonthFromDateString, getDateFromString, getMonthString, getMonthStringFromNow } from "../utils";
-import { BudgetMonth } from "../entities/BudgetMonth";
-import { CategoryGroup, CreditCardGroupName } from "../entities/CategoryGroup";
+import { EntityManager, EntitySubscriberInterface, EventSubscriber, getRepository, InsertEvent, RemoveEvent, UpdateEvent } from "typeorm";
+import { formatMonthFromDateString } from "../utils";
 import { Category } from "../entities/Category";
 import { Payee } from "../entities/Payee";
 import { Account, AccountTypes } from "../entities/Account";
-import { add, equal, isNegative, isPositive, multiply, subtract } from "dinero.js";
+import { add, equal, isZero, multiply, subtract } from "dinero.js";
 import { CategoryMonth } from "../entities/CategoryMonth";
-import { Transaction, TransactionFlags, TransactionOriginalValues, TransactionStatus } from "../entities/Transaction";
+import { Transaction, TransactionCache, TransactionStatus } from "../entities/Transaction";
 import { CategoryMonths } from "../repositories/CategoryMonths";
 
 @EventSubscriber()
@@ -18,47 +15,37 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
   }
 
   async beforeInsert(event: InsertEvent<Transaction>) {
-    if (event.entity.getEventsEnabled() === false) {
-      return
-    }
-
-    await this.checkCreateTransferTransaction(event.entity as Transaction, event.manager)
-    await this.createCategoryMonth(event.entity as Transaction, event.manager)
+    await Promise.all([
+      this.checkCreateTransferTransaction(event.entity as Transaction, event.manager),
+      this.createCategoryMonth(event.entity as Transaction, event.manager),
+    ])
   }
 
   async beforeUpdate(event: UpdateEvent<Transaction>) {
-    if (event.entity.getEventsEnabled() === false) {
-      return
-    }
+    await Promise.all([
+      this.createCategoryMonth(event.entity as Transaction, event.manager),
+      this.updateTransferTransaction(event.entity as Transaction, event.manager),
 
-    await this.createCategoryMonth(event.entity as Transaction, event.manager)
-    await this.updateTransferTransaction(event.entity as Transaction, event.manager)
+      this.updateAccountBalanceOnUpdate(event.entity as Transaction, event.manager),
+      this.bookkeepingOnUpdate(event.entity as Transaction, event.manager),
+    ])
   }
 
   async afterInsert(event: InsertEvent<Transaction>) {
-    if (event.entity.getEventsEnabled() === false) {
-      return
-    }
-
-    await this.updateAccountBalanceOnAdd(event.entity as Transaction, event.manager)
-    await this.bookkeepingOnAdd(event.entity as Transaction, event.manager)
-    await this.createTransferTransaction(event.entity as Transaction, event.manager)
+    await Promise.all([
+      this.updateAccountBalanceOnAdd(event.entity as Transaction, event.manager),
+      this.bookkeepingOnAdd(event.entity as Transaction, event.manager),
+      this.createTransferTransaction(event.entity as Transaction, event.manager),
+    ])
   }
 
   async afterUpdate(event: UpdateEvent<Transaction>) {
-    if (event.entity.getEventsEnabled() === false) {
-      return
-    }
+    await Promise.all([
 
-    await this.updateAccountBalanceOnUpdate(event.entity as Transaction, event.manager)
-    await this.bookkeepingOnUpdate(event.entity as Transaction, event.manager)
+    ])
   }
 
   async beforeRemove(event: RemoveEvent<Transaction>) {
-    if (event.entity.getEventsEnabled() === false) {
-      return
-    }
-
     const transaction = event.entity
     const manager = event.manager
 
@@ -72,19 +59,18 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
   }
 
   async afterRemove(event: RemoveEvent<Transaction>) {
-    if (event.entity.getEventsEnabled() === false) {
-      return
-    }
-
-    await this.updateAccountBalanceOnRemove(event.entity as Transaction, event.manager)
-    await this.bookkeepingOnDelete(event.entity as Transaction, event.manager)
+    await Promise.all([
+      this.updateAccountBalanceOnRemove(event.entity as Transaction, event.manager),
+      this.bookkeepingOnDelete(event.entity as Transaction, event.manager),
+    ])
   }
 
   async checkCreateTransferTransaction(transaction: Transaction, manager: EntityManager) {
-    if (transaction.getHandleTransfers() === false) {
+    // This is only called on INSERT. If the id is null AND the transferAccountId is null,
+    // then this is the 'origin' transfer transaction
+    if (transaction.transferAccountId) {
       return
     }
-    transaction.setHandleTransfers(false)
 
     const payee = await manager.findOne(Payee, transaction.payeeId)
     if (payee.transferAccountId === null) {
@@ -115,7 +101,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       await manager.getCustomRepository(CategoryMonths).findOrCreate(
         transaction.budgetId,
         trackingCategory.id,
-        transaction.getMonth(),
+        Transaction.getMonth(transaction.date),
       )
     }
   }
@@ -136,9 +122,9 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       if (account.type === AccountTypes.CreditCard) {
         // Update CC category
         const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-        const ccCategoryMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, transaction.getMonth())
+        const ccCategoryMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
         ccCategoryMonth.update({ activity: multiply(transaction.amount, -1) })
-        await manager.getCustomRepository(CategoryMonths).save(ccCategoryMonth)
+        await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
       }
       return
     }
@@ -157,17 +143,17 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
 
     if (category.inflow === false || account.type !== AccountTypes.CreditCard) {
       // Cascade category month
-      const transactionCategoryMonth = await manager.getRepository(CategoryMonth).findOne({ categoryId: transaction.categoryId, month: transaction.getMonth() })
+      const transactionCategoryMonth = await manager.getRepository(CategoryMonth).findOne({ categoryId: transaction.categoryId, month: Transaction.getMonth(transaction.date) })
       transactionCategoryMonth.update({ activity: transaction.amount })
-      await manager.getRepository(CategoryMonth).update(transactionCategoryMonth.id, transactionCategoryMonth)
+      await manager.getRepository(CategoryMonth).update(transactionCategoryMonth.id, transactionCategoryMonth.getUpdatePayload())
     }
 
     if (account.type === AccountTypes.CreditCard) {
       // Update CC category
       const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-      const ccCategoryMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, transaction.getMonth())
+      const ccCategoryMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
       ccCategoryMonth.update({ activity: multiply(transaction.amount, -1) })
-      await manager.getCustomRepository(CategoryMonths).save(ccCategoryMonth)
+      await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
     }
   }
 
@@ -190,7 +176,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       status: TransactionStatus.Pending,
     })
 
-    await manager.save(Transaction, transferTransaction)
+    await manager.insert(Transaction, transferTransaction)
 
     const transferAccount = await manager.getRepository(Account).findOne(transferTransaction.accountId)
 
@@ -198,9 +184,8 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     transaction.transferAccountId = transferAccount.id
     transaction.transferTransactionId = transferTransaction.id
 
-    // Perform update here so that the listener hooks don't get called
-    transaction.setEventsEnabled(false)
-    await manager.getRepository(Transaction).save(transaction)
+    // Perform save here so that the listener hooks don't get called
+    await manager.getRepository(Transaction).save(transaction, { listeners: false })
   }
 
   private async updateAccountBalanceOnAdd(transaction: Transaction, manager: EntityManager) {
@@ -217,13 +202,12 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         break
     }
 
-    await manager.save(Account, account)
+    await manager.update(Account, account.id, account.getUpdatePayload())
   }
 
   private async updateAccountBalanceOnUpdate(transaction: Transaction, manager: EntityManager) {
-    const getRepository = manager.getRepository
-
-    if (transaction.amount === transaction.original.amount && transaction.status === transaction.original.status) {
+    const originalTransaction = TransactionCache.get(transaction.id)
+    if (transaction.amount === originalTransaction.amount && transaction.status === originalTransaction.status) {
       // amount and status hasn't changed, no balance update necessary
       return
     }
@@ -231,14 +215,14 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     // First, 'undo' the original amount / status then add in new. Easier than a bunch of if statements
     const account = await manager.findOne(Account, transaction.accountId)
 
-    switch (transaction.original.status) {
+    switch (originalTransaction.status) {
       case TransactionStatus.Pending:
-        account.uncleared = subtract(account.uncleared, transaction.original.amount)
+        account.uncleared = subtract(account.uncleared, originalTransaction.amount)
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared = subtract(account.cleared, transaction.original.amount)
+        account.cleared = subtract(account.cleared, originalTransaction.amount)
         break
     }
 
@@ -253,7 +237,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         break
     }
 
-    await manager.save(Account, account)
+    await manager.update(Account, account.id, account.getUpdatePayload())
   }
 
   private async updateAccountBalanceOnRemove(transaction: Transaction, manager: EntityManager) {
@@ -271,36 +255,43 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         break
     }
 
-    await manager.save(Account, account)
+    await manager.update(Account, account.id, account.getUpdatePayload())
   }
 
   private async updateTransferTransaction(transaction: Transaction, manager: EntityManager) {
-    if (transaction.getHandleTransfers() === false) {
+    if (!TransactionCache.transfersEnabled(transaction.id)) {
       return
     }
-    transaction.setHandleTransfers(false)
+    TransactionCache.disableTransfers(transaction.id)
+
+    const originalTransaction = TransactionCache.get(transaction.id)
 
     // If the payees, dates, and amounts haven't changed, bail
     if (
-      transaction.payeeId === transaction.original.payeeId &&
-      transaction.amount === transaction.original.amount &&
-      formatMonthFromDateString(transaction.date) === formatMonthFromDateString(transaction.original.date)
+      transaction.payeeId === originalTransaction.payeeId &&
+      transaction.amount === originalTransaction.amount &&
+      formatMonthFromDateString(transaction.date) === formatMonthFromDateString(originalTransaction.date)
     ) {
       return
     }
 
-    if (transaction.payeeId === transaction.original.payeeId && transaction.transferTransactionId) {
+    if (transaction.payeeId === originalTransaction.payeeId && transaction.transferTransactionId) {
+      if (equal(transaction.amount, originalTransaction.amount) && transaction.date === originalTransaction.date) {
+        // amount and dates are the same, everything else is not linked
+        return
+      }
+
       // Payees are the same, just update details
       const transferTransaction = await manager.findOne(Transaction, { transferTransactionId: transaction.id })
       transferTransaction.update({
         amount: multiply(transaction.amount, -1),
         date: transaction.date,
       })
-      await manager.getRepository(Transaction).save(transferTransaction)
+      await manager.getRepository(Transaction).update(transferTransaction.id, transferTransaction.getUpdatePayload())
       return
     }
 
-    if (transaction.payeeId !== transaction.original.payeeId) {
+    if (transaction.payeeId !== originalTransaction.payeeId) {
       // If the payee has changed, delete the transfer transaction before proceeding
       if (transaction.transferTransactionId) {
         const transferTransaction = await manager.findOne(Transaction, { transferTransactionId: transaction.id })
@@ -326,64 +317,71 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
           date: transaction.date,
           status: TransactionStatus.Pending,
         })
-        await manager.save(Transaction, transferTransaction)
+        await manager.update(Transaction, transferTransaction.id, transferTransaction.getUpdatePayload())
         transaction.transferTransactionId = transferTransaction.id
       }
     }
   }
 
   private async bookkeepingOnUpdate(transaction: Transaction, manager: EntityManager) {
-    const account = await transaction.account
+    const account = await manager.getRepository(Account).findOne(transaction.accountId)
 
     // No bookkeeping necessary for tracking accounts
     if (account.type === AccountTypes.Tracking) {
       return
     }
 
+    const originalTransaction = TransactionCache.get(transaction.id)
+
     // @TODO: hanle update of transactions when going to / from a transfer to / from a non-transfer
+
+    let activity = subtract(transaction.amount, originalTransaction.amount)
 
     if (transaction.transferTransactionId !== null) {
       // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!!
       if (account.type === AccountTypes.CreditCard) {
         // Update CC category
+        if (transaction.date !== originalTransaction.date && isZero(activity)) {
+          // No change in time or amount, so category month data doesn't change
+          return
+        }
+
         const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
         const originalCCMonth = await manager.findOne(CategoryMonth, {
           categoryId: ccCategory.id,
-          month: formatMonthFromDateString(transaction.original.date),
+          month: formatMonthFromDateString(originalTransaction.date),
         })
-        await originalCCMonth.update({ activity: transaction.original.amount })
+        await originalCCMonth.update({ activity: originalTransaction.amount })
 
-        const currentCCMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, transaction.getMonth())
+        const currentCCMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
         currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
-        await manager.getCustomRepository(CategoryMonths).save(currentCCMonth)
+        await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
       }
 
       return
     }
 
-    const category = await transaction.category
-    const originalCategory = await manager.findOne(Category, transaction.original.categoryId)
-
-    let activity = subtract(transaction.amount, transaction.original.amount)
-
     if (
-      transaction.original.categoryId !== transaction.categoryId ||
-      formatMonthFromDateString(transaction.original.date) !== formatMonthFromDateString(transaction.date)
+      originalTransaction.categoryId !== transaction.categoryId ||
+      formatMonthFromDateString(originalTransaction.date) !== formatMonthFromDateString(transaction.date)
     ) {
+      const category = await manager.getRepository(Category).findOne(transaction.categoryId)
+      const originalCategory = await manager.findOne(Category, originalTransaction.categoryId)
+
       // Cat or month has changed so the activity is the entirety of the transaction
       activity = transaction.amount
 
       // Revert original category, if set
-      if (transaction.original.categoryId) {
+      if (originalTransaction.categoryId) {
         if (originalCategory && originalCategory.inflow === false || account.type !== AccountTypes.CreditCard) {
           // Category or month has changed, so reset 'original' amount
           const originalCategoryMonth = await manager.getRepository(CategoryMonth).findOne(
-            { categoryId: transaction.original.categoryId, month: formatMonthFromDateString(transaction.original.date) },
+            { categoryId: originalTransaction.categoryId, month: formatMonthFromDateString(originalTransaction.date) },
             { relations: ['budgetMonth'] },
           )
 
-          originalCategoryMonth.update({ activity: multiply(transaction.original.amount, -1) })
-          await manager.getRepository(CategoryMonth).update(originalCategoryMonth.id, originalCategoryMonth)
+          originalCategoryMonth.update({ activity: multiply(originalTransaction.amount, -1) })
+          await manager.getRepository(CategoryMonth).update(originalCategoryMonth.id, originalCategoryMonth.getUpdatePayload())
         }
 
         if (account.type === AccountTypes.CreditCard) {
@@ -397,10 +395,10 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
           if (originalCategory.inflow === false) {
             const originalCCMonth = await manager.findOne(CategoryMonth, {
               categoryId: ccCategory.id,
-              month: formatMonthFromDateString(transaction.original.date),
+              month: formatMonthFromDateString(originalTransaction.date),
             })
-            originalCCMonth.update({ activity: transaction.original.amount })
-            await manager.getRepository(CategoryMonth).update(originalCCMonth.id, originalCCMonth)
+            originalCCMonth.update({ activity: originalTransaction.amount })
+            await manager.getRepository(CategoryMonth).update(originalCCMonth.id, originalCCMonth.getUpdatePayload())
           }
         }
       }
@@ -408,9 +406,9 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       // Apply to new category
       if (transaction.categoryId) {
         if (category.inflow === false || account.type !== AccountTypes.CreditCard) {
-          const transactionCategoryMonth = await manager.getRepository(CategoryMonth).findOne({ categoryId: transaction.categoryId, month: transaction.getMonth() })
+          const transactionCategoryMonth = await manager.getRepository(CategoryMonth).findOne({ categoryId: transaction.categoryId, month: Transaction.getMonth(transaction.date) })
           transactionCategoryMonth.update({ activity })
-          await manager.getRepository(CategoryMonth).update(transactionCategoryMonth.id, transactionCategoryMonth)
+          await manager.getRepository(CategoryMonth).update(transactionCategoryMonth.id, transactionCategoryMonth.getUpdatePayload())
         }
 
         if (account.type === AccountTypes.CreditCard) {
@@ -422,26 +420,35 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
            */
 
           if (category && category.inflow === false) {
-            const currentCCMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, transaction.getMonth())
+            const currentCCMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
             currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
-            await manager.getCustomRepository(CategoryMonths).save(currentCCMonth)
+            await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
           }
         }
       }
     } else {
+      if (isZero(activity)) {
+        return
+      }
+
       if (!transaction.categoryId) {
         return
       }
 
+      const category = await manager.getRepository(Category).findOne(transaction.categoryId)
       if (category.inflow === true && account.type === AccountTypes.CreditCard) {
         return
       }
 
+      const categoryMonth = await manager.getRepository(CategoryMonth).findOne({ categoryId: category.id, month: Transaction.getMonth(transaction.date) })
+      categoryMonth.update({ activity })
+      await manager.getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
+
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-        const currentCCMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, transaction.getMonth())
+        const currentCCMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
         currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
-        await manager.getCustomRepository(CategoryMonths).save(currentCCMonth)
+        await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
       }
     }
   }
@@ -461,9 +468,9 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     if (transaction.transferTransactionId !== null && transferAccount.type !== AccountTypes.Tracking) {
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-        const ccCategoryMonth = await manager.findOne(CategoryMonth, { categoryId: ccCategory.id, month: transaction.getMonth() })
+        const ccCategoryMonth = await manager.findOne(CategoryMonth, { categoryId: ccCategory.id, month: Transaction.getMonth(transaction.date) })
         ccCategoryMonth.update({ activity: transaction.amount })
-        await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth)
+        await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
       }
 
       return
@@ -485,16 +492,16 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         { relations: ['budgetMonth'] },
       )
       originalCategoryMonth.update({ activity: multiply(transaction.amount, -1) })
-      await manager.getRepository(CategoryMonth).update(originalCategoryMonth.id, originalCategoryMonth)
+      await manager.getRepository(CategoryMonth).update(originalCategoryMonth.id, originalCategoryMonth.getUpdatePayload())
     }
 
     // Check if we need to update a CC category
     if (account.type === AccountTypes.CreditCard) {
       // Update CC category
       const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-      const ccCategoryMonth = await manager.findOne(CategoryMonth, { categoryId: ccCategory.id, month: transaction.getMonth() })
+      const ccCategoryMonth = await manager.findOne(CategoryMonth, { categoryId: ccCategory.id, month: Transaction.getMonth(transaction.date) })
       ccCategoryMonth.update({ activity: transaction.amount })
-      await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth)
+      await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
     }
   }
 }

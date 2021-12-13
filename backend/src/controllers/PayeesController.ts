@@ -1,5 +1,5 @@
 import { Get, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
@@ -43,7 +43,7 @@ export class PayeesController extends Controller {
         ...requestBody,
         budgetId,
       })
-      await getRepository(Payee).save(payee)
+      await getRepository(Payee).insert(payee)
 
       return {
         message: 'success',

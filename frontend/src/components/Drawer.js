@@ -225,7 +225,9 @@ export default function AppDrawer(props) {
       <List dense={true}>
         <ListItemButton>
           <ListItemIcon size="small" style={{minWidth: '25px'}}>
-            <AddCircleIcon fontSize="small" />
+            <AddCircleIcon style={{
+              fontSize: theme.typography.subtitle2.fontSize,
+            }} />
           </ListItemIcon>
           <ListItemText primary="Add Account" onClick={() => props.onAddAccountClick()} />
         </ListItemButton>

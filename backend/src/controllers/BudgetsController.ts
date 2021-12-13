@@ -1,5 +1,5 @@
 import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../models/Budget'
@@ -86,7 +86,7 @@ export class BudgetsController extends Controller {
     try {
       const budget: Budget = getRepository(Budget).create({ ...requestBody })
       budget.user = request.user
-      await getRepository(Budget).save(budget)
+      await getRepository(Budget).insert(budget)
 
       return {
         message: 'success',
