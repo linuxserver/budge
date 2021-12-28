@@ -281,7 +281,17 @@ export default function BudgetTable(props) {
           )
         }
 
-        return <Chip size="small" label={value} color={color}></Chip>
+        return (
+          <Chip
+            size="small"
+            label={value}
+            color={color}
+            style={{
+              height: 'auto',
+              padding: "1px 0",
+            }}
+          />
+        )
       }
     },
   ]

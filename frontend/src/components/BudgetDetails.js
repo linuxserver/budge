@@ -44,7 +44,7 @@ export default function BudgetDetails(props) {
   return (
     <Box sx={{p: 2}}>
       <h3>
-        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })} Summary
+        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }).toUpperCase()} SUMMARY
       </h3>
       <TableContainer>
         <Table aria-label="simple table">
