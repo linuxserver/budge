@@ -1,16 +1,17 @@
 import { Budget } from "../entities/Budget";
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
+import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, MoreThan, MoreThanOrEqual, UpdateEvent } from "typeorm";
 import { formatMonthFromDateString, getDateFromString } from "../utils";
 import { BudgetMonth } from "../entities/BudgetMonth";
 import { Category } from "../entities/Category";
-import { add, isZero, isNegative, isPositive, subtract, equal } from "dinero.js";
+import { add, isZero, isNegative, isPositive, subtract, equal, dinero } from "dinero.js";
 import { CategoryMonth, CategoryMonthCache } from "../entities/CategoryMonth";
+import { USD } from "@dinero.js/currencies";
 import { CategoryMonths } from "../repositories/CategoryMonths";
 
 @EventSubscriber()
 export class CategoryMonthSubscriber implements EntitySubscriberInterface<CategoryMonth> {
   listenTo() {
-      return CategoryMonth;
+    return CategoryMonth
   }
 
   /**
@@ -26,12 +27,21 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
       categoryId: categoryMonth.categoryId,
       month: formatMonthFromDateString(prevMonth),
     })
-    if (prevCategoryMonth && isPositive(prevCategoryMonth.balance)) {
+
+    const category = await event.manager.findOne(Category, {
+      id: event.entity.categoryId
+    })
+
+    if (prevCategoryMonth && (category.trackingAccountId || isPositive(prevCategoryMonth.balance))) {
       categoryMonth.balance = add(prevCategoryMonth.balance, add(categoryMonth.budgeted, categoryMonth.activity))
     }
   }
 
   async afterInsert(event: InsertEvent<CategoryMonth>) {
+    if (isZero(event.entity.balance)) {
+      return
+    }
+
     await this.bookkeeping(event.entity as CategoryMonth, event.manager)
   }
 

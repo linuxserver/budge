@@ -7,6 +7,7 @@ import { add, equal, isZero, multiply, subtract } from "dinero.js";
 import { CategoryMonth } from "../entities/CategoryMonth";
 import { Transaction, TransactionCache, TransactionStatus } from "../entities/Transaction";
 import { CategoryMonths } from "../repositories/CategoryMonths";
+import { BudgetMonths } from "../repositories/BudgetMonths";
 
 @EventSubscriber()
 export class TransactionSubscriber implements EntitySubscriberInterface<Transaction> {
@@ -36,12 +37,6 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       this.updateAccountBalanceOnAdd(event.entity as Transaction, event.manager),
       this.bookkeepingOnAdd(event.entity as Transaction, event.manager),
       this.createTransferTransaction(event.entity as Transaction, event.manager),
-    ])
-  }
-
-  async afterUpdate(event: UpdateEvent<Transaction>) {
-    await Promise.all([
-
     ])
   }
 
