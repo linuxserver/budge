@@ -452,7 +452,12 @@ export default function BudgetTable(props) {
           // toolbar: false,
           draggable: false,
           // sorting: false,
-          headerStyle: { position: 'sticky', top: 0 },
+          headerStyle: {
+            position: 'sticky',
+            top: 0,
+            textTransform: 'uppercase',
+            fontSize: theme.typography.caption.fontSize,
+          },
           rowStyle: rowData => ({
             ...!rowData.groupId && {
               backgroundColor: theme.palette.action.hover,
