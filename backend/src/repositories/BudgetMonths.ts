@@ -12,7 +12,6 @@ export class BudgetMonths extends Repository<BudgetMonth> {
       const months = await budget.getMonths()
 
       let newBudgetMonth
-      let counter = 1
       let direction = 1
       let monthFrom = new Date()
       monthFrom.setDate(1)
@@ -20,20 +19,18 @@ export class BudgetMonths extends Repository<BudgetMonth> {
       if (month < months[0]) {
         monthFrom = new Date(`${months[0]}T12:00:00`)
         direction = -1
-        counter = -1
       } else if (month > months[months.length - 1]) {
         monthFrom = new Date(`${months[months.length - 1]}T12:00:00`)
       }
 
       // iterate over all months until we hit the first budget month
       do {
-        monthFrom.setMonth(monthFrom.getMonth() + counter)
+        monthFrom.setMonth(monthFrom.getMonth() + direction)
         newBudgetMonth = this.create({
           budgetId,
           month: formatMonthFromDateString(monthFrom),
         })
         await this.insert(newBudgetMonth)
-        newBudgetMonth.budget = Promise.resolve(budget)
       } while (newBudgetMonth.month !== month)
 
       return newBudgetMonth

@@ -24,8 +24,6 @@ export type CategoryMonthOriginalValues = {
 export class CategoryMonthCache {
   static cache: { [key: string]: CategoryMonthOriginalValues } = {}
 
-  static transfers: string[] = []
-
   public static get(id: string): CategoryMonthOriginalValues | null {
     if (CategoryMonthCache.cache[id]) {
       return CategoryMonthCache.cache[id]
@@ -114,9 +112,9 @@ export class CategoryMonth {
       categoryId: this.categoryId,
       budgetMonthId: this.budgetMonthId,
       month: this.month,
-      budgeted: this.budgeted,
-      activity: this.activity,
-      balance: this.balance,
+      budgeted: {...this.budgeted},
+      activity: {...this.activity},
+      balance: {...this.balance},
     }
   }
 

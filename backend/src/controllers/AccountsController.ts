@@ -166,7 +166,6 @@ export class AccountsController extends Controller {
         }
 
         const clearedTransactions = await getRepository(Transaction).find({ accountId: account.id, status: TransactionStatus.Cleared })
-        console.log(clearedTransactions)
         for (const transaction of clearedTransactions) {
           transaction.status = TransactionStatus.Reconciled
           await getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())
