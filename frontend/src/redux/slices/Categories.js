@@ -21,7 +21,7 @@ export const createCategory = createAsyncThunk('categories/createCategory', asyn
   return await api.createCategory(name, categoryGroupId, store.budgets.activeBudget.id);
 })
 
-export const updateCategory = createAsyncThunk('categories/updateCategory', async ({ id, name, order ,categoryGroupId }, { getState }) => {
+export const updateCategory = createAsyncThunk('categories/updateCategory', async ({ id, name, order, categoryGroupId }, { getState }) => {
   const store = getState()
   return await api.updateCategory(id, name, order, categoryGroupId, store.budgets.activeBudget.id);
 })
