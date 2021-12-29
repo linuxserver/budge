@@ -64,10 +64,11 @@ export default class API {
     return FromAPI.transformAccount(response.data.data)
   }
 
-  static async updateAccount(id, name, balance, budgetId) {
+  static async updateAccount(id, name, order, balance, budgetId) {
     const response = await axios.put(`/api/budgets/${budgetId}/accounts/${id}`, {
       ...name && { name },
       ...balance && { balance: balance.toJSON().amount },
+      ...order && { order },
     })
 
     return FromAPI.transformAccount(response.data.data)

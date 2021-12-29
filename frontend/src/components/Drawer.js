@@ -3,38 +3,34 @@ import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
-import Toolbar from '@mui/material/Toolbar';
-import Box from '@mui/material/Box';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
 import {
   useNavigate,
 } from "react-router-dom";
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { inputToDinero, intlFormat } from '../utils/Currency'
 import LogoutIcon from '@mui/icons-material/Logout';
 import api from '../api'
-import SsidChartIcon from '@mui/icons-material/SsidChart';
 import Grid from '@mui/material/Grid';
 import { add, isNegative } from 'dinero.js'
 import { useTheme } from '@mui/styles'
-import Stack from '@mui/material/Stack'
 import AddCircleIcon from "@mui/icons-material/AddCircle"
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { editAccount, fetchAccounts } from '../redux/slices/Accounts';
 
 const drawerWidth = 300;
 
 export default function AppDrawer(props) {
+  const dispatch = useDispatch()
   const theme = useTheme()
   const navigate = useNavigate()
 
@@ -47,14 +43,17 @@ export default function AppDrawer(props) {
    * State block
    */
   const [accountsListOpen, setAccountsListOpen] = useState({ BUDGET: true, TRACKING: true })
-  const [trackingAccountsOpen, setTrackingAccountsOpen] = useState(true)
   const [selectedItem, setSelectedItem] = useState('Budget')
 
   /**
    * Redux block
    */
   const budget = useSelector(state => state.budgets.activeBudget)
-  const accounts = useSelector(state => state.accounts.accounts)
+  const accounts = useSelector(state => {
+    const accounts = [...state.accounts.accounts]
+    accounts.sort((a, b) => a.order < b.order ? -1 : 1)
+    return accounts
+  })
   const budgetAccounts = accounts.filter(account => account.type !== 2)
   const trackingAccounts = accounts.filter(account => account.type === 2)
 
@@ -132,6 +131,16 @@ export default function AppDrawer(props) {
     )
   }
 
+  const DragState = {
+    account: -1,
+    dropAccount: -1, // drag target
+  };
+
+  const reorderAccounts = async (from, to) => {
+    await dispatch(editAccount({ id: from.id, order: to.order + 0.5 }))
+    dispatch(fetchAccounts())
+  }
+
   const AccountItem = (account) => {
     const balanceColor = isNegative(account.balance) ? theme.palette.error.main : theme.palette.text.secondary
     return (
@@ -139,6 +148,23 @@ export default function AppDrawer(props) {
           key={`account-${account.id}`}
           selected={selectedItem === `account-${account.id}`}
           onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
+          draggable="true"
+          onDragStart={(e) => {
+            DragState.account = account
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            if (account.id !== DragState.account.id) {
+              DragState.dropAccount = account
+            }
+          }}
+          onDragEnd={(e) => {
+            if (DragState.dropAccount !== -1) {
+              reorderAccounts(DragState.account, DragState.dropAccount)
+            }
+            DragState.account = -1;
+            DragState.dropAccount = -1;
+          }}
         >
           <Grid container direction="row" justifyContent="space-between" alignItems="center">
             <div>

@@ -11,9 +11,9 @@ export const createAccount = createAsyncThunk('accounts/create', async ({ name, 
   return account
 })
 
-export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name, balance }, { getState }) => {
+export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name, order, balance }, { getState }) => {
   const store = getState()
-  return await api.updateAccount(id, name, balance, store.budgets.activeBudget.id)
+  return await api.updateAccount(id, name, order, balance, store.budgets.activeBudget.id)
 })
 
 export const fetchAccounts = createAsyncThunk('accounts/fetch', async (_, { getState }) => {

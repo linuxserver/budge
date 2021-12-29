@@ -30,6 +30,7 @@ export class AccountsController extends Controller {
       balance: 0,
       cleared: 0,
       uncleared: 0,
+      order: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
@@ -114,6 +115,7 @@ export class AccountsController extends Controller {
       balance: 0,
       cleared: 0,
       uncleared: 0,
+      order: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },
@@ -141,12 +143,29 @@ export class AccountsController extends Controller {
         }
       }
 
-      if (requestBody.name !== account.name) {
+      if (requestBody.name !== account.name || requestBody.order !== account.order) {
         account.name = requestBody.name
-        await getRepository(Account).update(account.id, account.getUpdatePayload())
+
+        if (account.order !== requestBody.order) {
+          account.order = requestBody.order
+
+          // Update all accounts because of order change
+          let accounts = (await getRepository(Account).find({ budgetId })).map(act => {
+            if (account.id === act.id) {
+              return account
+            }
+
+            return act
+          })
+
+          accounts = Account.sort(accounts)
+          await getRepository(Account).save(accounts)
+        } else {
+          await getRepository(Account).update(account.id, account.getUpdatePayload())
+        }
       }
 
-      if (requestBody.balance) {
+      if (typeof requestBody.balance === 'number') {
         // Reconcile the account
         const difference = subtract(dinero({ amount: requestBody.balance, currency: USD }), account.cleared)
         if (!isZero(difference)) {
@@ -201,6 +220,7 @@ export class AccountsController extends Controller {
         balance: 0,
         cleared: 0,
         uncleared: 0,
+        order: 0,
         created: '2011-10-05T14:48:00.000Z',
         updated: '2011-10-05T14:48:00.000Z',
       },
@@ -246,6 +266,7 @@ export class AccountsController extends Controller {
       balance: 0,
       cleared: 0,
       uncleared: 0,
+      order: 0,
       created: '2011-10-05T14:48:00.000Z',
       updated: '2011-10-05T14:48:00.000Z',
     },

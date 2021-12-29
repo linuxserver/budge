@@ -321,7 +321,7 @@ export default function BudgetTable(props) {
     }
 
     dispatch(fetchCategories())
-  };
+  }
 
   const onBudgetEdit = async (newRow, oldRow) => {
     if (equal(newRow.budgeted, oldRow.budgeted)) {

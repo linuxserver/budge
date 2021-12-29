@@ -150,7 +150,6 @@ export class CategoriesController extends Controller {
       if (categoryGroup.order !== requestBody.order) {
         // re-order category groups
         categoryGroup.order = requestBody.order
-        console.log(categoryGroup.order)
 
         let categoryGroups = (await getRepository(CategoryGroup).find({ budgetId })).map(group => {
           if (group.id === categoryGroup.id) {
@@ -159,16 +158,8 @@ export class CategoriesController extends Controller {
 
           return group
         })
-        categoryGroups = categoryGroups.sort((a, b) => {
-          if (a.order === b.order) {
-            return a.name > b.name ? -1 : 1
-          }
-          return a.order < b.order ? -1 : 1
-        })
-        categoryGroups = categoryGroups.map((group, index) => {
-          group.order = index
-          return group
-        })
+
+        categoryGroups = CategoryGroup.sort(categoryGroups)
 
         await getRepository(CategoryGroup).save(categoryGroups)
       } else {
@@ -284,16 +275,7 @@ export class CategoriesController extends Controller {
           categories = categories.map(oldCategory => oldCategory.id === category.id ? category : oldCategory)
         }
 
-        categories.sort((a, b) => {
-          if (a.order === b.order) {
-            return a.name < b.name ? -1 : 1
-          }
-          return a.order < b.order ? -1 : 1
-        })
-        categories = categories.map((cat, index) => {
-          cat.order = index
-          return cat
-        })
+        categories = Category.sort(categories)
         await getRepository(Category).save(categories)
       } else {
         await getRepository(Category).update(category.id, category.getUpdatePayload())

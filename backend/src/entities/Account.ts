@@ -61,6 +61,9 @@ export class Account {
   })
   uncleared: Dinero<number> = dinero({ amount: 0, currency: USD })
 
+  @Column({ type: 'int', default: 0 })
+  order: number = 0
+
   @CreateDateColumn()
   created: Date
 
@@ -109,8 +112,23 @@ export class Account {
       balance: this.balance.toJSON().amount,
       cleared: this.cleared.toJSON().amount,
       uncleared: this.uncleared.toJSON().amount,
+      order: this.order,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }
+  }
+
+  public static sort(accounts: Account[]): Account[] {
+    accounts = accounts.sort((a, b) => {
+      if (a.order === b.order) {
+        return a.name > b.name ? -1 : 1
+      }
+      return a.order < b.order ? -1 : 1
+    })
+
+    return accounts.map((group, index) => {
+      group.order = index
+      return group
+    })
   }
 }

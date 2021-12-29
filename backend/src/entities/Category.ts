@@ -97,4 +97,18 @@ export class Category {
       updated: this.updated.toISOString(),
     }
   }
+
+  public static sort(categories: Category[]): Category[] {
+    categories.sort((a, b) => {
+      if (a.order === b.order) {
+        return a.name < b.name ? -1 : 1
+      }
+      return a.order < b.order ? -1 : 1
+    })
+
+    return categories.map((cat, index) => {
+      cat.order = index
+      return cat
+    })
+  }
 }

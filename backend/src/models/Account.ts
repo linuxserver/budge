@@ -53,6 +53,11 @@ export interface AccountModel {
   uncleared: number
 
   /**
+   * Order position of accounts
+   */
+  order: number
+
+  /**
    * Datetime user was created
    */
   created: string
@@ -96,6 +101,7 @@ export interface CreateAccountRequest {
  */
 export interface EditAccountRequest {
   name?: string
+  order?: number
   balance?: number
 }
 

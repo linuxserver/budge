@@ -76,4 +76,18 @@ export class CategoryGroup {
       updated: this.updated.toISOString(),
     }
   }
+
+  public static sort(categoryGroups: CategoryGroup[]): CategoryGroup[] {
+    categoryGroups = categoryGroups.sort((a, b) => {
+      if (a.order === b.order) {
+        return a.name > b.name ? -1 : 1
+      }
+      return a.order < b.order ? -1 : 1
+    })
+
+    return categoryGroups.map((group, index) => {
+      group.order = index
+      return group
+    })
+  }
 }
