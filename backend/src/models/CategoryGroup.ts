@@ -38,6 +38,11 @@ export interface CategoryGroupModel {
   locked: boolean
 
   /**
+   * Category group ordering
+   */
+  order: number
+
+  /**
    * Child categories
    */
   categories: CategoryModel[]
@@ -57,11 +62,12 @@ export interface CategoryGroupModel {
  * @example {
  *  "categoryGroupId": "abc123",
  *  "name": "Emergency Fund",
- *  "categories": []
+ *  "order": 0,
  * }
  */
 export interface CategoryGroupRequest {
   name: string
+  order: number
 }
 
 export type CategoryGroupResponse = DataResponse<CategoryGroupModel>

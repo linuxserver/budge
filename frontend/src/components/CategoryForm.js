@@ -37,6 +37,7 @@ export default function NewCategoryDialog(props) {
         await dispatch(updateCategory({
           id: props.categoryId,
           name: name,
+          order: props.order,
           categoryGroupId: categoryGroup,
         }))
         break

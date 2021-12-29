@@ -3,13 +3,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   CreateDateColumn,
   ManyToOne,
   OneToMany,
-  AfterInsert,
-  PrimaryColumn,
-  BeforeInsert,
 } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
@@ -17,16 +13,13 @@ import { CategoryGroup } from './CategoryGroup'
 import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
-import { getMonthString, getMonthStringFromNow } from '../utils'
-import { Payee } from './Payee'
 import { Dinero } from '@dinero.js/core'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { CurrencyDBTransformer } from '../models/Currency'
-import { Base } from './Base'
 
 @Entity('budgets')
-export class Budget extends BaseEntity {
+export class Budget {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -58,82 +51,40 @@ export class Budget extends BaseEntity {
   /**
    * Has many accounts
    */
-  @OneToMany(() => Account, account => account.budget, { cascade: true })
+  @OneToMany(() => Account, account => account.budget)
   accounts: Promise<Account[]>
 
   /**
    * Has many categories
    */
-  @OneToMany(() => Category, category => category.budget, { cascade: true })
+  @OneToMany(() => Category, category => category.budget)
   categories: Promise<Category[]>
 
   /**
    * Has many category groups
    */
-  @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget, { cascade: true })
+  @OneToMany(() => CategoryGroup, categoryGroup => categoryGroup.budget)
   categoryGroups: Promise<CategoryGroup[]>
 
   /**
    * Has many budget months
    */
-  @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget, { cascade: true })
+  @OneToMany(() => BudgetMonth, budgetMonth => budgetMonth.budget)
   months: Promise<BudgetMonth[]>
 
   /**
    * Has many budget transactions
    */
-  @OneToMany(() => Transaction, transaction => transaction.budget, { cascade: true })
+  @OneToMany(() => Transaction, transaction => transaction.budget)
   transactions: Promise<Transaction[]>
 
-  @AfterInsert()
-  private async initialBudgetSetup(): Promise<void> {
-    const today = getMonthString()
-    const prevMonth = getMonthStringFromNow(-1)
-    const nextMonth = getMonthStringFromNow(1)
-
-    // Create initial budget months
-    await Promise.all(
-      [prevMonth, today, nextMonth].map(month => {
-        return BudgetMonth.create({ budgetId: this.id, month }).save()
-      }),
-    )
-
-    // Create internal categories
-    const internalCategoryGroup = CategoryGroup.create({
-      budgetId: this.id,
-      name: 'Internal Category',
-      internal: true,
-      locked: true,
-    })
-    await internalCategoryGroup.save()
-
-    await Promise.all(
-      ['To be Budgeted'].map(name => {
-        const internalCategory = Category.create({
-          budgetId: this.id,
-          name: name,
-          categoryGroupId: internalCategoryGroup.id,
-          inflow: true,
-          locked: true,
-        })
-        return internalCategory.save()
-      }),
-    )
-
-    // Create special 'Starting Balance' payee
-    const startingBalancePayee = Payee.create({
-      budgetId: this.id,
-      name: 'Starting Balance',
-      internal: true,
-    })
-    await startingBalancePayee.save()
-
-    const reconciliationPayee = Payee.create({
-      budgetId: this.id,
-      name: 'Reconciliation Balance Adjustment',
-      internal: true,
-    })
-    await reconciliationPayee.save()
+  public getUpdatePayload() {
+    return {
+      id: this.id,
+      userId: this.userId,
+      name: this.name,
+      toBeBudgeted: {...this.toBeBudgeted},
+    }
   }
 
   public async toResponseModel(): Promise<BudgetModel> {

@@ -1,5 +1,5 @@
 import { Get, Put, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account, AccountTypes } from '../entities/Account'
@@ -9,6 +9,7 @@ import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
 import { USD } from '@dinero.js/currencies'
 import { dinero, isZero, subtract } from 'dinero.js'
+import { getRepository } from 'typeorm'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')
@@ -39,7 +40,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne({ id: budgetId, userId: request.user.id })
+      const budget = await getRepository(Budget).findOne({ id: budgetId, userId: request.user.id })
       if (!budget) {
         this.setStatus(404)
         return {
@@ -47,12 +48,12 @@ export class AccountsController extends Controller {
         }
       }
 
-      const account: Account = Account.create({
+      const account: Account = getRepository(Account).create({
         ...requestBody,
         balance: dinero({ amount: requestBody.balance, currency: USD }),
         budgetId,
       })
-      await account.save()
+      await getRepository(Account).insert(account)
 
       // Create a transaction for the starting balance of the account
       if (requestBody.balance !== 0) {
@@ -64,13 +65,13 @@ export class AccountsController extends Controller {
             amount = amount * -1 // Inverse balance for CCs
             break
           case AccountTypes.Bank:
-            const inflowCategory = await Category.findOne({ budgetId: account.budgetId, inflow: true })
+            const inflowCategory = await getRepository(Category).findOne({ budgetId: account.budgetId, inflow: true })
             categoryId = inflowCategory.id
             break
         }
 
-        const startingBalancePayee = await Payee.findOne({ budgetId, name: 'Starting Balance', internal: true })
-        const startingBalanceTransaction = Transaction.create({
+        const startingBalancePayee = await getRepository(Payee).findOne({ budgetId, name: 'Starting Balance', internal: true })
+        const startingBalanceTransaction = getRepository(Transaction).create({
           budgetId,
           accountId: account.id,
           payeeId: startingBalancePayee.id,
@@ -80,15 +81,15 @@ export class AccountsController extends Controller {
           memo: 'Starting Balance',
           status: TransactionStatus.Reconciled,
         })
-        await startingBalanceTransaction.save()
+        await getRepository(Transaction).insert(startingBalanceTransaction)
       }
 
       // Reload account to get the new balanace after the 'initial' transaction was created
-      await account.reload()
+      // await account.reload()
 
       return {
         message: 'success',
-        data: await account.toResponseModel(),
+        data: await (await getRepository(Account).findOne(account.id)).toResponseModel(),
       }
     } catch (err) {
       console.log(err)
@@ -124,7 +125,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -132,7 +133,7 @@ export class AccountsController extends Controller {
         }
       }
 
-      const account = await Account.findOne(id)
+      let account = await getRepository(Account).findOne(id)
       if (!account) {
         this.setStatus(404)
         return {
@@ -142,16 +143,16 @@ export class AccountsController extends Controller {
 
       if (requestBody.name !== account.name) {
         account.name = requestBody.name
-        await account.save()
+        await getRepository(Account).update(account.id, account.getUpdatePayload())
       }
 
       if (requestBody.balance) {
         // Reconcile the account
         const difference = subtract(dinero({ amount: requestBody.balance, currency: USD }), account.cleared)
         if (!isZero(difference)) {
-          const reconciliationPayee = await Payee.findOne({ budgetId, name: 'Reconciliation Balance Adjustment', internal: true })
-          const inflowCategory = await Category.findOne({ budgetId: account.budgetId, inflow: true })
-          const startingBalanceTransaction = Transaction.create({
+          const reconciliationPayee = await getRepository(Payee).findOne({ budgetId, name: 'Reconciliation Balance Adjustment', internal: true })
+          const inflowCategory = await getRepository(Category).findOne({ budgetId: account.budgetId, inflow: true })
+          const startingBalanceTransaction = getRepository(Transaction).create({
             budgetId,
             accountId: account.id,
             payeeId: reconciliationPayee.id,
@@ -161,17 +162,16 @@ export class AccountsController extends Controller {
             memo: 'Reconciliation Transaction',
             status: TransactionStatus.Reconciled,
           })
-          await startingBalanceTransaction.save()
+          await getRepository(Transaction).insert(startingBalanceTransaction)
         }
 
-        const clearedTransactions = await Transaction.find({ accountId: account.id, status: TransactionStatus.Cleared })
-        console.log(clearedTransactions)
+        const clearedTransactions = await getRepository(Transaction).find({ accountId: account.id, status: TransactionStatus.Cleared })
         for (const transaction of clearedTransactions) {
           transaction.status = TransactionStatus.Reconciled
-          await transaction.save()
+          await getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())
         }
 
-        await account.reload()
+        account = await getRepository(Account).findOne(account.id)
       }
 
       return {
@@ -211,7 +211,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountsResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne({ id: budgetId, userId: request.user.id })
+      const budget = await getRepository(Budget).findOne({ id: budgetId, userId: request.user.id })
       if (!budget) {
         this.setStatus(404)
         return {
@@ -219,7 +219,7 @@ export class AccountsController extends Controller {
         }
       }
 
-      const accounts = await Account.find({ where: { budgetId } })
+      const accounts = await getRepository(Account).find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -256,7 +256,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne({ id: budgetId, userId: request.user.id })
+      const budget = await getRepository(Budget).findOne({ id: budgetId, userId: request.user.id })
       if (!budget) {
         this.setStatus(404)
         return {
@@ -264,7 +264,7 @@ export class AccountsController extends Controller {
         }
       }
 
-      const account = await Account.findOne(accountId)
+      const account = await getRepository(Account).findOne(accountId)
 
       return {
         message: 'success',

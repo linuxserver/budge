@@ -111,6 +111,7 @@ export default function BudgetTableHeader(props) {
           <CategoryGroupForm
             popupState={categoryGroupPopupState}
             mode={'create'}
+            order={0}
           />
           <Button
             aria-describedby="category-group-add"

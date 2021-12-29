@@ -1,8 +1,9 @@
 import { LoginResponse, LogoutResponse, UserResponse } from '../models/User'
 import { Get, Security, Route, Post, Body, Controller, Tags, Example, Request } from 'tsoa'
-import { User } from '../entities'
+import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
+import { getRepository } from 'typeorm'
 
 @Route()
 export class RootController extends Controller {
@@ -23,7 +24,7 @@ export class RootController extends Controller {
   })
   public async login(@Body() requestBody: LoginRequest, @Request() request: ExpressRequest): Promise<LoginResponse|ErrorResponse> {
     const { email, password } = requestBody
-    const user: User = await User.findOne({ email })
+    const user: User = await getRepository(User).findOne({ email })
 
     if (!user) {
       this.setStatus(403)
@@ -75,7 +76,7 @@ export class RootController extends Controller {
   })
   public async getMe(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await User.findOne({ email: request.user.email })
+      const user: User = await getRepository(User).findOne({ email: request.user.email })
 
       return {
         data: await user.toResponseModel(),

@@ -11,9 +11,9 @@ export const createCategoryGroup = createAsyncThunk('categories/createCategoryGr
   return await api.createCategoryGroup(name, store.budgets.activeBudget.id);
 })
 
-export const updateCategoryGroup = createAsyncThunk('categories/updateCategoryGroup', async ({ id, name }, { getState }) => {
+export const updateCategoryGroup = createAsyncThunk('categories/updateCategoryGroup', async ({ id, name, order }, { getState }) => {
   const store = getState()
-  return await api.updateCategoryGroup(id, name, store.budgets.activeBudget.id);
+  return await api.updateCategoryGroup(id, name, order, store.budgets.activeBudget.id);
 })
 
 export const createCategory = createAsyncThunk('categories/createCategory', async ({ name, categoryGroupId }, { getState }) => {
@@ -21,9 +21,9 @@ export const createCategory = createAsyncThunk('categories/createCategory', asyn
   return await api.createCategory(name, categoryGroupId, store.budgets.activeBudget.id);
 })
 
-export const updateCategory = createAsyncThunk('categories/updateCategory', async ({ id, name, categoryGroupId }, { getState }) => {
+export const updateCategory = createAsyncThunk('categories/updateCategory', async ({ id, name, order, categoryGroupId }, { getState }) => {
   const store = getState()
-  return await api.updateCategory(id, name, categoryGroupId, store.budgets.activeBudget.id);
+  return await api.updateCategory(id, name, order, categoryGroupId, store.budgets.activeBudget.id);
 })
 
 const categoriesSlice = createSlice({

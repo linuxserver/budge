@@ -1,15 +1,17 @@
-import { createConnection, getConnection } from 'typeorm'
+import { createConnection, getConnection, getRepository, getCustomRepository } from 'typeorm'
 import { User } from '../src/entities/User'
 import { Budget } from '../src/entities/Budget'
 import { Category } from '../src/entities/Category'
 import { CategoryGroup } from '../src/entities/CategoryGroup'
 import { CategoryMonth } from '../src/entities/CategoryMonth'
 import { formatMonthFromDateString, getMonthStringFromNow } from '../src/utils'
-import { Account } from '../src/entities'
+import { Account } from '../src/entities/Account'
 import { AccountTypes } from '../src/entities/Account'
 import { Transaction } from '../src/entities/Transaction'
 import { Payee } from '../src/entities/Payee'
-
+import { dinero } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { CategoryMonths } from '../src/repositories/CategoryMonths'
 
 beforeAll(async () => {
   await createConnection({
@@ -25,32 +27,32 @@ beforeAll(async () => {
     emitDecoratorMetadata: true,
   })
 
-  await User.create({
+  const user = getRepository(User).create({
     email: 'test@example.com',
     password: 'password',
-  }).save()
+  })
+  await getRepository(User).save(user)
 
-  const user = await User.findOne({ email: 'test@example.com' })
-
-  const budget = Budget.create({
+  const budget = getRepository(Budget).create({
     id: 'test-budget',
     userId: user.id,
     name: 'My Budget',
   })
-  await budget.save()
+  await getRepository(Budget).save(budget)
 
-  const categoryGroup = CategoryGroup.create({
+  const categoryGroup = getRepository(CategoryGroup).create({
     budgetId: budget.id,
     name: 'Bills',
   })
-  await categoryGroup.save()
+  await getRepository(CategoryGroup).save(categoryGroup)
   await Promise.all(['Power', 'Water'].map(async catName => {
-    return Category.create({
+    const newCategory = getRepository(Category).create({
       id: `test-${catName.toLowerCase()}`,
       budgetId: budget.id,
       categoryGroupId: categoryGroup.id,
       name: catName,
-    }).save()
+    })
+    return getRepository(Category).insert(newCategory)
   }))
 })
 
@@ -61,40 +63,49 @@ afterAll(() => {
 
 describe("Budget Tests", () => {
   it("Should budget a positive category and cascade to the next month", async () => {
-    const budget = await Budget.findOne({ id: 'test-budget' })
-    const category = await Category.findOne({ id: 'test-power' })
+    const budget = await getRepository(Budget).findOne('test-budget')
+    const category = await getRepository(Category).findOne('test-power')
     const thisMonth = formatMonthFromDateString(new Date())
     const nextMonth = getMonthStringFromNow(1)
 
-    const categoryMonth = await CategoryMonth.findOrCreate(budget.id, category.id, thisMonth)
+    const categoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budget.id, category.id, thisMonth)
 
-    await categoryMonth.update({ budgeted: 25})
+    categoryMonth.update({ budgeted: dinero({ amount: 25, currency: USD })})
+    await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
 
-    const nextCategoryMonth = await CategoryMonth.findOne({ categoryId: category.id, month: nextMonth })
+    let nextCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: category.id, month: nextMonth })
 
-    expect(nextCategoryMonth.balance).toBe(25)
+    expect(nextCategoryMonth.balance.toJSON().amount).toBe(25)
 
-    await categoryMonth.update({ budgeted: -25 })
-    await nextCategoryMonth.reload()
+    categoryMonth.update({ budgeted: dinero({ amount: -25, currency: USD }) })
+    await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
+    nextCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: category.id, month: nextMonth })
 
-    expect(categoryMonth.budgeted).toBe(-25)
-    expect(nextCategoryMonth.balance).toBe(0)
+    expect(categoryMonth.budgeted.toJSON().amount).toBe(-25)
+    expect(nextCategoryMonth.balance.toJSON().amount).toBe(0)
+
+    await categoryMonth.update({ budgeted: dinero({ amount: 0, currency: USD }) })
+    await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
+    nextCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: category.id, month: nextMonth })
+
+    expect(categoryMonth.budgeted.toJSON().amount).toBe(0)
+    expect(nextCategoryMonth.balance.toJSON().amount).toBe(0)
   })
 
   it("Income should add to TBB and remove on a deleted transaction", async () => {
-    const budget = await Budget.findOne({ id: 'test-budget' })
-    let account = Account.create({
+    let budget = await getRepository(Budget).findOne({ id: 'test-budget' })
+    let account = getRepository(Account).create({
       budgetId: budget.id,
       type: AccountTypes.Bank,
       name: "Checking",
     })
 
-    await account.save()
+    await getRepository(Account).insert(account)
 
-    const category = await Category.findOne({ budgetId: budget.id, inflow: true })
+    const category = await getRepository(Category).findOne({ budgetId: budget.id, inflow: true })
 
-    const payee = await Payee.findOne({ name: "Starting Balance", internal: true})
-    const transaction = Transaction.create({
+    const payee = await getRepository(Payee).findOne({ name: "Starting Balance", internal: true})
+    const transaction = getRepository(Transaction).create({
       budgetId: budget.id,
       accountId: account.id,
       categoryId: category.id,
@@ -102,58 +113,62 @@ describe("Budget Tests", () => {
       amount: 100,
       date: new Date(),
     })
-    await transaction.save()
 
-    await account.reload()
-    await budget.reload()
+    await getRepository(Transaction).insert(transaction)
 
-    expect(account.balance).toBe(100)
-    expect(budget.toBeBudgeted).toBe(100)
+    account = await getRepository(Account).findOne(account.id)
+    budget = await getRepository(Budget).findOne(budget.id)
 
-    await transaction.remove()
-    await budget.reload()
-    await account.reload()
+    expect(account.balance.toJSON().amount).toBe(100)
+    expect(budget.toBeBudgeted.toJSON().amount).toBe(100)
 
-    expect(budget.toBeBudgeted).toBe(0)
-    expect(account.balance).toBe(0)
+    await getRepository(Transaction).remove(transaction)
+    account = await getRepository(Account).findOne(account.id)
+    budget = await getRepository(Budget).findOne(budget.id)
+
+    expect(budget.toBeBudgeted.toJSON().amount).toBe(0)
+    expect(account.balance.toJSON().amount).toBe(0)
   })
 
   it("Transfer transaction should not affect TBB", async () => {
-    const budget = await Budget.findOne({ id: 'test-budget' })
-    const account = Account.create({
+    let budget = await getRepository(Budget).findOne({ id: 'test-budget' })
+    const account = getRepository(Account).create({
       budgetId: budget.id,
       type: AccountTypes.Bank,
       name: "Savings",
     })
 
-    await account.save()
+    await getRepository(Account).insert(account)
 
-    // Inflow category
-    const category = await Category.findOne({ budgetId: budget.id, inflow: true })
-    const payee = await Payee.findOne({ name: "Starting Balance", internal: true})
+    //  Inflow category
+    const category = await getRepository(Category).findOne({ budgetId: budget.id, inflow: true })
+    const payee = await getRepository(Payee).findOne({ name: "Starting Balance", internal: true})
 
     // checking account
-    const checkingAccount = await Account.findOne({ budgetId: budget.id, name: "Checking" })
-    await Transaction.create({
+    let checkingAccount = await getRepository(Account).findOne({ budgetId: budget.id, name: "Checking" })
+    // starting balance of 100
+    const transaction = getRepository(Transaction).create({
       budgetId: budget.id,
       accountId: checkingAccount.id,
       categoryId: category.id,
       payeeId: payee.id,
       amount: 100,
       date: new Date(),
-    }).save()
+    })
+    await getRepository(Transaction).insert(transaction)
 
     // create savings account
-    const savingsAccount = Account.create({
+    let savingsAccount = getRepository(Account).create({
       budgetId: budget.id,
       type: AccountTypes.Bank,
       name: "Savings",
     })
-    await savingsAccount.save()
+    await getRepository(Account).insert(savingsAccount)
 
-    await checkingAccount.reload()
+    checkingAccount = await getRepository(Account).findOne({ budgetId: budget.id, name: "Checking" })
 
-    const transferTransaction = Transaction.create({
+    // transfer 50 checking -> savings
+    let transferTransaction = getRepository(Transaction).create({
       budgetId: budget.id,
       accountId: checkingAccount.id,
       categoryId: null,
@@ -161,46 +176,47 @@ describe("Budget Tests", () => {
       amount: -50,
       date: new Date(),
     })
-    transferTransaction.handleTransfers = true
-    await transferTransaction.save()
+    await getRepository(Transaction).insert(transferTransaction)
 
-    await checkingAccount.reload()
-    await savingsAccount.reload()
-    await budget.reload()
+    checkingAccount = await getRepository(Account).findOne(checkingAccount.id)
+    savingsAccount = await getRepository(Account).findOne(savingsAccount.id)
+    budget = await getRepository(Budget).findOne(budget.id)
 
-    expect(budget.toBeBudgeted).toBe(100)
-    expect(checkingAccount.balance).toBe(50)
-    expect(savingsAccount.balance).toBe(50)
+    expect(budget.toBeBudgeted.toJSON().amount).toBe(100)
+    expect(checkingAccount.balance.toJSON().amount).toBe(50)
+    expect(savingsAccount.balance.toJSON().amount).toBe(50)
 
-    await (await Transaction.findOne(transferTransaction.id)).remove()
-    await checkingAccount.reload()
-    await savingsAccount.reload()
-    await budget.reload()
+    // Remove transfer transaction (100 savings back to checking)
+    await getRepository(Transaction).remove(transferTransaction)
+    checkingAccount = await getRepository(Account).findOne(checkingAccount.id)
+    savingsAccount = await getRepository(Account).findOne(savingsAccount.id)
+    budget = await getRepository(Budget).findOne(budget.id)
 
-    expect(budget.toBeBudgeted).toBe(100)
-    expect(checkingAccount.balance).toBe(100)
-    expect(savingsAccount.balance).toBe(0)
+    expect(budget.toBeBudgeted.toJSON().amount).toBe(100)
+    expect(checkingAccount.balance.toJSON().amount).toBe(100)
+    expect(savingsAccount.balance.toJSON().amount).toBe(0)
   })
 
   it("Credit card transactions affect their category", async () => {
-    const budget = await Budget.findOne({ id: 'test-budget' })
-    const account = Account.create({
+    let budget = await getRepository(Budget).findOne({ id: 'test-budget' })
+    let account = getRepository(Account).create({
       budgetId: budget.id,
       type: AccountTypes.CreditCard,
       name: "Visa",
     })
 
-    await account.save()
+    await getRepository(Account).insert(account)
 
-    const paymentCategory = await Category.findOne({ id: 'test-power' })
+    const paymentCategory = await getRepository(Category).findOne({ id: 'test-power' })
 
-    const payee = Payee.create({
+    const payee = getRepository(Payee).create({
       budgetId: budget.id,
       name: 'Power company',
     })
-    await payee.save()
+    await getRepository(Payee).insert(payee)
 
-    const ccTransaction = Transaction.create({
+    // pay 50 to test-power from credit card
+    const ccTransaction = getRepository(Transaction).create({
       budgetId: budget.id,
       accountId: account.id,
       categoryId: paymentCategory.id,
@@ -208,25 +224,28 @@ describe("Budget Tests", () => {
       amount: -50,
       date: new Date(),
     })
-    await ccTransaction.save()
+    await getRepository(Transaction).insert(ccTransaction)
 
-    await account.reload()
+    const ccCategory = await getRepository(Category).findOne({ trackingAccountId: account.id })
+    const ccCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: ccCategory.id, month: Transaction.getMonth(ccTransaction.date) })
 
-    const ccCategory = await Category.findOne({ trackingAccountId: account.id })
-    const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: ccTransaction.getMonth() })
+    account = await getRepository(Account).findOne(account.id)
+    const paymentCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: 'test-power', month: Transaction.getMonth(ccTransaction.date) })
 
-    expect(ccCategoryMonth.balance).toBe(50)
-    expect((await (await Account.findOne({ name: 'Visa' })).balance)).toBe(-50)
+    expect(ccCategoryMonth.balance.toJSON().amount).toBe(50)
+    expect(account.balance.toJSON().amount).toBe(-50)
+    expect(paymentCategoryMonth.balance.toJSON().amount).toBe(-50)
   })
 
   it("Credit card transfer reduces CC category", async () => {
-    const budget = await Budget.findOne({ id: 'test-budget' })
+    const budget = await getRepository(Budget).findOne({ id: 'test-budget' })
 
     // Initial amount for Checking transfer
-    const checkingAccount = await Account.findOne({ budgetId: budget.id, name: "Checking" })
-    const ccAccount = await Account.findOne({ budgetId: budget.id, name: 'Visa' })
+    let checkingAccount = await getRepository(Account).findOne({ budgetId: budget.id, name: "Checking" })
+    let ccAccount = await getRepository(Account).findOne({ budgetId: budget.id, name: 'Visa' })
 
-    const transaction = await Transaction.createNew({
+    // Transfer 50 checking -> credit card for payment
+    const transaction = getRepository(Transaction).create({
       budgetId: budget.id,
       accountId: checkingAccount.id,
       categoryId: null,
@@ -235,14 +254,46 @@ describe("Budget Tests", () => {
       date: new Date(),
       handleTransfers: true,
     })
+    await getRepository(Transaction).insert(transaction)
 
-    await checkingAccount.reload()
-    await ccAccount.reload()
+    checkingAccount = await getRepository(Account).findOne(checkingAccount.id)
+    ccAccount = await getRepository(Account).findOne(ccAccount.id)
 
-    const ccCategory = await Category.findOne({ trackingAccountId: ccAccount.id })
-    const ccCategoryMonth = await CategoryMonth.findOne({ categoryId: ccCategory.id, month: transaction.getMonth() })
+    const ccCategory = await getRepository(Category).findOne({ trackingAccountId: ccAccount.id })
+    const ccCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: ccCategory.id, month: Transaction.getMonth(transaction.date) })
 
-    expect(ccCategoryMonth.balance).toBe(0)
-    expect(ccAccount.balance).toBe(0)
+    expect(ccCategoryMonth.balance.toJSON().amount).toBe(0)
+    expect(ccAccount.balance.toJSON().amount).toBe(0)
+  })
+
+  it("Credit card inflow should account for CC category and target category", async () => {
+    const budget = await getRepository(Budget).findOne({ id: 'test-budget' })
+
+    // Initial amount for Checking transfer
+    let checkingAccount = await getRepository(Account).findOne({ budgetId: budget.id, name: "Checking" })
+    let ccAccount = await getRepository(Account).findOne({ budgetId: budget.id, name: 'Visa' })
+    let paymentCategory = await getRepository(Category).findOne({ id: 'test-power' })
+    let payee = await getRepository(Payee).findOne({ budgetId: budget.id, name: 'Power company' })
+
+    // 'reimbursement' of 10 to credit card from test-power
+    const transaction = getRepository(Transaction).create({
+      budgetId: budget.id,
+      accountId: ccAccount.id,
+      categoryId: paymentCategory.id,
+      payeeId: payee.id,
+      amount: 10,
+      date: new Date(),
+    })
+    await getRepository(Transaction).insert(transaction)
+
+    ccAccount = await getRepository(Account).findOne(ccAccount.id)
+
+    const ccCategory = await getRepository(Category).findOne({ trackingAccountId: ccAccount.id })
+    const ccCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: ccCategory.id, month: Transaction.getMonth(transaction.date) })
+    const paymentCategoryMonth = await getRepository(CategoryMonth).findOne({ categoryId: paymentCategory.id, month: Transaction.getMonth(transaction.date) })
+
+    expect(ccCategoryMonth.balance.toJSON().amount).toBe(-10)
+    expect(ccAccount.balance.toJSON().amount).toBe(10)
+    expect(paymentCategoryMonth.balance.toJSON().amount).toBe(-40)
   })
 })

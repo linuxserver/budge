@@ -43,6 +43,11 @@ export interface CategoryModel {
   locked: boolean
 
   /**
+   * Category ordering
+   */
+  order: number
+
+  /**
    * Datetime transaction was created
    */
   created: string
@@ -62,6 +67,7 @@ export interface CategoryModel {
 export interface CategoryRequest {
   categoryGroupId: string
   name: string
+  order: number
 }
 
 export type CategoryResponse = DataResponse<CategoryModel>

@@ -359,10 +359,12 @@ export default function Account(props) {
 
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
     dispatch(refreshBudget())
-    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
     dispatch(fetchBudgetMonths())
     dispatch(fetchPayees())
     dispatch(fetchAccounts())
+    if (newRow.categoryId && newRow.categoryId !== '0') {
+      dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
+    }
   }
 
   const setTransactionStatus = (rowData) => {
@@ -588,6 +590,12 @@ export default function Account(props) {
           rowStyle: rowData => ({
             fontSize: theme.typography.subtitle2.fontSize,
           }),
+          headerStyle: {
+            position: 'sticky',
+            top: 0,
+            textTransform: 'uppercase',
+            fontSize: theme.typography.caption.fontSize,
+          },
         }}
         components={{
           Row: props => (

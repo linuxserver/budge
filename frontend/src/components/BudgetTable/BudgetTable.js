@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
-import MaterialTable, { MTableCell, MTableEditCell } from "@material-table/core";
+import MaterialTable, { MTableCell, MTableEditCell, MTableBodyRow } from "@material-table/core";
 import { TableIcons } from '../../utils/Table'
 import { fetchBudgetMonth, updateCategoryMonth, fetchCategoryMonths, refreshBudget } from "../../redux/slices/Budgets";
+import { updateCategoryGroup, updateCategory, fetchCategories } from "../../redux/slices/Categories"
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -29,20 +30,26 @@ export default function BudgetTable(props) {
   const budgetId = budget.id
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
-  const categoriesMap = useSelector(
-    state => state.categories.categoryGroups.reduce(
-      (acc, group) => {
-        if (group.internal) {
-          return acc
-        }
-        acc[group.id] = group.name
-        for (const category of group.categories) {
-          acc[category.id] = category.name
-        }
+  const [categoryGroupsMap, categoriesMap] = useSelector(
+    state => {
+      const groupMap = {}
+      const map = state.categories.categoryGroups.reduce(
+        (acc, group) => {
+          if (group.internal) {
+            return acc
+          }
+          groupMap[group.id] = group
+          acc[group.id] = group.name
+          for (const category of group.categories) {
+            acc[category.id] = category.name
+          }
 
-        return acc
-      }, {}
-    )
+          return acc
+        }, {}
+      )
+
+      return [groupMap, map]
+    }
   )
   const budgetMonth = useSelector(state => {
     if (!state.budgets.budgetMonths[month]) {
@@ -61,6 +68,8 @@ export default function BudgetTable(props) {
 
       let groupRow = {
         id: group.id,
+        name: group.name,
+        order: group.order,
         categoryId: group.id,
         month,
         budgeted: dinero({ amount: 0, currency: USD }),
@@ -71,6 +80,8 @@ export default function BudgetTable(props) {
       for (let category of group.categories) {
         const defaultRow = {
           id: category.id,
+          name: category.name,
+          order: category.order,
           groupId: group.id,
           categoryId: category.id,
           month,
@@ -98,6 +109,8 @@ export default function BudgetTable(props) {
 
         retval.push({
           ...categoryMonth,
+          name: category.name,
+          order: category.order,
           groupId: group.id,
           trackingAccountId: category.trackingAccountId,
         })
@@ -115,11 +128,23 @@ export default function BudgetTable(props) {
   let cellEditing = false
   const openCategoryDialog = props.openCategoryDialog
   const openCategoryGroupDialog = props.openCategoryGroupDialog
+  const DragState = {
+    row: -1,
+    dropRow: -1, // drag target
+  };
 
   const columns = [
     {
+      title: "order",
+      field: "order",
+      hidden: true,
+      editable: "never",
+      defaultSort: "asc",
+    },
+    {
       title: "Category",
       field: "categoryId",
+      sorting: false,
       lookup: categoriesMap,
       editable: "never",
       align: "left",
@@ -149,6 +174,7 @@ export default function BudgetTable(props) {
                       popupState={popupState}
                       mode={'edit'}
                       name={categoriesMap[rowData.categoryId]}
+                      order={categoriesMap[rowData.order]}
                       categoryId={rowData.categoryId}
                     />
                   )
@@ -159,6 +185,7 @@ export default function BudgetTable(props) {
                       popupState={popupState}
                       mode={'edit'}
                       name={categoriesMap[rowData.categoryId]}
+                      order={rowData.order}
                       categoryId={rowData.categoryId}
                       categoryGroupId={rowData.groupId}
                     />
@@ -179,9 +206,11 @@ export default function BudgetTable(props) {
                       {...bindTrigger(popupState)}
                       style={{padding: 0}}
                       aria-label="add"
-                      size="small"
+                      // size="small"
                     >
-                      <AddCircleIcon fontSize="small" />
+                      <AddCircleIcon style={{
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      }} />
                     </IconButton>
                     <CategoryForm
                       popupState={popupState}
@@ -199,61 +228,100 @@ export default function BudgetTable(props) {
     {
       title: "Assigned",
       field: "budgeted",
+      sorting: false,
       type: "currency",
       render: rowData => intlFormat(rowData.budgeted),
     },
     {
       title: "Activity",
       field: "activity",
+      sorting: false,
       type: "currency",
       editable: "never",
       render: rowData => intlFormat(rowData.activity),
     },
     {
-        title: "Balance",
-        field: "balance",
-        type: "currency",
-        align: "right",
-        editable: "never",
-        render: (rowData) => {
-          const value = intlFormat(rowData.balance)
+      title: "Balance",
+      field: "balance",
+      sorting: false,
+      type: "currency",
+      align: "right",
+      editable: "never",
+      render: (rowData) => {
+        const value = intlFormat(rowData.balance)
 
-          if (!rowData.groupId) {
-            return value
-          }
-
-          let color = "default"
-          if (rowData.trackingAccountId) {
-            if (isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)) {
-              color = "warning"
-            } else if (isZero(rowData.balance) || isNegative(rowData.balance)) {
-              color = "default"
-            } else {
-              color = "success"
-            }
-          } else {
-            if (isZero(rowData.balance)) {
-              color = "default"
-            } else if (isNegative(rowData.balance)) {
-              color = "error"
-            } else {
-              color = "success"
-            }
-          }
-
-          // Tooltip for CC warning
-          if (rowData.trackingAccountId && color === 'warning') {
-            return (
-              <Tooltip title="Month is underfunded, this amount may not be accurate">
-                <Chip size="small" label={value} color={color}></Chip>
-              </Tooltip>
-            )
-          }
-
-          return <Chip size="small" label={value} color={color}></Chip>
+        if (!rowData.groupId) {
+          return value
         }
-      },
+
+        let color = "default"
+        if (rowData.trackingAccountId) {
+          if (isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)) {
+            color = "warning"
+          } else if (isZero(rowData.balance) || isNegative(rowData.balance)) {
+            color = "default"
+          } else {
+            color = "success"
+          }
+        } else {
+          if (isZero(rowData.balance)) {
+            color = "default"
+          } else if (isNegative(rowData.balance)) {
+            color = "error"
+          } else {
+            color = "success"
+          }
+        }
+
+        // Tooltip for CC warning
+        if (rowData.trackingAccountId && color === 'warning') {
+          return (
+            <Tooltip title="Month is underfunded, this amount may not be accurate">
+              <Chip size="small" label={value} color={color}></Chip>
+            </Tooltip>
+          )
+        }
+
+        return (
+          <Chip
+            size="small"
+            label={value}
+            color={color}
+            style={{
+              height: 'auto',
+              padding: "1px 0",
+            }}
+          />
+        )
+      }
+    },
   ]
+
+  const reorderRows = async (from, to) => {
+    if (from.groupId) {
+      /// updating a category, not a group
+      if (!to.groupId) {
+        // placing into a new group, at the very top
+        from.groupId = to.id
+      } else {
+        // placing into same or new group, at the position dropped
+        from.groupId = to.groupId
+        from.order = to.order + 0.5
+      }
+
+      await dispatch(updateCategory({ id: from.categoryId, name: from.name, order: from.order, categoryGroupId: from.groupId }))
+    } else {
+      if (to.groupId) {
+        // This is category, find the group it belongs in
+        to = categoryGroupsMap[to.groupId]
+      }
+
+      from.order = to.order + 0.5
+      await dispatch(updateCategoryGroup({ id: from.id, name: from.name, order: from.order }))
+    }
+
+    dispatch(fetchCategories())
+  };
 
   const onBudgetEdit = async (newRow, oldRow) => {
     if (equal(newRow.budgeted, oldRow.budgeted)) {
@@ -320,6 +388,28 @@ export default function BudgetTable(props) {
               />
             )
           },
+          Row: (props) => (
+            <MTableBodyRow
+              {...props}
+              draggable="true"
+              onDragStart={(e) => {
+                DragState.row = props.data
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                if (props.data.id !== DragState.row.id) {
+                  DragState.dropRow = props.data
+                }
+              }}
+              onDragEnd={(e) => {
+                if (DragState.dropRow !== -1) {
+                  reorderRows(DragState.row, DragState.dropRow)
+                }
+                DragState.row = -1;
+                DragState.dropRow = -1;
+              }}
+            />
+          ),
           Cell: budgetTableCell,
           EditCell: props => {
             return (
@@ -372,8 +462,13 @@ export default function BudgetTable(props) {
           showTitle: false,
           // toolbar: false,
           draggable: false,
-          sorting: false,
-          headerStyle: { position: 'sticky', top: 0 },
+          // sorting: false,
+          headerStyle: {
+            position: 'sticky',
+            top: 0,
+            textTransform: 'uppercase',
+            fontSize: theme.typography.caption.fontSize,
+          },
           rowStyle: rowData => ({
             ...!rowData.groupId && {
               backgroundColor: theme.palette.action.hover,
@@ -381,7 +476,6 @@ export default function BudgetTable(props) {
             },
             fontSize: theme.typography.subtitle2.fontSize,
           }),
-          // headerStyle: { position: 'sticky', top: 0 }
         }}
         icons={TableIcons}
         columns={columns}

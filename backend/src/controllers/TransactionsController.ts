@@ -1,12 +1,13 @@
 import { Get, Put, Delete, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account } from '../entities/Account'
-import { Transaction, TransactionStatus } from '../entities/Transaction'
+import { Transaction, TransactionCache, TransactionStatus } from '../entities/Transaction'
 import { TransactionRequest, TransactionResponse, TransactionsResponse } from '../models/Transaction'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
+import { getManager, getRepository } from 'typeorm'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
@@ -37,7 +38,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -45,12 +46,17 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transaction = await Transaction.createNew({
-        budgetId,
-        ...requestBody,
-        amount: dinero({ amount: requestBody.amount, currency: USD }),
-        date: new Date(requestBody.date),
-        handleTransfers: true,
+      const transaction = await getManager().transaction(async transactionalEntityManager => {
+        const transaction = transactionalEntityManager.getRepository(Transaction).create({
+          budgetId,
+          ...requestBody,
+          amount: dinero({ amount: requestBody.amount, currency: USD }),
+          date: new Date(requestBody.date),
+        })
+        TransactionCache.enableTransfers(transaction.id)
+        await transactionalEntityManager.getRepository(Transaction).insert(transaction)
+
+        return transaction
       })
 
       return {
@@ -90,7 +96,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -101,12 +107,17 @@ export class TransactionsController extends Controller {
       // Load in original transaction to check if the amount has been altered
       // and updated the category month accordingly
       // @TODO: remove relation to test db transactions
-      const transaction = await Transaction.findOne(transactionId, { relations: ['account'] })
-      await transaction.update({
-        ...requestBody,
-        amount: dinero({ amount: requestBody.amount, currency: USD }),
-        date: new Date(requestBody.date), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
-        handleTransfers: true,
+      const transaction = await getManager().transaction(async transactionalEntityManager => {
+        const transaction = await transactionalEntityManager.getRepository(Transaction).findOne(transactionId, { relations: ['account'] })
+        transaction.update({
+          ...requestBody,
+          amount: dinero({ amount: requestBody.amount, currency: USD }),
+          ...requestBody.date && { date: new Date(requestBody.date) }, // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
+        })
+        TransactionCache.enableTransfers(transaction.id)
+        await transactionalEntityManager.getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())
+
+        return transaction
       })
 
       return {
@@ -133,7 +144,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -141,9 +152,9 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transaction = await Transaction.findOne(transactionId)
-      transaction.handleTransfers = true
-      await transaction.remove()
+      const transaction = await getRepository(Transaction).findOne(transactionId)
+      TransactionCache.enableTransfers(transactionId)
+      await getRepository(Transaction).remove(transaction)
 
       return {
         message: 'success',
@@ -182,7 +193,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -190,7 +201,7 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const account = await Account.findOne(accountId, { relations: ['transactions'] })
+      const account = await getRepository(Account).findOne(accountId, { relations: ['transactions'] })
 
       return {
         message: 'success',

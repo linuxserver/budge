@@ -2,24 +2,21 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   AfterLoad,
   BeforeUpdate,
   BeforeInsert,
   Index,
   CreateDateColumn,
   OneToMany,
-  PrimaryColumn,
 } from 'typeorm'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import config from '../config'
 import { UserModel } from '../models/User'
 import { Budget } from './Budget'
-import { Base } from './Base'
 
 @Entity('users')
-export class User extends BaseEntity {
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
@@ -32,7 +29,7 @@ export class User extends BaseEntity {
 
   private currentPassword: string
 
-  @OneToMany(() => Budget, budget => budget.user, { cascade: true })
+  @OneToMany(() => Budget, budget => budget.user)
   budgets: Budget[]
 
   @CreateDateColumn()

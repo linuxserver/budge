@@ -1,9 +1,10 @@
 import { Get, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities'
+import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
 import { Payee } from '../entities/Payee'
+import { getRepository } from 'typeorm'
 
 @Tags('Payees')
 @Route('budgets/{budgetId}/payees')
@@ -30,7 +31,7 @@ export class PayeesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<PayeeResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -38,11 +39,11 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payee = Payee.create({
+      const payee = getRepository(Payee).create({
         ...requestBody,
         budgetId,
       })
-      await payee.save()
+      await getRepository(Payee).insert(payee)
 
       return {
         message: 'success',
@@ -76,7 +77,7 @@ export class PayeesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<PayeesResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -84,7 +85,7 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payees = await Payee.find({ where: { budgetId } })
+      const payees = await getRepository(Payee).find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -117,7 +118,7 @@ export class PayeesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<PayeeResponse | ErrorResponse> {
     try {
-      const budget = await Budget.findOne(budgetId)
+      const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -125,7 +126,7 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payee = await Payee.findOne(payeeId)
+      const payee = await getRepository(Payee).findOne(payeeId)
 
       return {
         message: 'success',
