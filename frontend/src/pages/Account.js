@@ -590,6 +590,12 @@ export default function Account(props) {
           rowStyle: rowData => ({
             fontSize: theme.typography.subtitle2.fontSize,
           }),
+          headerStyle: {
+            position: 'sticky',
+            top: 0,
+            textTransform: 'uppercase',
+            fontSize: theme.typography.caption.fontSize,
+          },
         }}
         components={{
           Row: props => (
