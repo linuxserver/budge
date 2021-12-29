@@ -88,7 +88,7 @@ class BudgE {
     }
 
     try {
-      return (await this.makeRequest(`budgets/${this.budgetId}/categories/groups`, 'post', { json: { name } })).data
+      return (await this.makeRequest(`budgets/${this.budgetId}/categories/groups`, 'post', { json: { name, order: 0 } })).data
     } catch (err) {
       console.log(err.response.body)
       process.exit()
@@ -108,7 +108,7 @@ class BudgE {
 
     try {
       console.log(`Creating category ${name}`)
-      return (await this.makeRequest(`budgets/${this.budgetId}/categories`, 'post', { json: { name, categoryGroupId } })).data
+      return (await this.makeRequest(`budgets/${this.budgetId}/categories`, 'post', { json: { name, categoryGroupId, order: 0 } })).data
     } catch (err) {
       console.log(err.response.body)
       process.exit()
