@@ -109,6 +109,7 @@ export default function BudgetTable(props) {
 
         retval.push({
           ...categoryMonth,
+          name: category.name,
           order: category.order,
           groupId: group.id,
           trackingAccountId: category.trackingAccountId,
@@ -308,7 +309,7 @@ export default function BudgetTable(props) {
         from.order = to.order + 0.5
       }
 
-      await dispatch(updateCategory({ id: from.id, name: from.name, order: from.order, categoryGroupId: from.groupId }))
+      await dispatch(updateCategory({ id: from.categoryId, name: from.name, order: from.order, categoryGroupId: from.groupId }))
     } else {
       if (to.groupId) {
         // This is category, find the group it belongs in
@@ -475,7 +476,6 @@ export default function BudgetTable(props) {
             },
             fontSize: theme.typography.subtitle2.fontSize,
           }),
-          // headerStyle: { position: 'sticky', top: 0 }
         }}
         icons={TableIcons}
         columns={columns}
