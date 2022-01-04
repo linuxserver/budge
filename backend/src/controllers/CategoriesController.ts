@@ -1,4 +1,4 @@
-import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
+import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example, Query } from 'tsoa'
 import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
@@ -11,7 +11,7 @@ import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } f
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { USD } from '@dinero.js/currencies'
 import { dinero } from 'dinero.js'
-import { getCustomRepository, getRepository } from 'typeorm'
+import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
 
 @Tags('Categories')
@@ -363,6 +363,7 @@ export class CategoriesController extends Controller {
     @Path() budgetId: string,
     @Path() categoryId: string,
     @Request() request: ExpressRequest,
+    @Query() from?: string,
   ): Promise<CategoryMonthsResponse | ErrorResponse> {
     try {
       const budget = await getRepository(Budget).findOne(budgetId)
@@ -373,7 +374,14 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryMonths = await getRepository(CategoryMonth).find({ categoryId })
+      const findParams = {
+        where: {
+          categoryId,
+          ...(from && { month: MoreThanOrEqual(from) }),
+        }
+      }
+      console.log(findParams)
+      const categoryMonths = await getRepository(CategoryMonth).find(findParams)
 
       return {
         message: 'success',

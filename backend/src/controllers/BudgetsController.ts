@@ -1,4 +1,4 @@
-import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
+import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example, Query } from 'tsoa'
 import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
@@ -6,7 +6,7 @@ import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../models/Budget
 import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../models/BudgetMonth'
-import { getRepository } from 'typeorm'
+import { getRepository, MoreThanOrEqual } from 'typeorm'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -203,6 +203,7 @@ export class BudgetsController extends Controller {
   public async getBudgetMonths(
     @Path() budgetId: string,
     @Request() request: ExpressRequest,
+    @Query() from?: string,
   ): Promise<BudgetMonthsResponse | ErrorResponse> {
     let budget: Budget = await getRepository(Budget).findOne(budgetId)
 
@@ -213,7 +214,12 @@ export class BudgetsController extends Controller {
       }
     }
 
-    const budgetMonths = await getRepository(BudgetMonth).find({ budgetId })
+    const budgetMonths = await getRepository(BudgetMonth).find({
+      where: {
+        budgetId,
+        ...(from && { month: MoreThanOrEqual(from) }),
+      }
+    })
 
     return {
       message: 'success',
