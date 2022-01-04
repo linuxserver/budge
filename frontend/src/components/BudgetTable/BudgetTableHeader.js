@@ -1,13 +1,13 @@
 import React from "react";
-import { useDispatch } from "react-redux"
-import { setCurrentMonth } from "../../redux/slices/Budgets";
+import { useDispatch, useSelector } from "react-redux"
+import { selectActiveBudget, setCurrentMonth } from "../../redux/slices/Budgets";
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { formatMonthFromDateString, getDateFromString } from "../../utils/Date";
 import Grid from '@mui/material/Grid';
 import { isNegative } from 'dinero.js'
-import { inputToDinero, intlFormat } from '../../utils/Currency'
+import { inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
 import BudgetMonthPicker from "../BudgetMonthPicker";
 import Button from '@mui/material/Button';
 import { useTheme } from '@mui/styles'
@@ -24,11 +24,12 @@ export default function BudgetTableHeader(props) {
   const theme = useTheme()
   const dispatch = useDispatch()
 
-  const month = props.month
-  const availableMonths = props.availableMonths
-  const budget = props.budget
+  const month = useSelector(state => state.budgets.currentMonth)
+  const availableMonths = useSelector(state => state.budgets.availableMonths)
+  const budget = useSelector(selectActiveBudget)
+  console.log(budget)
 
-  const toBeBudgeted = budget ? budget.toBeBudgeted : inputToDinero(0)
+  const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
   let tbbColor = 'success'
   if (isNegative(toBeBudgeted)) {
     tbbColor = 'error'

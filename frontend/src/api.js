@@ -41,19 +41,19 @@ export default class API {
       name,
     })
 
-    return FromAPI.transformBudget(response.data.data)
+    return response.data.data
   }
 
   static async fetchBudgets() {
     const response = await axios.get('/api/budgets')
 
-    return response.data.data.map(budget => FromAPI.transformBudget(budget))
+    return response.data.data
   }
 
   static async fetchBudget(budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}`)
 
-    return FromAPI.transformBudget(response.data.data)
+    return response.data.data
   }
 
   static async createAccount(name, type, balance, date, budgetId) {
@@ -61,7 +61,7 @@ export default class API {
       name, type, balance: balance.toJSON().amount, date
     })
 
-    return FromAPI.transformAccount(response.data.data)
+    return response.data.data
   }
 
   static async updateAccount(id, name, order, balance, budgetId) {
@@ -71,13 +71,13 @@ export default class API {
       ...order && { order },
     })
 
-    return FromAPI.transformAccount(response.data.data)
+    return response.data.data
   }
 
   static async fetchAccounts(budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/accounts`)
 
-    return response.data.data.map(account => FromAPI.transformAccount(account))
+    return response.data.data
   }
 
   static async createPayee(name, budgetId) {
@@ -95,19 +95,19 @@ export default class API {
   static async fetchAccountTransactions(accountId, budgetId) {
     const response = await axios.get(`/api/budgets/${budgetId}/accounts/${accountId}/transactions`)
 
-    return response.data.data.map(transaction => FromAPI.transformTransaction(transaction))
+    return response.data.data
   }
 
   static async createTransaction(transaction, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/transactions`, ToAPI.transformTransaction(transaction))
 
-    return FromAPI.transformTransaction(response.data.data)
+    return response.data.data
   }
 
   static async updateTransaction(transaction, budgetId) {
     const response = await axios.put(`/api/budgets/${budgetId}/transactions/${transaction.id}`, ToAPI.transformTransaction(transaction))
 
-    return FromAPI.transformTransaction(response.data.data)
+    return response.data.data
   }
 
   static async deleteTransaction(transactionId, budgetId) {
@@ -157,19 +157,27 @@ export default class API {
   static async fetchBudgetMonth(budgetId, month) {
     const response = await axios.get(`/api/budgets/${budgetId}/months/${month}`)
 
-    return FromAPI.transformBudgetMonth(response.data.data)
+    return response.data.data
   }
 
-  static async fetchBudgetMonths(budgetId) {
-    const response = await axios.get(`/api/budgets/${budgetId}/months`)
+  static async fetchBudgetMonths(budgetId, from) {
+    const response = await axios.get(`/api/budgets/${budgetId}/months`, {
+      params: {
+        ...(from && { from }),
+      },
+    })
 
-    return response.data.data.map(budgetMonth => FromAPI.transformBudgetMonth(budgetMonth))
+    return response.data.data
   }
 
-  static async fetchCategoryMonths(categoryId, budgetId) {
-    const response = await axios.get(`/api/budgets/${budgetId}/categories/${categoryId}/months`)
+  static async fetchCategoryMonths(categoryId, month, budgetId) {
+    const response = await axios.get(`/api/budgets/${budgetId}/categories/${categoryId}/months`, {
+      params: {
+        ...(month && { from: month }),
+      }
+    })
 
-    return response.data.data.map(categoryMonth => FromAPI.transformCategoryMonth(categoryMonth))
+    return response.data.data
   }
 
   static async updateCategoryMonth(budgetId, categoryId, month, budgeted) {
@@ -177,6 +185,6 @@ export default class API {
       budgeted: budgeted.toJSON().amount,
     })
 
-    return FromAPI.transformCategoryMonth(response.data.data)
+    return response.data.data
   }
 }

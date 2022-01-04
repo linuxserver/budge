@@ -40,4 +40,4 @@ const userSlice = createSlice({
 
 export const { logout, setUser, setInitComplete } = userSlice.actions
 
-export default userSlice
+export default userSlice.reducer

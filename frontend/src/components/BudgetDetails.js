@@ -1,26 +1,25 @@
 import Box from '@mui/material/Box';
 import { useSelector } from 'react-redux'
-import { inputToDinero, intlFormat } from '../utils/Currency'
+import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import { selectActiveBudget } from '../redux/slices/Budgets';
 
 export default function BudgetDetails(props) {
-  const budget = useSelector(state => state.budgets.activeBudget)
+  const budget = useSelector(selectActiveBudget)
   const month = useSelector(state => state.budgets.currentMonth)
   const budgetMonth = useSelector(state => {
-    return state.budgets.budgetMonths[month]
+    return state.budgetMonths.entities[month] || null
   })
 
-  const toBeBudgeted = budget ? budget.toBeBudgeted : inputToDinero(0)
-  const income = budgetMonth ? budgetMonth.income : inputToDinero(0)
-  const activity = budgetMonth ? budgetMonth.activity : inputToDinero(0)
-  const budgeted = budgetMonth ? budgetMonth.budgeted : inputToDinero(0)
-  const underfunded = budgetMonth ? budgetMonth.underfunded : inputToDinero(0)
+  const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
+  const income = budgetMonth ? valueToDinero(budgetMonth.income) : inputToDinero(0)
+  const activity = budgetMonth ? valueToDinero(budgetMonth.activity) : inputToDinero(0)
+  const budgeted = budgetMonth ? valueToDinero(budgetMonth.budgeted) : inputToDinero(0)
+  const underfunded = budgetMonth ? valueToDinero(budgetMonth.underfunded) : inputToDinero(0)
 
   const rows = [
     {

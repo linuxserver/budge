@@ -20,6 +20,14 @@ export function intlFormat(dineroObject, locale, options = {}) {
   return toFormat(dineroObject, transformer);
 }
 
+export function valueToDinero(value) {
+  return dinero({ amount: value, currency: USD })
+}
+
+export function dineroToValue(dineroObj) {
+  return dineroObj.toJSON().amount
+}
+
 export class ToAPI {
   static transformTransaction(transaction) {
     return {
@@ -63,9 +71,9 @@ export class FromAPI {
       activity: dinero({ amount: budgetMonth.activity, currency: USD }),
       budgeted: dinero({ amount: budgetMonth.budgeted, currency: USD }),
       underfunded: dinero({ amount: budgetMonth.underfunded, currency: USD }),
-      ...(budgetMonth.categories && {
-        categories: budgetMonth.categories.map(categoryMonth => FromAPI.transformCategoryMonth(categoryMonth))
-      }),
+      // ...(budgetMonth.categories && {
+      //   categories: Object.values(budgetMonth.categories.entities).map(categoryMonth => FromAPI.transformCategoryMonth(categoryMonth))
+      // }),
     }
   }
 

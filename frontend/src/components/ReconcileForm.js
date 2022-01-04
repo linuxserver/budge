@@ -15,8 +15,7 @@ import { toUnit } from "dinero.js";
 import Typography from '@mui/material/Typography';
 import { inputToDinero, intlFormat } from "../utils/Currency";
 import ButtonGroup from '@mui/material/ButtonGroup';
-import { editAccount } from "../redux/slices/Accounts";
-import { fetchAccountTransactions } from "../redux/slices/Transactions"
+import { editAccount, fetchAccountTransactions } from "../redux/slices/Accounts";
 
 export default function ReconcileForm(props) {
   /**

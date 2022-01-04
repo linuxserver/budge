@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux"
+import { createSelector } from '@reduxjs/toolkit'
 import MaterialTable, { MTableCell, MTableEditCell, MTableBodyRow } from "@material-table/core";
 import { TableIcons } from '../../utils/Table'
-import { fetchBudgetMonth, updateCategoryMonth, fetchCategoryMonths, refreshBudget } from "../../redux/slices/Budgets";
-import { updateCategoryGroup, updateCategory, fetchCategories } from "../../redux/slices/Categories"
+import { refreshBudget } from "../../redux/slices/Budgets";
+import { updateCategoryMonth, fetchCategoryMonths, selectCategoryMonths } from '../../redux/slices/BudgetMonths'
+import { fetchBudgetMonth } from '../../redux/slices/BudgetMonths'
+import { updateCategory,  } from "../../redux/slices/Categories"
+import { updateCategoryGroup, fetchCategories, categoryGroupsSelectors } from '../../redux/slices/CategoryGroups'
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -11,13 +15,14 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import { dinero, add, equal, isPositive, isNegative, isZero, toUnit } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
-import { inputToDinero, intlFormat } from '../../utils/Currency'
+import { FromAPI, inputToDinero, intlFormat } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
 import BudgetTableHeader from './BudgetTableHeader'
 import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
 import CategoryForm from '../CategoryForm'
 import Tooltip from '@mui/material/Tooltip'
+import _ from 'underscore'
 
 export default function BudgetTable(props) {
   const theme = useTheme()
@@ -26,42 +31,65 @@ export default function BudgetTable(props) {
    * Redux block
    */
   const dispatch = useDispatch()
-  const budget = useSelector(state => state.budgets.activeBudget)
-  const budgetId = budget.id
+  const budgetId = useSelector(state => state.budgets.activeBudgetId)
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
-  const [categoryGroupsMap, categoriesMap] = useSelector(
-    state => {
-      const groupMap = {}
-      const map = state.categories.categoryGroups.reduce(
-        (acc, group) => {
-          if (group.internal) {
-            return acc
-          }
-          groupMap[group.id] = group
-          acc[group.id] = group.name
-          for (const category of group.categories) {
-            acc[category.id] = category.name
-          }
 
+  const selectCategoryMaps = createSelector(categoryGroupsSelectors.selectAll, categoryGroups => {
+    const groupMap = {}
+    const map = categoryGroups.reduce(
+      (acc, group) => {
+        if (group.internal) {
           return acc
-        }, {}
-      )
+        }
+        groupMap[group.id] = group
+        acc[group.id] = group.name
+        for (const category of group.categories) {
+          acc[category.id] = category.name
+        }
 
-      return [groupMap, map]
+        return acc
+      }, {}
+    )
+
+    return [groupMap, map]
+  })
+  const [categoryGroupsMap, categoriesMap] = useSelector(selectCategoryMaps)
+
+  const budgetMonthSelector = createSelector(
+    (state, month) => state.budgetMonths.entities[month],
+    budgetMonth => {
+      if (!budgetMonth) {
+        dispatch(fetchBudgetMonth({ month }))
+        return {}
+      }
+
+      return FromAPI.transformBudgetMonth(budgetMonth)
     }
   )
-  const budgetMonth = useSelector(state => {
-    if (!state.budgets.budgetMonths[month]) {
-      dispatch(fetchBudgetMonth({ month }))
-      return []
-    }
+  const budgetMonth = useSelector(state => budgetMonthSelector(state, month))
 
-    return state.budgets.budgetMonths[month]
-  })
-  const data = useSelector(state => {
+  const categoryMonthsSelector = createSelector([
+      (state, month) => state.budgetMonths.entities[month],
+      state => state.categoryMonths.entities,
+    ],
+    (budgetMonth, categories) => {
+      console.log(budgetMonth)
+      if (!budgetMonth) {
+        return []
+      }
+
+      return budgetMonth.categories.map(categoryId => FromAPI.transformCategoryMonth(categories[categoryId]))
+    }
+  )
+
+  const selectData = createSelector([
+    categoryGroupsSelectors.selectAll,
+    (state, month) => budgetMonthSelector(state, month),
+    (state, month) => categoryMonthsSelector(state, month),
+  ], (groups, budgetMonth, categoryMonths) => {
     let retval = []
-    state.categories.categoryGroups.map(group => {
+    groups.map(group => {
       if (group.internal) {
         return
       }
@@ -95,9 +123,9 @@ export default function BudgetTable(props) {
           continue
         }
 
-        const budgetMonthCategory = budgetMonth.categories.filter(monthCategory => monthCategory.categoryId === category.id)
+        const budgetMonthCategory = categoryMonths.filter(monthCategory => monthCategory.categoryId === category.id)
         // If no budget category, no transactions, so just build a dummy one
-        const categoryMonth = budgetMonthCategory[0] || defaultRow
+        const categoryMonth = budgetMonthCategory[0] ? budgetMonthCategory[0] : defaultRow
 
         groupRow.budgeted = add(groupRow.budgeted, categoryMonth.budgeted)
         groupRow.activity = add(groupRow.activity, categoryMonth.activity)
@@ -121,6 +149,8 @@ export default function BudgetTable(props) {
 
     return retval
   })
+
+  const data = useSelector(state => selectData(state, month))
 
   /**
   * Dynamic variables
@@ -248,6 +278,9 @@ export default function BudgetTable(props) {
       align: "right",
       editable: "never",
       render: (rowData) => {
+        if (!budgetMonth) {
+          return <></>
+        }
         const value = intlFormat(rowData.balance)
 
         if (!rowData.groupId) {
@@ -333,9 +366,9 @@ export default function BudgetTable(props) {
 
     // const monthIndex = availableMonths.indexOf(month)
     // Fetch all months starting with the existing to get cascaded balance updates
-    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
-    dispatch(fetchBudgetMonth({ month, budgetId }))
     dispatch(refreshBudget())
+    dispatch(fetchBudgetMonth({ month, budgetId }))
+    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId, month }))
     // return Promise.all(availableMonths.slice(monthIndex).map(month => dispatch(fetchBudgetMonth({ month }))))
   }
 
@@ -381,9 +414,6 @@ export default function BudgetTable(props) {
           Toolbar: props => {
             return (
               <BudgetTableHeader
-                month={month}
-                availableMonths={availableMonths}
-                budget={budget}
                 openCategoryGroupDialog={openCategoryGroupDialog}
               />
             )

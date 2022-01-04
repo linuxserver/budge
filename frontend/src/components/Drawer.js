@@ -14,7 +14,7 @@ import {
 } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import { inputToDinero, intlFormat } from '../utils/Currency'
+import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
 import LogoutIcon from '@mui/icons-material/Logout';
 import api from '../api'
 import Grid from '@mui/material/Grid';
@@ -25,7 +25,8 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { editAccount, fetchAccounts } from '../redux/slices/Accounts';
+import { accountsSelectors, editAccount, fetchAccounts } from '../redux/slices/Accounts';
+import { selectActiveBudget } from '../redux/slices/Budgets';
 
 const drawerWidth = 300;
 
@@ -48,12 +49,8 @@ export default function AppDrawer(props) {
   /**
    * Redux block
    */
-  const budget = useSelector(state => state.budgets.activeBudget)
-  const accounts = useSelector(state => {
-    const accounts = [...state.accounts.accounts]
-    accounts.sort((a, b) => a.order < b.order ? -1 : 1)
-    return accounts
-  })
+  const budget = useSelector(selectActiveBudget)
+  const accounts = useSelector(accountsSelectors.selectAll)
   const budgetAccounts = accounts.filter(account => account.type !== 2)
   const trackingAccounts = accounts.filter(account => account.type === 2)
 
@@ -89,7 +86,7 @@ export default function AppDrawer(props) {
 
   const AccountList = (label, accounts) => {
     const balance = accounts.reduce((total, account) => {
-      return add(account.balance, total)
+      return add(valueToDinero(account.balance), total)
     }, inputToDinero(0))
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.text.secondary
 
@@ -142,7 +139,8 @@ export default function AppDrawer(props) {
   }
 
   const AccountItem = (account) => {
-    const balanceColor = isNegative(account.balance) ? theme.palette.error.main : theme.palette.text.secondary
+    const balance = valueToDinero(account.balance)
+    const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.text.secondary
     return (
         <ListItemButton
           key={`account-${account.id}`}
@@ -184,7 +182,7 @@ export default function AppDrawer(props) {
 
             <div>
               <ListItemText
-                secondary={intlFormat(account.balance)}
+                secondary={intlFormat(balance)}
                 secondaryTypographyProps={{
                   // fontWeight: 'bold',
                   color: balanceColor,

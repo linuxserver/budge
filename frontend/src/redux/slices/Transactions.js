@@ -1,18 +1,19 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit';
 import api from '../../api';
 import { get } from 'lodash'
+import { batch } from 'react-redux'
 
 export const fetchAccountTransactions = createAsyncThunk('transactions/fetchAccountTransactions', async ({ accountId }, { getState }) => {
   const state = getState()
   return {
     accountId,
-    transactions: await api.fetchAccountTransactions(accountId, state.budgets.activeBudget.id)
+    transactions: await api.fetchAccountTransactions(accountId, state.budgets.activeBudgetId)
   };
 })
 
 export const createTransaction = createAsyncThunk('transactions/createTransaction', async ({ transaction }, { getState }) => {
   const state = getState()
-  const response = await api.createTransaction(transaction, state.budgets.activeBudget.id)
+  const response = await api.createTransaction(transaction, state.budgets.activeBudgetId)
 
   return {
     accountId: response.accountId,
@@ -24,7 +25,7 @@ export const createTransaction = createAsyncThunk('transactions/createTransactio
 
 export const updateTransaction = createAsyncThunk('transactions/updateTransaction', async ({ transaction }, { getState }) => {
   const state = getState()
-  const response = await api.updateTransaction(transaction, state.budgets.activeBudget.id)
+  const response = await api.updateTransaction(transaction, state.budgets.activeBudgetId)
 
   return {
     accountId: response.accountId,
@@ -36,7 +37,7 @@ export const updateTransaction = createAsyncThunk('transactions/updateTransactio
 
 export const deleteTransaction = createAsyncThunk('transactions/deleteTransaction', async ({ transaction }, { getState }) => {
   const state = getState()
-  const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudget.id)
+  const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
 
   return {
     transactionId: transaction.id,
@@ -44,36 +45,41 @@ export const deleteTransaction = createAsyncThunk('transactions/deleteTransactio
   }
 })
 
+export const transactionsAdapter = createEntityAdapter({
+  // Assume IDs are stored in a field other than `book.id`
+  // selectId: (payee) => payee.id,
+
+  // Keep the "all IDs" array sorted based on book titles
+  // sortComparer: (a, b) => a.title.localeCompare(b.title),
+})
+
 const transactionsSlice = createSlice({
   name: 'transactions',
 
-  initialState: {
-    transactions: {},
-  },
+  initialState: transactionsAdapter.getInitialState(),
 
   reducers: {},
 
   extraReducers: {
     [fetchAccountTransactions.fulfilled]: (state, { payload: { accountId, transactions }}) => {
-      state.transactions[accountId] = transactions
+      const accountEntry = state.entities[accountId];
+      if (accountEntry) {
+        transactionsAdapter.setAll(accountEntry.transactions, transactions);
+      }
     },
 
     [createTransaction.fulfilled]: (state, { payload: { accountId, transaction } }) => {
-      if (!state.transactions[accountId]) {
-        state.transactions[accountId] = []
+      const accountEntry = state.entities[accountId];
+      if (accountEntry) {
+        transactionsAdapter.addOne(accountEntry.transactions, transaction);
       }
-
-      state.transactions[accountId].push(transaction)
     },
 
     [updateTransaction.fulfilled]: (state, { payload: { accountId, transaction } }) => {
-      state.transactions[accountId] = state.transactions[accountId].map(existingTransaction => {
-        if (existingTransaction.id !== transaction.id) {
-          return existingTransaction
-        }
-
-        return transaction
-      })
+      const accountEntry = state.entities[accountId];
+      if (accountEntry) {
+        transactionsAdapter.updateOne(accountEntry.transactions, transaction);
+      }
     },
 
     [updateTransaction.rejected]: (state) => {
@@ -81,9 +87,14 @@ const transactionsSlice = createSlice({
     },
 
     [deleteTransaction.fulfilled]: (state, { payload: { transactionId, accountId } }) => {
-      state.transactions[accountId] = state.transactions[accountId].filter(transaction => transaction.id !== transactionId)
+      const accountEntry = state.entities[accountId];
+      if (accountEntry) {
+        transactionsAdapter.removeOne(accountEntry.transactions, transactionId)
+      }
     },
   },
 })
 
-export default transactionsSlice
+export const transactionsSelectors = transactionsAdapter.getSelectors(state => state.transactions)
+
+export default transactionsSlice.reducer

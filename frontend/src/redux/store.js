@@ -2,11 +2,9 @@ import { configureStore } from '@reduxjs/toolkit';
 import thunkMiddleware from 'redux-thunk';
 import { reducers } from './slices';
 
-export const makeStore = (initialState) => configureStore({
+export const store = configureStore({
   reducer: reducers,
-  middleware: [thunkMiddleware],
+  // middleware: [thunkMiddleware],
   devTools: (process.env.NODE_ENV !== 'production'),
-  preloadedState: initialState,
+  // preloadedState: initialState,
 });
-
-export const store = makeStore({});

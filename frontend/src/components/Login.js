@@ -7,10 +7,12 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { setUser, login, logout, setInitComplete } from '../redux/slices/Users'
-import { createBudget, fetchBudgetMonth, fetchBudgetMonths, fetchBudgets, setActiveBudget, getAvailableMonths } from '../redux/slices/Budgets'
+import { createBudget, fetchAvailableMonths, fetchBudgets, setActiveBudget, getAvailableMonths } from '../redux/slices/Budgets'
 import { fetchAccountTransactions } from '../redux/slices/Transactions'
-import { fetchPayees, setAccounts } from '../redux/slices/Accounts'
-import { fetchCategories, createCategoryGroup, createCategory } from '../redux/slices/Categories'
+import { setAccounts } from '../redux/slices/Accounts'
+import { fetchPayees } from '../redux/slices/Payees'
+import { fetchCategories, createCategoryGroup } from '../redux/slices/CategoryGroups'
+import { createCategory } from '../redux/slices/Categories'
 import api from '../api'
 import { useDispatch } from 'react-redux'
 import AlertDialog from './AlertDialog'
@@ -53,8 +55,8 @@ export default function Login(props) {
   const initUser = async () => {
     const budgets = (await dispatch(fetchBudgets())).payload
     // @TODO: better way to set 'default' budget? Maybe a flag on the budget object
-    dispatch(setActiveBudget(budgets[0]))
-    dispatch(setAccounts(budgets[0].accounts))
+    await dispatch(setActiveBudget(budgets[0].id))
+    await dispatch(setAccounts(budgets[0].accounts))
 
     // @TODO: get all categories
     await dispatch(fetchCategories())
@@ -67,7 +69,7 @@ export default function Login(props) {
     }))
 
     await dispatch(fetchPayees())
-    await dispatch(fetchBudgetMonths())
+    await dispatch(fetchAvailableMonths())
 
     // done
     dispatch(setInitComplete(true))
@@ -99,7 +101,7 @@ export default function Login(props) {
     }))
     // Create initial budget
     const newBudget = (await dispatch(createBudget({ name: 'My Budget' }))).payload
-    dispatch(setActiveBudget(newBudget))
+    dispatch(setActiveBudget(newBudget.id))
 
     // Create initial items such as category group, categories, etc.
     const newCategoryGroup = (await dispatch(createCategoryGroup({

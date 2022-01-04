@@ -8,7 +8,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { createAccount } from '../redux/slices/Accounts';
 import { useSelector, useDispatch } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem';
-import { fetchCategories } from '../redux/slices/Categories';
+import { fetchCategories } from '../redux/slices/CategoryGroups';
 import { refreshBudget } from '../redux/slices/Budgets';
 import { inputToDinero } from '../utils/Currency'
 
@@ -29,8 +29,6 @@ export default function AddAccountDialog(props) {
    * Redux block
    */
   const dispatch = useDispatch()
-  const user = useSelector(state => state.users.user)
-  const budgetId = useSelector(state => state.budgets.activeBudget.id)
 
   const handleCreateAccount = async () => {
     await dispatch(createAccount({

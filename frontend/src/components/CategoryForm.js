@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux"
-import { createCategory, updateCategory } from "../redux/slices/Categories";
+import { categoriesSelectors, createCategory, selectCategoryToGroupMap, updateCategory } from "../redux/slices/Categories";
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
@@ -11,13 +11,14 @@ import {
   bindPopover,
 } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack';
+import { categoryGroupsSelectors } from "../redux/slices/CategoryGroups";
 
 export default function NewCategoryDialog(props) {
   /**
    * Redux block
    */
   const dispatch = useDispatch()
-  const categoryGroups = useSelector(state => state.categories.categoryGroups)
+  const categoryGroups = useSelector(categoryGroupsSelectors.selectAll)
 
   /**
    * State block
