@@ -162,6 +162,7 @@ export default function Account(props) {
             renderInput={params => {
               return (
                 <TextField
+                  sx={{ minWidth: 125 }}
                   focus={true}
                   margin="dense"
                   variant="standard"
@@ -356,18 +357,20 @@ export default function Account(props) {
 
         const value = dinero(props.value)
         return (
-          <MTableEditField
-            {...props}
-            variant="standard"
-            value={toUnit(value, { digits: 2 })}
-            onChange={value => {
-              if (amountFieldFocused === 'outflow') {
-                amountFieldModified = true
-                props.onChange(toSnapshot(inputToDinero(value)))
-              }
-            }}
-            onFocus={focusOutflowField}
-          />
+          <Box sx={{ textAlign: 'right' }}>
+            <MTableEditField
+              {...props}
+              variant="standard"
+              value={toUnit(value, { digits: 2 })}
+              onChange={value => {
+                if (amountFieldFocused === 'outflow') {
+                  amountFieldModified = true
+                  props.onChange(toSnapshot(inputToDinero(value)))
+                }
+              }}
+              onFocus={focusOutflowField}
+            />
+          </Box>
         )
       },
       customExport: rowData => {
@@ -395,18 +398,20 @@ export default function Account(props) {
 
         const value = dinero(props.value)
         return (
-          <MTableEditField
-            {...props}
-            variant="standard"
-            value={toUnit(value, { digits: 2 })}
-            onChange={value => {
-              if (amountFieldFocused === 'inflow') {
-                amountFieldModified = true
-                props.onChange(toSnapshot(inputToDinero(value)))
-              }
-            }}
-            onFocus={focusInflowField}
-          />
+          <Box sx={{ textAlign: 'right' }}>
+            <MTableEditField
+              {...props}
+              variant="standard"
+              value={toUnit(value, { digits: 2 })}
+              onChange={value => {
+                if (amountFieldFocused === 'inflow') {
+                  amountFieldModified = true
+                  props.onChange(toSnapshot(inputToDinero(value)))
+                }
+              }}
+              onFocus={focusInflowField}
+            />
+          </Box>
         )
       },
       customExport: rowData => {
@@ -778,17 +783,16 @@ export default function Account(props) {
           },
           body: {
             emptyDataSourceMessage: 'No transactions to display',
+            editRow: {
+              deleteText: (
+                <Typography style={{ fontSize: theme.typography.subtitle2.fontSize, fontWeight: 'bold' }}>
+                  Really delete this transaction?
+                </Typography>
+              ),
+            },
           },
         }}
         components={{
-          // Actions: props => {
-          //   return <></>
-          // },
-          // Header: props => (
-          //   <MTableHeader
-          //     {...props}
-          //   />
-          // ),
           Body: props => {
             tableProps = props
             return <MTableBody {...props} />
@@ -935,24 +939,6 @@ export default function Account(props) {
             await onTransactionDelete(row)
           },
         }}
-        actions={
-          [
-            // {
-            //   icon: () => (<></>),
-            //   tooltip: 'Edit selected transactions',
-            //   // isFreeAction: true,
-            //   onClick: onSelectedAction,
-            // },
-            // {
-            //   icon: () => (
-            //     <SaveAltIcon />
-            //   ),
-            //   tooltip: 'Export filtered transactions',
-            //   isFreeAction: true,
-            //   onClick: exportData
-            // },
-          ]
-        }
       />
     </div>
   )
