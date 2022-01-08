@@ -47,6 +47,38 @@ export class RootController extends Controller {
   }
 
   /**
+   * Retrieve currently logged in user
+   */
+  @Security('jwtRequired')
+  @Get('ping')
+  @Example<UserResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      email: 'alex@example.com',
+      created: '2011-10-05T14:48:00.000Z',
+      updated: '2011-10-05T14:48:00.000Z',
+    },
+  })
+  public async ping(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
+    try {
+      const user: User = await getRepository(User).findOne({ email: request.user.email })
+      const token = user.generateJWT()
+
+      this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
+
+      return {
+        data: await user.toResponseModel(),
+        message: 'success',
+      }
+    } catch (err) {
+      return {
+        message: 'failed',
+      }
+    }
+  }
+
+  /**
    * Logout and clear existing JWT
    */
   @Tags('Authentication')
