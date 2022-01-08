@@ -155,8 +155,9 @@ export class Transaction {
     TransactionCache.set(this)
   }
 
-  public update(partial: DeepPartial<Transaction>) {
+  public update(partial: DeepPartial<Transaction>): Transaction {
     Object.assign(this, partial)
+    return this
   }
 
   public getUpdatePayload() {

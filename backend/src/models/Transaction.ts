@@ -79,6 +79,28 @@ export interface TransactionRequest {
   status: TransactionStatus
 }
 
+/**
+ * @example {
+ *  "transactions": [
+ *    {
+ *      "name": "My Budget",
+ *    }
+ *  ],
+ * }
+ */
+ export interface TransactionsRequest {
+  transactions: TransactionRequest[]
+}
+
+/**
+ * @example {
+ *   ids: ["abc123"]
+ * }
+ */
+export interface TransactionsDeleteRequest {
+  ids: string[]
+}
+
 export type TransactionResponse = DataResponse<TransactionModel>
 
 export type TransactionsResponse = DataResponse<TransactionModel[]>
