@@ -1,17 +1,15 @@
-import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux"
-import { createCategory, updateCategory } from "../redux/slices/Categories";
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+import React, { useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { createCategory, updateCategory } from '../redux/slices/Categories'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 import Popover from '@mui/material/Popover'
-import Box from '@mui/material/Box';
-import {
-  bindPopover,
-} from 'material-ui-popup-state/hooks'
-import Stack from '@mui/material/Stack';
-import { categoryGroupsSelectors } from "../redux/slices/CategoryGroups";
+import Box from '@mui/material/Box'
+import { bindPopover } from 'material-ui-popup-state/hooks'
+import Stack from '@mui/material/Stack'
+import { categoryGroupsSelectors } from '../redux/slices/CategoryGroups'
 
 export default function NewCategoryDialog(props) {
   /**
@@ -29,18 +27,22 @@ export default function NewCategoryDialog(props) {
   const submit = async () => {
     switch (props.mode) {
       case 'create':
-        await dispatch(createCategory({
-          name: name,
-          categoryGroupId: categoryGroup,
-        }))
+        await dispatch(
+          createCategory({
+            name: name,
+            categoryGroupId: categoryGroup,
+          }),
+        )
         break
       case 'edit':
-        await dispatch(updateCategory({
-          id: props.categoryId,
-          name: name,
-          order: props.order,
-          categoryGroupId: categoryGroup,
-        }))
+        await dispatch(
+          updateCategory({
+            id: props.categoryId,
+            name: name,
+            order: props.order,
+            categoryGroupId: categoryGroup,
+          }),
+        )
         break
     }
 
@@ -56,7 +58,7 @@ export default function NewCategoryDialog(props) {
         vertical: 'bottom',
         horizontal: 'left',
       }}
-      BackdropProps={{ onClick: () => props.popupState.close()}}
+      BackdropProps={{ onClick: () => props.popupState.close() }}
     >
       <Box sx={{ p: 2 }}>
         <TextField
@@ -65,9 +67,7 @@ export default function NewCategoryDialog(props) {
           margin="dense"
           id="name"
           value={name}
-          onChange={(event) =>
-            setName(event.target.value)
-          }
+          onChange={event => setName(event.target.value)}
           label="Name"
           type="text"
           variant="standard"
@@ -78,7 +78,7 @@ export default function NewCategoryDialog(props) {
           id="demo-simple-select-standard"
           value={categoryGroup}
           label="Category Group"
-          onChange={(event) => {
+          onChange={event => {
             console.log(event.target.value)
             setCategoryGroup(event.target.value)
           }}
@@ -88,16 +88,17 @@ export default function NewCategoryDialog(props) {
               return
             }
 
-            return <MenuItem value={group.id} key={group.id}>{group.name}</MenuItem>
+            return (
+              <MenuItem value={group.id} key={group.id}>
+                {group.name}
+              </MenuItem>
+            )
           })}
         </Select>
-        <Stack
-          direction="row"
-          justifyContent="flex-end"
-          alignItems="center"
-          spacing={2}
-        >
-          <Button size="small" onClick={submit}>{props.mode === 'create' ? 'Add' : 'Edit'}</Button>
+        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+          <Button size="small" onClick={submit}>
+            {props.mode === 'create' ? 'Add' : 'Edit'}
+          </Button>
         </Stack>
       </Box>
     </Popover>

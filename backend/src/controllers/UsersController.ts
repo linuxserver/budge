@@ -35,7 +35,7 @@ export class UsersController extends Controller {
         const newUser: User = transactionalEntityManager.getRepository(User).create({ ...requestBody })
         await transactionalEntityManager.getRepository(User).insert(newUser)
         return newUser
-      });
+      })
 
       return {
         message: 'success',

@@ -1,7 +1,7 @@
-import { Budget } from "../entities/Budget"
-import { EntityRepository, Repository } from "typeorm"
-import { BudgetMonth } from "../entities/BudgetMonth"
-import { formatMonthFromDateString } from "../utils"
+import { Budget } from '../entities/Budget'
+import { EntityRepository, Repository } from 'typeorm'
+import { BudgetMonth } from '../entities/BudgetMonth'
+import { formatMonthFromDateString } from '../utils'
 
 @EntityRepository(BudgetMonth)
 export class BudgetMonths extends Repository<BudgetMonth> {

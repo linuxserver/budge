@@ -1,30 +1,36 @@
-import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit';
-import { createSelectorCreator } from 'reselect';
-import api from '../../api';
-import { setCategories } from './Categories';
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit'
+import { createSelectorCreator } from 'reselect'
+import api from '../../api'
+import { setCategories } from './Categories'
 
 export const fetchCategories = createAsyncThunk('categories/fetch', async (_, { dispatch, getState }) => {
   const store = getState()
-  const response = await api.fetchCategories(store.budgets.activeBudgetId);
+  const response = await api.fetchCategories(store.budgets.activeBudgetId)
 
   const categories = response.reduce((acc, group) => {
     return acc.concat(group.categories)
-  }, []);
+  }, [])
 
   dispatch(setCategories(categories))
 
   return response
 })
 
-export const createCategoryGroup = createAsyncThunk('categories/createCategoryGroup', async ({ name }, { getState }) => {
-  const store = getState()
-  return await api.createCategoryGroup(name, store.budgets.activeBudgetId);
-})
+export const createCategoryGroup = createAsyncThunk(
+  'categories/createCategoryGroup',
+  async ({ name }, { getState }) => {
+    const store = getState()
+    return await api.createCategoryGroup(name, store.budgets.activeBudgetId)
+  },
+)
 
-export const updateCategoryGroup = createAsyncThunk('categories/updateCategoryGroup', async ({ id, name, order }, { getState }) => {
-  const store = getState()
-  return await api.updateCategoryGroup(id, name, order, store.budgets.activeBudgetId);
-})
+export const updateCategoryGroup = createAsyncThunk(
+  'categories/updateCategoryGroup',
+  async ({ id, name, order }, { getState }) => {
+    const store = getState()
+    return await api.updateCategoryGroup(id, name, order, store.budgets.activeBudgetId)
+  },
+)
 
 const categoryGroupsAdapter = createEntityAdapter()
 

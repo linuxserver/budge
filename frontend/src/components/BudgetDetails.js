@@ -1,12 +1,12 @@
-import Box from '@mui/material/Box';
+import Box from '@mui/material/Box'
 import { useSelector } from 'react-redux'
 import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import { selectActiveBudget } from '../redux/slices/Budgets';
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableRow from '@mui/material/TableRow'
+import { selectActiveBudget } from '../redux/slices/Budgets'
 import { useTheme } from '@mui/styles'
 
 export default function BudgetDetails(props) {
@@ -41,27 +41,29 @@ export default function BudgetDetails(props) {
       field: 'Underfunded',
       value: intlFormat(underfunded),
     },
-  ];
+  ]
 
   return (
-    <Box sx={{
-      mt: 2,
-      mr: 1,
-      p: 0.1,
-      borderRadius: 2,
-      backgroundColor: theme.palette.action.hover,
-    }}>
+    <Box
+      sx={{
+        mt: 2,
+        mr: 1,
+        p: 0.1,
+        borderRadius: 2,
+        backgroundColor: theme.palette.action.hover,
+      }}
+    >
       <h3>
-        {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }).toUpperCase()} SUMMARY
+        {new Date(Date.UTC(...month.split('-')))
+          .toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+          .toUpperCase()}{' '}
+        SUMMARY
       </h3>
       <TableContainer>
         <Table aria-label="simple table">
           <TableBody>
-            {rows.map((row) => (
-              <TableRow
-                key={row.field}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
+            {rows.map(row => (
+              <TableRow key={row.field} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell align="left">{row.field}</TableCell>
                 <TableCell align="right">{row.value}</TableCell>
               </TableRow>

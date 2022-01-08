@@ -2,7 +2,7 @@ import Axios from 'axios'
 import { ToAPI } from './utils/Currency'
 
 const axios = Axios.create({
-  withCredentials: true
+  withCredentials: true,
 })
 
 export default class API {
@@ -23,8 +23,8 @@ export default class API {
 
   static async login(email, password) {
     const response = await axios.post('/api/login', {
-        email,
-        password,
+      email,
+      password,
     })
 
     return response.data.data
@@ -58,7 +58,10 @@ export default class API {
 
   static async createAccount(name, type, balance, date, budgetId) {
     const response = await axios.post(`/api/budgets/${budgetId}/accounts`, {
-      name, type, balance: balance.toJSON().amount, date
+      name,
+      type,
+      balance: balance.toJSON().amount,
+      date,
     })
 
     return response.data.data
@@ -66,9 +69,9 @@ export default class API {
 
   static async updateAccount(id, name, order, balance, budgetId) {
     const response = await axios.put(`/api/budgets/${budgetId}/accounts/${id}`, {
-      ...name && { name },
-      ...balance && { balance: balance.toJSON().amount },
-      ...order && { order },
+      ...(name && { name }),
+      ...(balance && { balance: balance.toJSON().amount }),
+      ...(order && { order }),
     })
 
     return response.data.data
@@ -105,7 +108,10 @@ export default class API {
   }
 
   static async updateTransaction(transaction, budgetId) {
-    const response = await axios.put(`/api/budgets/${budgetId}/transactions/${transaction.id}`, ToAPI.transformTransaction(transaction))
+    const response = await axios.put(
+      `/api/budgets/${budgetId}/transactions/${transaction.id}`,
+      ToAPI.transformTransaction(transaction),
+    )
 
     return response.data.data
   }
@@ -129,7 +135,7 @@ export default class API {
     const response = await axios.delete(`/api/budgets/${budgetId}/transactions`, {
       data: {
         ids,
-      }
+      },
     })
 
     return response.data.data
@@ -193,7 +199,7 @@ export default class API {
     const response = await axios.get(`/api/budgets/${budgetId}/categories/${categoryId}/months`, {
       params: {
         ...(month && { from: month }),
-      }
+      },
     })
 
     return response.data.data

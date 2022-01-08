@@ -5,7 +5,7 @@ import { normalize, schema } from 'normalizr'
 const categoryMonthEntity = new schema.Entity('categoryMonths')
 
 const budgetMonthEntity = new schema.Entity('budgetMonths', {
-  categories: [categoryMonthEntity]
+  categories: [categoryMonthEntity],
 })
 
 export const fetchBudgetMonth = createAsyncThunk('budgetMonths/fetchMonth', async ({ month }, { getState }) => {
@@ -38,29 +38,35 @@ export const fetchBudgetMonths = createAsyncThunk('budgetMonths/fetchMonths', as
   }
 })
 
-export const fetchCategoryMonths = createAsyncThunk('budgetMonths/fetchCategoryMonths', async ({ categoryId, month = false }, { getState }) => {
-  const store = getState()
-  const categoryMonths = await api.fetchCategoryMonths(categoryId, month, store.budgets.activeBudgetId)
+export const fetchCategoryMonths = createAsyncThunk(
+  'budgetMonths/fetchCategoryMonths',
+  async ({ categoryId, month = false }, { getState }) => {
+    const store = getState()
+    const categoryMonths = await api.fetchCategoryMonths(categoryId, month, store.budgets.activeBudgetId)
 
-  return {
-    categoryId,
-    entities: normalize(categoryMonths, [categoryMonthEntity]).entities
-  }
-})
+    return {
+      categoryId,
+      entities: normalize(categoryMonths, [categoryMonthEntity]).entities,
+    }
+  },
+)
 
-export const updateCategoryMonth = createAsyncThunk('budgetMonths/updateCategoryMonth', async({ categoryId, month, budgeted }, { getState }) => {
-  const store = getState()
-  const categoryMonth = await api.updateCategoryMonth(store.budgets.activeBudgetId, categoryId, month, budgeted)
+export const updateCategoryMonth = createAsyncThunk(
+  'budgetMonths/updateCategoryMonth',
+  async ({ categoryId, month, budgeted }, { getState }) => {
+    const store = getState()
+    const categoryMonth = await api.updateCategoryMonth(store.budgets.activeBudgetId, categoryId, month, budgeted)
 
-  return {
-    month,
-    entities: normalize(categoryMonth, categoryMonthEntity).entities,
-  }
-})
+    return {
+      month,
+      entities: normalize(categoryMonth, categoryMonthEntity).entities,
+    }
+  },
+)
 
 const budgetMonthsAdapter = createEntityAdapter({
   selectId: budgetMonth => budgetMonth.month,
-  sortComparer: (a, b) => a.month < b.month ? -1 : 1,
+  sortComparer: (a, b) => (a.month < b.month ? -1 : 1),
 })
 
 const budgetMonthsSlice = createSlice({
@@ -72,7 +78,6 @@ const budgetMonthsSlice = createSlice({
     // setActiveBudget: (state, action) => {
     //   state.activeBudget = action.payload
     // },
-
     // setCurrentMonth: (state, { payload }) => {
     //   state.currentMonth = formatMonthFromDateString(payload)
     // },
@@ -93,7 +98,7 @@ const budgetMonthsSlice = createSlice({
 })
 
 export const categoryMonthsAdapter = createEntityAdapter({
-  sortComparer: (a, b) => a.month < b.month ? -1 : 1,
+  sortComparer: (a, b) => (a.month < b.month ? -1 : 1),
 })
 
 const categoryMonthsSlice = createSlice({
@@ -101,8 +106,7 @@ const categoryMonthsSlice = createSlice({
 
   initialState: categoryMonthsAdapter.getInitialState(),
 
-  reducers: {
-  },
+  reducers: {},
 
   extraReducers: builder => {
     builder

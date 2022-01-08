@@ -1,13 +1,5 @@
 import { CategoryGroupModel } from '../models/CategoryGroup'
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  OneToMany,
-  Index,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, Index } from 'typeorm'
 import { Budget } from './Budget'
 import { Category } from './Category'
 

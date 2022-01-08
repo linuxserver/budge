@@ -96,9 +96,9 @@ export class Account {
       transferPayeeId: this.transferPayeeId,
       name: this.name,
       type: this.type,
-      balance: {...this.balance},
-      cleared: {...this.cleared},
-      uncleared: {...this.uncleared},
+      balance: { ...this.balance },
+      cleared: { ...this.cleared },
+      uncleared: { ...this.uncleared },
     }
   }
 

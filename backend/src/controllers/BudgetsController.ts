@@ -218,7 +218,7 @@ export class BudgetsController extends Controller {
       where: {
         budgetId,
         ...(from && { month: MoreThanOrEqual(from) }),
-      }
+      },
     })
 
     return {

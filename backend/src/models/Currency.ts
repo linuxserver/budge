@@ -1,12 +1,8 @@
 import { dinero } from 'dinero.js'
-import { Dinero } from '@dinero.js/core'
-import {
-  BaseEntity,
-} from 'typeorm'
 import { USD } from '@dinero.js/currencies'
 
 export class CurrencyDBTransformer {
-  to (entityValue: any) {
+  to(entityValue: any) {
     if (!entityValue) {
       entityValue = dinero({ amount: 0, currency: USD })
     }
@@ -16,7 +12,7 @@ export class CurrencyDBTransformer {
     return entityValue.toJSON().amount
   }
 
-  from (dbValue: any) {
+  from(dbValue: any) {
     if (!dbValue) {
       dbValue = 0
     }

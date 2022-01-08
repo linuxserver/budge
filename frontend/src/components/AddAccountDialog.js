@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import { createAccount } from '../redux/slices/Accounts';
+import React, { useState } from 'react'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import { createAccount } from '../redux/slices/Accounts'
 import { useDispatch } from 'react-redux'
-import MenuItem from '@mui/material/MenuItem';
-import { fetchCategories } from '../redux/slices/CategoryGroups';
-import { refreshBudget } from '../redux/slices/Budgets';
+import MenuItem from '@mui/material/MenuItem'
+import { fetchCategories } from '../redux/slices/CategoryGroups'
+import { refreshBudget } from '../redux/slices/Budgets'
 import { inputToDinero } from '../utils/Currency'
 
-const accountTypes = ['Bank', 'Credit Card', 'Tracking Account'];
+const accountTypes = ['Bank', 'Credit Card', 'Tracking Account']
 
 export default function AddAccountDialog(props) {
   /**
@@ -21,9 +21,9 @@ export default function AddAccountDialog(props) {
   const [name, setName] = useState('')
   const [accountType, setAccountType] = useState('')
   const [balance, setBalance] = useState(0)
-  const onNameChange = (e) => setName(e.target.value);
-  const onAccountTypeChange = (e) => setAccountType(e.target.value);
-  const onBalanceChange = (e) => setBalance(e.target.value);
+  const onNameChange = e => setName(e.target.value)
+  const onAccountTypeChange = e => setAccountType(e.target.value)
+  const onBalanceChange = e => setBalance(e.target.value)
 
   /**
    * Redux block
@@ -31,12 +31,14 @@ export default function AddAccountDialog(props) {
   const dispatch = useDispatch()
 
   const handleCreateAccount = async () => {
-    await dispatch(createAccount({
-      name,
-      accountType,
-      balance: inputToDinero(balance),
-      date: new Date(),
-    }))
+    await dispatch(
+      createAccount({
+        name,
+        accountType,
+        balance: inputToDinero(balance),
+        date: new Date(),
+      }),
+    )
 
     dispatch(refreshBudget())
 

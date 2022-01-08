@@ -4,7 +4,13 @@ import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { Account } from '../entities/Account'
 import { Transaction, TransactionCache, TransactionStatus } from '../entities/Transaction'
-import { TransactionModel, TransactionRequest, TransactionResponse, TransactionsDeleteRequest, TransactionsRequest, TransactionsResponse } from '../models/Transaction'
+import {
+  TransactionRequest,
+  TransactionResponse,
+  TransactionsDeleteRequest,
+  TransactionsRequest,
+  TransactionsResponse,
+} from '../models/Transaction'
 import { dinero } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 import { getManager, getRepository, In } from 'typeorm'
@@ -108,14 +114,18 @@ export class TransactionsController extends Controller {
       // and updated the category month accordingly
       // @TODO: remove relation to test db transactions
       const transaction = await getManager().transaction(async transactionalEntityManager => {
-        const transaction = await transactionalEntityManager.getRepository(Transaction).findOne(transactionId, { relations: ['account'] })
+        const transaction = await transactionalEntityManager
+          .getRepository(Transaction)
+          .findOne(transactionId, { relations: ['account'] })
         transaction.update({
           ...requestBody,
           amount: dinero({ amount: requestBody.amount, currency: USD }),
-          ...requestBody.date && { date: new Date(requestBody.date) }, // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
+          ...(requestBody.date && { date: new Date(requestBody.date) }), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
         })
         TransactionCache.enableTransfers(transaction.id)
-        await transactionalEntityManager.getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())
+        await transactionalEntityManager
+          .getRepository(Transaction)
+          .update(transaction.id, transaction.getUpdatePayload())
 
         return transaction
       })
@@ -166,18 +176,25 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transactionsMap = requestBody.transactions.reduce((acc: { [key: string]: TransactionRequest }, transaction: TransactionRequest) => {
-        acc[transaction.id] = transaction
-        return acc
-      }, {})
+      const transactionsMap = requestBody.transactions.reduce(
+        (acc: { [key: string]: TransactionRequest }, transaction: TransactionRequest) => {
+          acc[transaction.id] = transaction
+          return acc
+        },
+        {},
+      )
 
       const transactions = await getManager().transaction(async transactionalEntityManager => {
-        const transactions = await transactionalEntityManager.getRepository(Transaction).find({ where: { id: In(Object.keys(transactionsMap)) } })
-        transactions.map(transaction => transaction.update({
-          ...transactionsMap[transaction.id],
-          amount: transaction.amount,
-          date: transaction.date,
-        }))
+        const transactions = await transactionalEntityManager
+          .getRepository(Transaction)
+          .find({ where: { id: In(Object.keys(transactionsMap)) } })
+        transactions.map(transaction =>
+          transaction.update({
+            ...transactionsMap[transaction.id],
+            amount: transaction.amount,
+            date: transaction.date,
+          }),
+        )
 
         await transactionalEntityManager.getRepository(Transaction).save(transactions)
 
@@ -251,7 +268,9 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transactions = await getManager().getRepository(Transaction).find({ where: { id: In(requestBody.ids) } })
+      const transactions = await getManager()
+        .getRepository(Transaction)
+        .find({ where: { id: In(requestBody.ids) } })
       requestBody.ids.map(id => TransactionCache.enableTransfers(id))
       await getManager().getRepository(Transaction).remove(transactions)
 

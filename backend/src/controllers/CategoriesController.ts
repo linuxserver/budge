@@ -260,7 +260,8 @@ export class CategoriesController extends Controller {
       const category = await getRepository(Category).findOne(id, { relations: ['categoryGroup'] })
 
       const originalCategoryGroupId = category.categoryGroupId
-      const updateOrder = category.categoryGroupId !== requestBody.categoryGroupId || category.order !== requestBody.order
+      const updateOrder =
+        category.categoryGroupId !== requestBody.categoryGroupId || category.order !== requestBody.order
 
       category.name = requestBody.name
       category.order = requestBody.order
@@ -272,7 +273,7 @@ export class CategoriesController extends Controller {
         if (originalCategoryGroupId !== category.categoryGroupId) {
           categories.push(category)
         } else {
-          categories = categories.map(oldCategory => oldCategory.id === category.id ? category : oldCategory)
+          categories = categories.map(oldCategory => (oldCategory.id === category.id ? category : oldCategory))
         }
 
         categories = Category.sort(categories)
@@ -378,7 +379,7 @@ export class CategoriesController extends Controller {
         where: {
           categoryId,
           ...(from && { month: MoreThanOrEqual(from) }),
-        }
+        },
       }
       console.log(findParams)
       const categoryMonths = await getRepository(CategoryMonth).find(findParams)

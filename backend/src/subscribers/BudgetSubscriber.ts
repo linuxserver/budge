@@ -1,15 +1,15 @@
-import { Budget } from "../entities/Budget";
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
-import { getMonthString, getMonthStringFromNow } from "../utils";
-import { BudgetMonth } from "../entities/BudgetMonth";
-import { CategoryGroup } from "../entities/CategoryGroup";
-import { Category } from "../entities/Category";
-import { Payee } from "../entities/Payee";
+import { Budget } from '../entities/Budget'
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm'
+import { getMonthString, getMonthStringFromNow } from '../utils'
+import { BudgetMonth } from '../entities/BudgetMonth'
+import { CategoryGroup } from '../entities/CategoryGroup'
+import { Category } from '../entities/Category'
+import { Payee } from '../entities/Payee'
 
 @EventSubscriber()
 export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
   listenTo() {
-    return Budget;
+    return Budget
   }
 
   async afterInsert(event: InsertEvent<Budget>) {

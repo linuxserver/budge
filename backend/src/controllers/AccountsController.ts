@@ -1,4 +1,4 @@
-import { Get, Put, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
+import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
 import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
@@ -71,7 +71,11 @@ export class AccountsController extends Controller {
             break
         }
 
-        const startingBalancePayee = await getRepository(Payee).findOne({ budgetId, name: 'Starting Balance', internal: true })
+        const startingBalancePayee = await getRepository(Payee).findOne({
+          budgetId,
+          name: 'Starting Balance',
+          internal: true,
+        })
         const startingBalanceTransaction = getRepository(Transaction).create({
           budgetId,
           accountId: account.id,
@@ -169,7 +173,11 @@ export class AccountsController extends Controller {
         // Reconcile the account
         const difference = subtract(dinero({ amount: requestBody.balance, currency: USD }), account.cleared)
         if (!isZero(difference)) {
-          const reconciliationPayee = await getRepository(Payee).findOne({ budgetId, name: 'Reconciliation Balance Adjustment', internal: true })
+          const reconciliationPayee = await getRepository(Payee).findOne({
+            budgetId,
+            name: 'Reconciliation Balance Adjustment',
+            internal: true,
+          })
           const inflowCategory = await getRepository(Category).findOne({ budgetId: account.budgetId, inflow: true })
           const startingBalanceTransaction = getRepository(Transaction).create({
             budgetId,
@@ -184,7 +192,10 @@ export class AccountsController extends Controller {
           await getRepository(Transaction).insert(startingBalanceTransaction)
         }
 
-        const clearedTransactions = await getRepository(Transaction).find({ accountId: account.id, status: TransactionStatus.Cleared })
+        const clearedTransactions = await getRepository(Transaction).find({
+          accountId: account.id,
+          status: TransactionStatus.Cleared,
+        })
         for (const transaction of clearedTransactions) {
           transaction.status = TransactionStatus.Reconciled
           await getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())

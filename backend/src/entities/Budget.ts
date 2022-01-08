@@ -1,12 +1,5 @@
 import { BudgetModel } from '../models/Budget'
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
 import { CategoryGroup } from './CategoryGroup'
@@ -83,7 +76,7 @@ export class Budget {
       id: this.id,
       userId: this.userId,
       name: this.name,
-      toBeBudgeted: {...this.toBeBudgeted},
+      toBeBudgeted: { ...this.toBeBudgeted },
     }
   }
 

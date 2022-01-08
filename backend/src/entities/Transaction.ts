@@ -50,28 +50,28 @@ export class TransactionCache {
     TransactionCache.cache[transaction.id] = {
       payeeId: transaction.payeeId,
       categoryId: transaction.categoryId,
-      amount: {...transaction.amount},
+      amount: { ...transaction.amount },
       date: new Date(transaction.date.getTime()),
       status: transaction.status,
     }
   }
 
   public static enableTransfers(id: string) {
-    const index = TransactionCache.transfers.indexOf(id);
+    const index = TransactionCache.transfers.indexOf(id)
     if (index === -1) {
       TransactionCache.transfers.push(id)
     }
   }
 
   public static disableTransfers(id: string) {
-    const index = TransactionCache.transfers.indexOf(id);
+    const index = TransactionCache.transfers.indexOf(id)
     if (index > -1) {
-      TransactionCache.transfers.splice(index, 1);
+      TransactionCache.transfers.splice(index, 1)
     }
   }
 
   public static transfersEnabled(id: string): boolean {
-    const index = TransactionCache.transfers.indexOf(id);
+    const index = TransactionCache.transfers.indexOf(id)
     if (index > -1) {
       return true
     }

@@ -1,34 +1,32 @@
 import React, { useState } from 'react'
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import ListItem from '@mui/material/ListItem';
-import MailIcon from '@mui/icons-material/Mail';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import Collapse from '@mui/material/Collapse';
-import {
-  useNavigate,
-} from "react-router-dom";
+import Drawer from '@mui/material/Drawer'
+import List from '@mui/material/List'
+import Divider from '@mui/material/Divider'
+import ListItem from '@mui/material/ListItem'
+import MailIcon from '@mui/icons-material/Mail'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import Collapse from '@mui/material/Collapse'
+import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
-import LogoutIcon from '@mui/icons-material/Logout';
+import LogoutIcon from '@mui/icons-material/Logout'
 import api from '../api'
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid'
 import { add, isNegative } from 'dinero.js'
 import { useTheme } from '@mui/styles'
-import AddCircleIcon from "@mui/icons-material/AddCircle"
+import AddCircleIcon from '@mui/icons-material/AddCircle'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { accountsSelectors, editAccount, fetchAccounts } from '../redux/slices/Accounts';
-import { selectActiveBudget } from '../redux/slices/Budgets';
+import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { accountsSelectors, editAccount, fetchAccounts } from '../redux/slices/Accounts'
+import { selectActiveBudget } from '../redux/slices/Budgets'
 
-const drawerWidth = 300;
+const drawerWidth = 300
 
 export default function AppDrawer(props) {
   const dispatch = useDispatch()
@@ -36,7 +34,7 @@ export default function AppDrawer(props) {
   const navigate = useNavigate()
 
   const menuItems = [
-    { name: 'Budget', path: '/'},
+    { name: 'Budget', path: '/' },
     // { name: 'All Accounts', path: '/accounts'},
   ]
 
@@ -81,7 +79,7 @@ export default function AppDrawer(props) {
   const logout = async () => {
     await api.logout()
     navigate('/')
-    window.location.reload(false);
+    window.location.reload(false)
   }
 
   const AccountList = (label, accounts) => {
@@ -96,13 +94,16 @@ export default function AppDrawer(props) {
           <Grid container direction="row" justifyContent="space-between" alignItems="center">
             <div>
               <Grid container direction="row" justifyContent="space-between" alignItems="center">
-                <ListItemIcon size="small" edge="end" style={{minWidth: '20px'}}>
+                <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
                   {accountsListOpen[label] ? <ExpandMore fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
                 </ListItemIcon>
-                <ListItemText primary={label} primaryTypographyProps={{
-                  // variant: 'caption',
-                  style: { fontWeight: 'bold' },
-                }}/>
+                <ListItemText
+                  primary={label}
+                  primaryTypographyProps={{
+                    // variant: 'caption',
+                    style: { fontWeight: 'bold' },
+                  }}
+                />
               </Grid>
             </div>
 
@@ -131,66 +132,66 @@ export default function AppDrawer(props) {
   const DragState = {
     account: -1,
     dropAccount: -1, // drag target
-  };
+  }
 
   const reorderAccounts = async (from, to) => {
     await dispatch(editAccount({ id: from.id, order: to.order + 0.5 }))
     dispatch(fetchAccounts())
   }
 
-  const AccountItem = (account) => {
+  const AccountItem = account => {
     const balance = valueToDinero(account.balance)
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.text.secondary
     return (
-        <ListItemButton
-          key={`account-${account.id}`}
-          selected={selectedItem === `account-${account.id}`}
-          onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
-          draggable="true"
-          onDragStart={(e) => {
-            DragState.account = account
-          }}
-          onDragEnter={(e) => {
-            e.preventDefault();
-            if (account.id !== DragState.account.id) {
-              DragState.dropAccount = account
-            }
-          }}
-          onDragEnd={(e) => {
-            if (DragState.dropAccount !== -1) {
-              reorderAccounts(DragState.account, DragState.dropAccount)
-            }
-            DragState.account = -1;
-            DragState.dropAccount = -1;
-          }}
-        >
-          <Grid container direction="row" justifyContent="space-between" alignItems="center">
-            <div>
-              <ListItemText
-                sx={{ maxWidth: 150 }}
-                primary={account.name}
-                primaryTypographyProps={{
-                  style: {
-                    // fontWeight: 'bold',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }
-                }}
-              />
-            </div>
-
-            <div>
-              <ListItemText
-                secondary={intlFormat(balance)}
-                secondaryTypographyProps={{
+      <ListItemButton
+        key={`account-${account.id}`}
+        selected={selectedItem === `account-${account.id}`}
+        onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
+        draggable="true"
+        onDragStart={e => {
+          DragState.account = account
+        }}
+        onDragEnter={e => {
+          e.preventDefault()
+          if (account.id !== DragState.account.id) {
+            DragState.dropAccount = account
+          }
+        }}
+        onDragEnd={e => {
+          if (DragState.dropAccount !== -1) {
+            reorderAccounts(DragState.account, DragState.dropAccount)
+          }
+          DragState.account = -1
+          DragState.dropAccount = -1
+        }}
+      >
+        <Grid container direction="row" justifyContent="space-between" alignItems="center">
+          <div>
+            <ListItemText
+              sx={{ maxWidth: 150 }}
+              primary={account.name}
+              primaryTypographyProps={{
+                style: {
                   // fontWeight: 'bold',
-                  color: balanceColor,
-                }}
-              />
-            </div>
-          </Grid>
-        </ListItemButton>
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                },
+              }}
+            />
+          </div>
+
+          <div>
+            <ListItemText
+              secondary={intlFormat(balance)}
+              secondaryTypographyProps={{
+                // fontWeight: 'bold',
+                color: balanceColor,
+              }}
+            />
+          </div>
+        </Grid>
+      </ListItemButton>
     )
   }
 
@@ -205,7 +206,7 @@ export default function AppDrawer(props) {
     >
       <List>
         <PopupState variant="popover" popupId="demo-popup-menu">
-          {(popupState) => (
+          {popupState => (
             <React.Fragment>
               <ListItemButton {...bindTrigger(popupState)}>
                 <ListItemText primary={budget.name} />
@@ -228,7 +229,7 @@ export default function AppDrawer(props) {
             onClick={() => listItemClicked(menuItemConfig.name, menuItemConfig.path)}
             selected={selectedItem === menuItemConfig.name}
           >
-            <ListItemIcon style={{minWidth: '40px'}}>
+            <ListItemIcon style={{ minWidth: '40px' }}>
               {index % 2 === 0 ? <AccountBalanceIcon /> : <MailIcon />}
             </ListItemIcon>
             <ListItemText primary={menuItemConfig.name} />
@@ -238,36 +239,33 @@ export default function AppDrawer(props) {
 
       <Divider />
 
-      {
-        budgetAccounts.length > 0 && AccountList('BUDGET', budgetAccounts)
-      }
+      {budgetAccounts.length > 0 && AccountList('BUDGET', budgetAccounts)}
 
-      {
-        trackingAccounts.length > 0 && AccountList('TRACKING', trackingAccounts)
-      }
+      {trackingAccounts.length > 0 && AccountList('TRACKING', trackingAccounts)}
 
       <List dense={true}>
         <ListItemButton>
-          <ListItemIcon size="small" style={{minWidth: '20px'}}>
-            <AddCircleIcon style={{
-              fontSize: theme.typography.subtitle2.fontSize,
-            }} />
+          <ListItemIcon size="small" style={{ minWidth: '20px' }}>
+            <AddCircleIcon
+              style={{
+                fontSize: theme.typography.subtitle2.fontSize,
+              }}
+            />
           </ListItemIcon>
           <ListItemText primary="Add Account" onClick={() => props.onAddAccountClick()} />
         </ListItemButton>
       </List>
 
-      <List dense={true} style={{ marginTop: "auto" }}>
+      <List dense={true} style={{ marginTop: 'auto' }}>
         <ListItem disablePadding>
           <ListItemButton>
             <ListItemIcon>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText primary="Log Out" onClick={logout}/>
+            <ListItemText primary="Log Out" onClick={logout} />
           </ListItemButton>
         </ListItem>
       </List>
-
     </Drawer>
   )
 }

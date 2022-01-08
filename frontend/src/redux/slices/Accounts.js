@@ -1,14 +1,17 @@
-import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit';
-import api from '../../api';
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit'
+import api from '../../api'
 
-export const createAccount = createAsyncThunk('accounts/create', async ({ name, accountType, balance, date}, { getState, dispatch }) => {
-  const store = getState()
-  const account = await api.createAccount(name, accountType, balance, date, store.budgets.activeBudgetId);
+export const createAccount = createAsyncThunk(
+  'accounts/create',
+  async ({ name, accountType, balance, date }, { getState, dispatch }) => {
+    const store = getState()
+    const account = await api.createAccount(name, accountType, balance, date, store.budgets.activeBudgetId)
 
-  dispatch(fetchAccountTransactions({ accountId: account.id }))
+    dispatch(fetchAccountTransactions({ accountId: account.id }))
 
-  return account
-})
+    return account
+  },
+)
 
 export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name, order, balance }, { getState }) => {
   const store = getState()
@@ -17,77 +20,95 @@ export const editAccount = createAsyncThunk('accounts/edit', async ({ id, name, 
 
 export const fetchAccounts = createAsyncThunk('accounts/fetch', async (_, { getState }) => {
   const store = getState()
-  return await api.fetchAccounts(store.budgets.activeBudgetId);
+  return await api.fetchAccounts(store.budgets.activeBudgetId)
 })
 
-export const fetchAccountTransactions = createAsyncThunk('transactions/fetchAccountTransactions', async ({ accountId }, { getState }) => {
-  const state = getState()
-  return {
-    accountId,
-    transactions: await api.fetchAccountTransactions(accountId, state.budgets.activeBudgetId)
-  };
-})
+export const fetchAccountTransactions = createAsyncThunk(
+  'transactions/fetchAccountTransactions',
+  async ({ accountId }, { getState }) => {
+    const state = getState()
+    return {
+      accountId,
+      transactions: await api.fetchAccountTransactions(accountId, state.budgets.activeBudgetId),
+    }
+  },
+)
 
-export const createTransaction = createAsyncThunk('transactions/createTransaction', async ({ transaction }, { getState }) => {
-  const state = getState()
-  const response = await api.createTransaction(transaction, state.budgets.activeBudgetId)
+export const createTransaction = createAsyncThunk(
+  'transactions/createTransaction',
+  async ({ transaction }, { getState }) => {
+    const state = getState()
+    const response = await api.createTransaction(transaction, state.budgets.activeBudgetId)
 
-  return {
-    accountId: response.accountId,
-    transaction: {
-      ...response,
-    },
-  }
-})
+    return {
+      accountId: response.accountId,
+      transaction: {
+        ...response,
+      },
+    }
+  },
+)
 
-export const updateTransaction = createAsyncThunk('transactions/updateTransaction', async ({ transaction }, { getState }) => {
-  const state = getState()
-  const response = await api.updateTransaction(transaction, state.budgets.activeBudgetId)
+export const updateTransaction = createAsyncThunk(
+  'transactions/updateTransaction',
+  async ({ transaction }, { getState }) => {
+    const state = getState()
+    const response = await api.updateTransaction(transaction, state.budgets.activeBudgetId)
 
-  return {
-    accountId: response.accountId,
-    transaction: response,
-  }
-})
+    return {
+      accountId: response.accountId,
+      transaction: response,
+    }
+  },
+)
 
-export const updateTransactions = createAsyncThunk('transactions/updateTransactions', async ({ accountId, transactions }, { getState }) => {
-  const state = getState()
-  const response = await api.updateTransactions(transactions, state.budgets.activeBudgetId)
+export const updateTransactions = createAsyncThunk(
+  'transactions/updateTransactions',
+  async ({ accountId, transactions }, { getState }) => {
+    const state = getState()
+    const response = await api.updateTransactions(transactions, state.budgets.activeBudgetId)
 
-  console.log('returned')
-  console.log({
-    accountId,
-    transactions: response,
-  })
-  return {
-    accountId,
-    transactions: response,
-  }
-})
+    console.log('returned')
+    console.log({
+      accountId,
+      transactions: response,
+    })
+    return {
+      accountId,
+      transactions: response,
+    }
+  },
+)
 
-export const deleteTransaction = createAsyncThunk('transactions/deleteTransaction', async ({ transaction }, { getState }) => {
-  const state = getState()
-  const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
+export const deleteTransaction = createAsyncThunk(
+  'transactions/deleteTransaction',
+  async ({ transaction }, { getState }) => {
+    const state = getState()
+    const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
 
-  return {
-    transactionId: transaction.id,
-    accountId: transaction.accountId,
-  }
-})
+    return {
+      transactionId: transaction.id,
+      accountId: transaction.accountId,
+    }
+  },
+)
 
-export const deleteTransactions = createAsyncThunk('transactions/deleteTransactions', async ({ transactions, accountId }, { getState }) => {
-  const state = getState()
-  const transactionIds = transactions.map(transaction => transaction.id)
-  await api.deleteTransactions(transactionIds, state.budgets.activeBudgetId)
+export const deleteTransactions = createAsyncThunk(
+  'transactions/deleteTransactions',
+  async ({ transactions, accountId }, { getState }) => {
+    const state = getState()
+    const transactionIds = transactions.map(transaction => transaction.id)
+    await api.deleteTransactions(transactionIds, state.budgets.activeBudgetId)
 
-  return {
-    transactionIds,
-    accountId,
-  }
-})
+    return {
+      transactionIds,
+      accountId,
+    }
+  },
+)
 
 export const accountsAdapter = createEntityAdapter({
-  sortComparer: (a, b) => a.order < b.order ? -1 : 1,
+  sortComparer: (a, b) => (a.order < b.order ? -1 : 1),
 })
 
 export const transactionsAdapter = createEntityAdapter()
@@ -99,14 +120,17 @@ const accountsSlice = createSlice({
 
   reducers: {
     setAccounts: (state, { payload }) => {
-      accountsAdapter.setAll(state, payload.map(account => ({
-        ...account,
-        transactions: transactionsAdapter.getInitialState(),
-      })))
+      accountsAdapter.setAll(
+        state,
+        payload.map(account => ({
+          ...account,
+          transactions: transactionsAdapter.getInitialState(),
+        })),
+      )
     },
   },
 
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       .addCase(createAccount.fulfilled, (state, { payload }) => {
         accountsAdapter.addOne(state, {
@@ -123,42 +147,44 @@ const accountsSlice = createSlice({
       .addCase(fetchAccounts.fulfilled, (state, { payload }) => {
         const accounts = payload.map(account => ({
           ...account,
-          transactions: state.entities[account.id] ? state.entities[account.id].transactions : transactionsAdapter.getInitialState(),
+          transactions: state.entities[account.id]
+            ? state.entities[account.id].transactions
+            : transactionsAdapter.getInitialState(),
         }))
         accountsAdapter.upsertMany(state, accounts)
       })
-      .addCase(fetchAccountTransactions.fulfilled, (state, { payload: { accountId, transactions }}) => {
-        const accountEntry = state.entities[accountId];
+      .addCase(fetchAccountTransactions.fulfilled, (state, { payload: { accountId, transactions } }) => {
+        const accountEntry = state.entities[accountId]
         if (accountEntry) {
-          transactionsAdapter.setAll(accountEntry.transactions, transactions);
+          transactionsAdapter.setAll(accountEntry.transactions, transactions)
         }
       })
       .addCase(createTransaction.fulfilled, (state, { payload: { accountId, transaction } }) => {
-        const accountEntry = state.entities[accountId];
+        const accountEntry = state.entities[accountId]
         if (accountEntry) {
-          transactionsAdapter.addOne(accountEntry.transactions, transaction);
+          transactionsAdapter.addOne(accountEntry.transactions, transaction)
         }
       })
       .addCase(updateTransaction.fulfilled, (state, { payload: { accountId, transaction } }) => {
-        const accountEntry = state.entities[accountId];
+        const accountEntry = state.entities[accountId]
         if (accountEntry) {
-          transactionsAdapter.setOne(accountEntry.transactions, transaction);
+          transactionsAdapter.setOne(accountEntry.transactions, transaction)
         }
       })
       .addCase(updateTransactions.fulfilled, (state, { payload: { accountId, transactions } }) => {
-        const accountEntry = state.entities[accountId];
+        const accountEntry = state.entities[accountId]
         if (accountEntry) {
-          transactionsAdapter.upsertMany(accountEntry.transactions, transactions);
+          transactionsAdapter.upsertMany(accountEntry.transactions, transactions)
         }
       })
       .addCase(deleteTransaction.fulfilled, (state, { payload: { transactionId, accountId } }) => {
-        const accountEntry = state.entities[accountId];
+        const accountEntry = state.entities[accountId]
         if (accountEntry) {
           transactionsAdapter.removeOne(accountEntry.transactions, transactionId)
         }
       })
       .addCase(deleteTransactions.fulfilled, (state, { payload: { transactionIds, accountId } }) => {
-        const accountEntry = state.entities[accountId];
+        const accountEntry = state.entities[accountId]
         if (accountEntry) {
           transactionsAdapter.removeMany(accountEntry.transactions, transactionIds)
         }

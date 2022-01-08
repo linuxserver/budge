@@ -16,7 +16,6 @@ import api from '../api'
 import { useDispatch } from 'react-redux'
 import AlertDialog from './AlertDialog'
 
-
 export default function Login(props) {
   /**
    * State block
@@ -27,8 +26,8 @@ export default function Login(props) {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false)
   const [alertDialogBody, setAlertDialogBody] = useState('')
 
-  const onEmailChange = (e) => setEmail(e.target.value);
-  const onPasswordChange = (e) => setPassword(e.target.value);
+  const onEmailChange = e => setEmail(e.target.value)
+  const onPasswordChange = e => setPassword(e.target.value)
 
   /**
    * Redux block
@@ -38,7 +37,7 @@ export default function Login(props) {
 
   useEffect(() => {
     onMount()
-  }, []);
+  }, [])
 
   const onMount = async () => {
     try {
@@ -61,11 +60,15 @@ export default function Login(props) {
     await dispatch(fetchCategories())
 
     // Fetch all account transactions
-    await Promise.all(budgets[0].accounts.map(account => {
-      return dispatch(fetchAccountTransactions({
-        accountId: account.id,
-      }))
-    }))
+    await Promise.all(
+      budgets[0].accounts.map(account => {
+        return dispatch(
+          fetchAccountTransactions({
+            accountId: account.id,
+          }),
+        )
+      }),
+    )
 
     await dispatch(fetchPayees())
     await dispatch(fetchAvailableMonths())
@@ -76,10 +79,12 @@ export default function Login(props) {
 
   const handleLogin = async () => {
     try {
-      await dispatch(login({
-        email,
-        password,
-      }))
+      await dispatch(
+        login({
+          email,
+          password,
+        }),
+      )
 
       await initUser()
     } catch (err) {
@@ -89,37 +94,46 @@ export default function Login(props) {
   }
 
   const userCreation = async () => {
-    await api.createUser(
-      email,
-      password,
-    )
+    await api.createUser(email, password)
 
-    await dispatch(login({
-      email,
-      password,
-    }))
+    await dispatch(
+      login({
+        email,
+        password,
+      }),
+    )
     // Create initial budget
     const newBudget = (await dispatch(createBudget({ name: 'My Budget' }))).payload
     dispatch(setActiveBudget(newBudget.id))
 
     // Create initial items such as category group, categories, etc.
-    const newCategoryGroup = (await dispatch(createCategoryGroup({
-      name: 'Expenses',
-    }))).payload
+    const newCategoryGroup = (
+      await dispatch(
+        createCategoryGroup({
+          name: 'Expenses',
+        }),
+      )
+    ).payload
 
     await Promise.all([
-      dispatch(createCategory({
-        categoryGroupId: newCategoryGroup.id,
-        name: 'Rent'
-      })),
-      dispatch(createCategory({
-        categoryGroupId: newCategoryGroup.id,
-        name: 'Electric'
-      })),
-      dispatch(createCategory({
-        categoryGroupId: newCategoryGroup.id,
-        name: 'Water'
-      })),
+      dispatch(
+        createCategory({
+          categoryGroupId: newCategoryGroup.id,
+          name: 'Rent',
+        }),
+      ),
+      dispatch(
+        createCategory({
+          categoryGroupId: newCategoryGroup.id,
+          name: 'Electric',
+        }),
+      ),
+      dispatch(
+        createCategory({
+          categoryGroupId: newCategoryGroup.id,
+          name: 'Water',
+        }),
+      ),
     ])
 
     await initUser()
@@ -127,13 +141,11 @@ export default function Login(props) {
 
   return (
     <div>
-      <AlertDialog open={alertDialogOpen} body={alertDialogBody} handleClose={() => setAlertDialogOpen(false)}/>
+      <AlertDialog open={alertDialogOpen} body={alertDialogBody} handleClose={() => setAlertDialogOpen(false)} />
       <Dialog open={open} disableEscapeKeyDown={true} onBackdropClick={() => false}>
         <DialogTitle>Login</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Login to start budgeting!
-          </DialogContentText>
+          <DialogContentText>Login to start budgeting!</DialogContentText>
           <TextField
             autoFocus
             margin="dense"
@@ -160,5 +172,5 @@ export default function Login(props) {
         </DialogActions>
       </Dialog>
     </div>
-  );
+  )
 }

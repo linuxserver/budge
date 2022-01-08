@@ -1,13 +1,5 @@
 import { CategoryMonthModel } from '../models/CategoryMonth'
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  Index,
-  AfterLoad,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, AfterLoad } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
 import { Dinero } from '@dinero.js/core'
@@ -38,9 +30,9 @@ export class CategoryMonthCache {
 
   public static set(categoryMonth: CategoryMonth) {
     CategoryMonthCache.cache[categoryMonth.id] = {
-      budgeted: {...categoryMonth.budgeted},
-      activity: {...categoryMonth.activity},
-      balance: {...categoryMonth.balance},
+      budgeted: { ...categoryMonth.budgeted },
+      activity: { ...categoryMonth.activity },
+      balance: { ...categoryMonth.balance },
     }
   }
 }
@@ -112,9 +104,9 @@ export class CategoryMonth {
       categoryId: this.categoryId,
       budgetMonthId: this.budgetMonthId,
       month: this.month,
-      budgeted: {...this.budgeted},
-      activity: {...this.activity},
-      balance: {...this.balance},
+      budgeted: { ...this.budgeted },
+      activity: { ...this.activity },
+      balance: { ...this.balance },
     }
   }
 

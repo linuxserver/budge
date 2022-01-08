@@ -1,12 +1,11 @@
-import { Budget } from "../entities/Budget";
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, MoreThan, MoreThanOrEqual, UpdateEvent } from "typeorm";
-import { formatMonthFromDateString, getDateFromString } from "../utils";
-import { BudgetMonth } from "../entities/BudgetMonth";
-import { Category } from "../entities/Category";
-import { add, isZero, isNegative, isPositive, subtract, equal, dinero } from "dinero.js";
-import { CategoryMonth, CategoryMonthCache } from "../entities/CategoryMonth";
-import { USD } from "@dinero.js/currencies";
-import { CategoryMonths } from "../repositories/CategoryMonths";
+import { Budget } from '../entities/Budget'
+import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm'
+import { formatMonthFromDateString, getDateFromString } from '../utils'
+import { BudgetMonth } from '../entities/BudgetMonth'
+import { Category } from '../entities/Category'
+import { add, isZero, isNegative, isPositive, subtract, equal } from 'dinero.js'
+import { CategoryMonth, CategoryMonthCache } from '../entities/CategoryMonth'
+import { CategoryMonths } from '../repositories/CategoryMonths'
 
 @EventSubscriber()
 export class CategoryMonthSubscriber implements EntitySubscriberInterface<CategoryMonth> {
@@ -29,7 +28,7 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     })
 
     const category = await event.manager.findOne(Category, {
-      id: event.entity.categoryId
+      id: event.entity.categoryId,
     })
 
     if (prevCategoryMonth && (category.trackingAccountId || isPositive(prevCategoryMonth.balance))) {
@@ -106,14 +105,15 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
       return
     }
 
-    const nextCategoryMonth = await manager.getCustomRepository(CategoryMonths).findOrCreate(
-      nextBudgetMonth.budgetId,
-      categoryMonth.categoryId,
-      nextBudgetMonth.month,
-    )
+    const nextCategoryMonth = await manager
+      .getCustomRepository(CategoryMonths)
+      .findOrCreate(nextBudgetMonth.budgetId, categoryMonth.categoryId, nextBudgetMonth.month)
 
     if (isPositive(categoryMonth.balance) || category.trackingAccountId) {
-      nextCategoryMonth.balance = add(categoryMonth.balance, add(nextCategoryMonth.budgeted, nextCategoryMonth.activity))
+      nextCategoryMonth.balance = add(
+        categoryMonth.balance,
+        add(nextCategoryMonth.budgeted, nextCategoryMonth.activity),
+      )
     } else {
       // If the next month's balance already matched it's activity, no need to keep cascading
       const calculatedNextMonth = add(nextCategoryMonth.budgeted, nextCategoryMonth.activity)

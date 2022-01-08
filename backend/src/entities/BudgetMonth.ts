@@ -1,13 +1,5 @@
 import { BudgetMonthModel } from '../models/BudgetMonth'
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  Index,
-  OneToMany,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, OneToMany } from 'typeorm'
 import { Budget } from './Budget'
 import { CategoryMonth } from './CategoryMonth'
 import { Dinero } from '@dinero.js/core'
@@ -31,28 +23,28 @@ export class BudgetMonth {
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer()
+    transformer: new CurrencyDBTransformer(),
   })
   income: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer()
+    transformer: new CurrencyDBTransformer(),
   })
   budgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer()
+    transformer: new CurrencyDBTransformer(),
   })
   activity: Dinero<number> = dinero({ amount: 0, currency: USD })
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer()
+    transformer: new CurrencyDBTransformer(),
   })
   underfunded: Dinero<number> = dinero({ amount: 0, currency: USD })
 
@@ -79,10 +71,10 @@ export class BudgetMonth {
       id: this.id,
       budgetId: this.budgetId,
       month: this.month,
-      income: {...this.income},
-      budgeted: {...this.budgeted},
-      activity: {...this.activity},
-      underfunded: {...this.underfunded},
+      income: { ...this.income },
+      budgeted: { ...this.budgeted },
+      activity: { ...this.activity },
+      underfunded: { ...this.underfunded },
     }
   }
 

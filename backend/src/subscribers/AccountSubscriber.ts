@@ -1,21 +1,18 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
-import { CategoryGroup, CreditCardGroupName } from "../entities/CategoryGroup";
-import { Category } from "../entities/Category";
-import { Payee } from "../entities/Payee";
-import { Account, AccountTypes } from "../entities/Account";
-import { add } from "dinero.js";
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm'
+import { CategoryGroup, CreditCardGroupName } from '../entities/CategoryGroup'
+import { Category } from '../entities/Category'
+import { Payee } from '../entities/Payee'
+import { Account, AccountTypes } from '../entities/Account'
+import { add } from 'dinero.js'
 
 @EventSubscriber()
 export class AccountSubscriber implements EntitySubscriberInterface<Account> {
   listenTo() {
-    return Account;
+    return Account
   }
 
   async afterInsert(event: InsertEvent<Account>) {
-    await Promise.all([
-      this.createCreditCardCategory(event),
-      this.createAccountPayee(event),
-    ])
+    await Promise.all([this.createCreditCardCategory(event), this.createAccountPayee(event)])
   }
 
   private async createAccountPayee(event: InsertEvent<Account>) {

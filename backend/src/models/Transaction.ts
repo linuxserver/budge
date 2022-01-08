@@ -88,7 +88,7 @@ export interface TransactionRequest {
  *  ],
  * }
  */
- export interface TransactionsRequest {
+export interface TransactionsRequest {
   transactions: TransactionRequest[]
 }
 

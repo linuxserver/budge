@@ -1,19 +1,19 @@
 import { forwardRef } from 'react'
-import AddBox from '@mui/icons-material/AddBox';
-import ArrowDownward from '@mui/icons-material/ArrowDownward';
-import Check from '@mui/icons-material/Check';
-import ChevronLeft from '@mui/icons-material/ChevronLeft';
-import ChevronRight from '@mui/icons-material/ChevronRight';
-import Clear from '@mui/icons-material/Clear';
-import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import Edit from '@mui/icons-material/Edit';
-import FilterList from '@mui/icons-material/FilterList';
-import FirstPage from '@mui/icons-material/FirstPage';
-import LastPage from '@mui/icons-material/LastPage';
-import Remove from '@mui/icons-material/Remove';
-import SaveAlt from '@mui/icons-material/SaveAlt';
-import Search from '@mui/icons-material/Search';
-import ViewColumn from '@mui/icons-material/ViewColumn';
+import AddBox from '@mui/icons-material/AddBox'
+import ArrowDownward from '@mui/icons-material/ArrowDownward'
+import Check from '@mui/icons-material/Check'
+import ChevronLeft from '@mui/icons-material/ChevronLeft'
+import ChevronRight from '@mui/icons-material/ChevronRight'
+import Clear from '@mui/icons-material/Clear'
+import DeleteOutline from '@mui/icons-material/DeleteOutline'
+import Edit from '@mui/icons-material/Edit'
+import FilterList from '@mui/icons-material/FilterList'
+import FirstPage from '@mui/icons-material/FirstPage'
+import LastPage from '@mui/icons-material/LastPage'
+import Remove from '@mui/icons-material/Remove'
+import SaveAlt from '@mui/icons-material/SaveAlt'
+import Search from '@mui/icons-material/Search'
+import ViewColumn from '@mui/icons-material/ViewColumn'
 
 export const TableIcons = {
   Add: forwardRef((props, ref) => <AddBox fontSize="small" {...props} ref={ref} />),
@@ -32,5 +32,5 @@ export const TableIcons = {
   Search: forwardRef((props, ref) => <Search fontSize="small" {...props} ref={ref} />),
   SortArrow: forwardRef((props, ref) => <ArrowDownward fontSize="small" {...props} ref={ref} />),
   ThirdStateCheck: forwardRef((props, ref) => <Remove fontSize="small" {...props} ref={ref} />),
-  ViewColumn: forwardRef((props, ref) => <ViewColumn fontSize="small" {...props} ref={ref} />)
-};
+  ViewColumn: forwardRef((props, ref) => <ViewColumn fontSize="small" {...props} ref={ref} />),
+}

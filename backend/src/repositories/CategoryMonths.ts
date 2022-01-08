@@ -1,8 +1,8 @@
-import { EntityRepository, EntityTarget, ObjectType, Repository, UpdateResult } from "typeorm";
-import { CategoryMonth } from "../entities/CategoryMonth";
-import { dinero } from "dinero.js";
-import { USD } from "@dinero.js/currencies";
-import { BudgetMonths } from "./BudgetMonths";
+import { EntityRepository, EntityTarget, ObjectType, Repository, UpdateResult } from 'typeorm'
+import { CategoryMonth } from '../entities/CategoryMonth'
+import { dinero } from 'dinero.js'
+import { USD } from '@dinero.js/currencies'
+import { BudgetMonths } from './BudgetMonths'
 
 @EntityRepository(CategoryMonth)
 export class CategoryMonths extends Repository<CategoryMonth> {
@@ -23,10 +23,7 @@ export class CategoryMonths extends Repository<CategoryMonth> {
   }
 
   async findOrCreate(budgetId: string, categoryId: string, month: string): Promise<CategoryMonth> {
-    let categoryMonth: CategoryMonth = await this.findOne(
-      { categoryId, month: month },
-      { relations: ['budgetMonth'] },
-    )
+    let categoryMonth: CategoryMonth = await this.findOne({ categoryId, month: month }, { relations: ['budgetMonth'] })
 
     if (!categoryMonth) {
       categoryMonth = await this.createNew(budgetId, categoryId, month)

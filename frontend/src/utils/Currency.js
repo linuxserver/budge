@@ -17,7 +17,7 @@ export function intlFormat(dineroObject, locale, options = {}) {
     })
   }
 
-  return toFormat(dineroObject, transformer);
+  return toFormat(dineroObject, transformer)
 }
 
 export function valueToDinero(value) {

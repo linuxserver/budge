@@ -1,8 +1,8 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../api';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import api from '../../api'
 
 export const login = createAsyncThunk('user/login', async ({ email, password }) => {
-  return await api.login(email, password);
+  return await api.login(email, password)
 })
 
 const userSlice = createSlice({
@@ -32,9 +32,9 @@ const userSlice = createSlice({
       state.user = action.payload
     },
 
-    [login.rejected]: (state) => {
+    [login.rejected]: state => {
       throw new Error()
-    }
+    },
   },
 })
 

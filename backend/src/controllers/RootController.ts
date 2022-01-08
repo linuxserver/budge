@@ -22,7 +22,10 @@ export class RootController extends Controller {
     },
     token: '1234abcd',
   })
-  public async login(@Body() requestBody: LoginRequest, @Request() request: ExpressRequest): Promise<LoginResponse|ErrorResponse> {
+  public async login(
+    @Body() requestBody: LoginRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<LoginResponse | ErrorResponse> {
     const { email, password } = requestBody
     const user: User = await getRepository(User).findOne({ email })
 
