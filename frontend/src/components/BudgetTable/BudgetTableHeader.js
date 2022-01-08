@@ -61,13 +61,12 @@ export default function BudgetTableHeader(props) {
   console.log(theme)
   return (
     <Box
-      sx={
-        {
-          // backgroundColor: theme.palette.background.default
-        }
-      }
+      sx={{
+        width: '100%',
+        // backgroundColor: theme.palette.background.default
+      }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ p: 2 }}>
+      <Stack direction="row" justifyContent="space-around" alignItems="center" spacing={2} sx={{ p: 2 }}>
         <div>
           <BudgetMonthPicker
             popupState={monthPickerPopupState}

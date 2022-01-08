@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { createSelector } from '@reduxjs/toolkit'
-import MaterialTable, { MTableCell, MTableEditCell, MTableBodyRow } from '@material-table/core'
+import MaterialTable, { MTableCell, MTableEditCell, MTableBodyRow, MTableToolbar } from '@material-table/core'
 import { TableIcons } from '../../utils/Table'
 import { refreshBudget } from '../../redux/slices/Budgets'
 import {
@@ -196,6 +196,7 @@ export default function BudgetTable(props) {
       lookup: categoriesMap,
       editable: 'never',
       align: 'left',
+      width: '55%',
       render: rowData => (
         <Grid container>
           <PopupState variant="popover" popupId={`popover-${rowData.categoryId}`}>
@@ -264,7 +265,7 @@ export default function BudgetTable(props) {
       field: 'budgeted',
       sorting: false,
       type: 'currency',
-      width: '1px',
+      // width: '20%',
       render: rowData => intlFormat(rowData.budgeted),
     },
     {
@@ -273,7 +274,7 @@ export default function BudgetTable(props) {
       sorting: false,
       type: 'currency',
       editable: 'never',
-      width: '1px',
+      // width: '20%',
       render: rowData => intlFormat(rowData.activity),
     },
     {
@@ -283,7 +284,7 @@ export default function BudgetTable(props) {
       type: 'currency',
       align: 'right',
       editable: 'never',
-      width: '1px',
+      // width: '20%',
       render: rowData => {
         if (!budgetMonth) {
           return <></>
@@ -424,6 +425,7 @@ export default function BudgetTable(props) {
           gridTemplateRows: 'auto 1fr auto',
           height: '100vh',
         }}
+        title={<BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />}
         components={{
           Toolbar: props => (
             <Box
@@ -431,7 +433,15 @@ export default function BudgetTable(props) {
                 backgroundColor: theme.palette.background.default,
               }}
             >
-              <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
+              <MTableToolbar
+                {...props}
+                localization={{
+                  searchPlaceholder: 'Filter categories',
+                }}
+                classes={{
+                  title: 'budget-table-title',
+                }}
+              />
 
               <Divider />
 
@@ -547,7 +557,7 @@ export default function BudgetTable(props) {
         options={{
           padding: 'dense',
           paging: false,
-          search: false,
+          // search: false,
           defaultExpanded: true,
           draggable: false,
           // sorting: false,
