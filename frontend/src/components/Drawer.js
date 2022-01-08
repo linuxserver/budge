@@ -248,7 +248,7 @@ export default function AppDrawer(props) {
 
       <List dense={true}>
         <ListItemButton>
-          <ListItemIcon size="small" style={{minWidth: '25px'}}>
+          <ListItemIcon size="small" style={{minWidth: '20px'}}>
             <AddCircleIcon style={{
               fontSize: theme.typography.subtitle2.fontSize,
             }} />

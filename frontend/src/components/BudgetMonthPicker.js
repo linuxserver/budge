@@ -21,8 +21,6 @@ export default function BudgetMonthPicker(props) {
       if (value.getYear() === newValue.getYear()) {
         return props.popupState.close()
       }
-
-      // return
     }
 
     setValue(newValue)

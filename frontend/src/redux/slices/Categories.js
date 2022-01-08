@@ -1,16 +1,6 @@
 import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } from '@reduxjs/toolkit';
 import api from '../../api';
 
-export const createCategoryGroup = createAsyncThunk('categories/createCategoryGroup', async ({ name }, { getState }) => {
-  const store = getState()
-  return await api.createCategoryGroup(name, store.budgets.activeBudgetId);
-})
-
-export const updateCategoryGroup = createAsyncThunk('categories/updateCategoryGroup', async ({ id, name, order }, { getState }) => {
-  const store = getState()
-  return await api.updateCategoryGroup(id, name, order, store.budgets.activeBudgetId);
-})
-
 export const createCategory = createAsyncThunk('categories/createCategory', async ({ name, categoryGroupId }, { getState }) => {
   const store = getState()
   return await api.createCategory(name, categoryGroupId, store.budgets.activeBudgetId);
@@ -18,7 +8,8 @@ export const createCategory = createAsyncThunk('categories/createCategory', asyn
 
 export const updateCategory = createAsyncThunk('categories/updateCategory', async ({ id, name, order, categoryGroupId }, { getState }) => {
   const store = getState()
-  return await api.updateCategory(id, name, order, categoryGroupId, store.budgets.activeBudgetId);
+  const category = await api.updateCategory(id, name, order, categoryGroupId, store.budgets.activeBudgetId);
+  return category
 })
 
 const categoriesAdapter = createEntityAdapter()
@@ -40,7 +31,8 @@ const categoriesSlice = createSlice({
     })
 
     builder.addCase(updateCategory.fulfilled, (state, { payload }) => {
-      categoriesAdapter.updateOne(state, payload)
+      console.log(payload)
+      categoriesAdapter.upsertOne(state, payload)
     })
   },
 })

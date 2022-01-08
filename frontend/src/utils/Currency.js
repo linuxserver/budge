@@ -28,6 +28,14 @@ export function dineroToValue(dineroObj) {
   return dineroObj.toJSON().amount
 }
 
+export function getBalanceColor(amount, theme) {
+  if (isNegative(amount)) {
+    return theme.palette.error.main
+  }
+
+  return theme.palette.success.main
+}
+
 export class ToAPI {
   static transformTransaction(transaction) {
     return {

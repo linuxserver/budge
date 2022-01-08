@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { createAccount } from '../redux/slices/Accounts';
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem';
 import { fetchCategories } from '../redux/slices/CategoryGroups';
 import { refreshBudget } from '../redux/slices/Budgets';

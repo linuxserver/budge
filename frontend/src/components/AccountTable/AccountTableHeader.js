@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux'
-import { createPayee, fetchAccounts, fetchPayees, editAccount, createTransaction, deleteTransaction, updateTransaction } from "../../redux/slices/Accounts";
+import { accountsSelectors, editAccount } from "../../redux/slices/Accounts";
 import TextField from '@mui/material/TextField';
-import { inputToDinero, intlFormat } from '../../utils/Currency'
-import { dinero, toUnit, isZero, isNegative, multiply } from "dinero.js";
+import { FromAPI, getBalanceColor, intlFormat } from '../../utils/Currency'
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover'
 import {
@@ -16,12 +15,21 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/styles'
 import ReconcileForm from '../../components/ReconcileForm'
+import { createSelector } from "@reduxjs/toolkit";
 
-export default function BudgetTableHeader(props) {
+export default function BudgetTableHeader({ accountId, name }) {
   const theme = useTheme()
   const dispatch = useDispatch()
 
-  const [accountName, setAccountName] = useState(props.account.name)
+  const selectAccount = createSelector([
+    (state, accountId) => accountsSelectors.selectById(state, accountId),
+  ], account => FromAPI.transformAccount(account))
+  const account = useSelector(state => selectAccount(state, accountId))
+
+  const [accountName, setAccountName] = useState(name)
+  useEffect(() => {
+    setAccountName(name)
+  }, [name])
 
   const editAccountPopupState = usePopupState({
     variant: 'popover',
@@ -35,15 +43,7 @@ export default function BudgetTableHeader(props) {
 
   const editAccountName = (event) => {
     editAccountPopupState.close()
-    dispatch(editAccount({ id: props.account.id, name: accountName }))
-  }
-
-  const getBalanceColor = (amount) => {
-    if (isNegative(amount)) {
-      return theme.palette.error.main
-    }
-
-    return theme.palette.success.main
+    dispatch(editAccount({ id: account.id, name: accountName }))
   }
 
   return (
@@ -56,7 +56,7 @@ export default function BudgetTableHeader(props) {
       >
         <div>
           <h3 style={{cursor: 'pointer', display: 'inline-block'}} {...bindTrigger(editAccountPopupState)}>
-            {props.account.name}
+            {account.name}
           </h3>
           <Popover
             {...bindPopover(editAccountPopupState)}
@@ -83,7 +83,7 @@ export default function BudgetTableHeader(props) {
                 alignItems="center"
                 spacing={2}
               >
-                <Button sx={{ p: 1 }} onClick={editAccountName}>Save</Button>
+                <Button size="small" sx={{ p: 1 }} onClick={editAccountName}>Save</Button>
               </Stack>
             </Box>
           </Popover>
@@ -98,11 +98,16 @@ export default function BudgetTableHeader(props) {
           >
             <Typography
               style={{
-                color: getBalanceColor(props.account.cleared),
+                color: getBalanceColor(account.cleared, theme),
                 fontWeight: "bold",
               }}
-            >{intlFormat(props.account.cleared)}</Typography>
-            <Typography variant="caption">Cleared</Typography>
+            >{intlFormat(account.cleared)}</Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: "bold",
+              }}
+            >Cleared</Typography>
           </Stack>
         </div>
 
@@ -117,11 +122,16 @@ export default function BudgetTableHeader(props) {
           >
             <Typography
               style={{
-                color: getBalanceColor(props.account.uncleared),
+                color: getBalanceColor(account.uncleared, theme),
                 fontWeight: "bold",
               }}
-            >{intlFormat(props.account.uncleared)}</Typography>
-            <Typography variant="caption">Uncleared</Typography>
+            >{intlFormat(account.uncleared)}</Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: "bold",
+              }}
+            >Uncleared</Typography>
           </Stack>
         </div>
 
@@ -136,11 +146,16 @@ export default function BudgetTableHeader(props) {
           >
             <Typography
               style={{
-                color: getBalanceColor(props.account.balance),
+                color: getBalanceColor(account.balance, theme),
                 fontWeight: "bold",
               }}
-            >{intlFormat(props.account.balance)}</Typography>
-            <Typography variant="caption">Working Balance</Typography>
+            >{intlFormat(account.balance)}</Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: "bold",
+              }}
+            >Working Balance</Typography>
           </Stack>
         </div>
 
@@ -155,10 +170,10 @@ export default function BudgetTableHeader(props) {
             </Typography>
           </Button>
           <ReconcileForm
-            key={props.account.cleared}
+            key={account.cleared}
             popupState={reconcilePopupState}
-            accountId={props.account.id}
-            balance={props.account.cleared}
+            accountId={account.id}
+            balance={account.cleared}
           />
         </div>
       </Stack>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux"
-import { categoriesSelectors, createCategory, selectCategoryToGroupMap, updateCategory } from "../redux/slices/Categories";
+import { createCategory, updateCategory } from "../redux/slices/Categories";
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
@@ -97,7 +97,7 @@ export default function NewCategoryDialog(props) {
           alignItems="center"
           spacing={2}
         >
-          <Button onClick={submit}>{props.mode === 'create' ? 'Add' : 'Edit'}</Button>
+          <Button size="small" onClick={submit}>{props.mode === 'create' ? 'Add' : 'Edit'}</Button>
         </Stack>
       </Box>
     </Popover>

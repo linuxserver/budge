@@ -2,12 +2,9 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux"
 import { selectActiveBudget, setCurrentMonth } from "../../redux/slices/Budgets";
 import IconButton from '@mui/material/IconButton';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { formatMonthFromDateString, getDateFromString } from "../../utils/Date";
-import Grid from '@mui/material/Grid';
 import { isNegative } from 'dinero.js'
-import { inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
+import { getBalanceColor, inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
 import BudgetMonthPicker from "../BudgetMonthPicker";
 import Button from '@mui/material/Button';
 import { useTheme } from '@mui/styles'
@@ -16,9 +13,11 @@ import {
   usePopupState,
   bindTrigger,
 } from 'material-ui-popup-state/hooks'
-import CategoryGroupForm from '../CategoryGroupForm'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box';
+import ArrowCircleLeftOutlinedIcon from '@mui/icons-material/ArrowCircleLeftOutlined';
+import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOutlined';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 
 export default function BudgetTableHeader(props) {
   const theme = useTheme()
@@ -27,7 +26,6 @@ export default function BudgetTableHeader(props) {
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
   const budget = useSelector(selectActiveBudget)
-  console.log(budget)
 
   const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
   let tbbColor = 'success'
@@ -54,14 +52,20 @@ export default function BudgetTableHeader(props) {
   })
 
   const navigateMonth = (direction) => {
+    props.onMonthNavigate(true)
     const monthDate = new Date(Date.UTC(...month.split('-')))
     monthDate.setDate(1)
     monthDate.setMonth(monthDate.getMonth() + direction)
     dispatch(setCurrentMonth(monthDate))
   }
 
+  const isToday = month === formatMonthFromDateString(new Date())
+
+  console.log(theme)
   return (
-    <Box>
+    <Box sx={{
+      // backgroundColor: theme.palette.background.default
+    }}>
       <Stack
         direction="row"
         justifyContent="space-between"
@@ -77,54 +81,83 @@ export default function BudgetTableHeader(props) {
             maxDate={availableMonths[availableMonths.length - 1]}
           />
           <div className="budget-month-navigation">
-            <IconButton disabled={prevMonthDisabled} onClick={() => navigateMonth(-1)}>
-              <ArrowBackIosNewIcon />
+            <IconButton
+              disabled={prevMonthDisabled}
+              onClick={() => navigateMonth(-1)}
+              sx={{
+                fontSize: theme.typography.h6.fontSize,
+                color: theme.palette.primary.main,
+              }}
+            >
+              <ArrowCircleLeftOutlinedIcon fontSize="large"/>
             </IconButton>
-            <Button {...bindTrigger(monthPickerPopupState)}>
+            <Button
+              {...bindTrigger(monthPickerPopupState)}
+              sx={{
+                fontSize: theme.typography.h6.fontSize,
+                fontWeight: "bold",
+                color: theme.palette.text.primary,
+              }}
+            >
               {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'short'})}
+              <ExpandMore sx={{
+                color: theme.palette.primary.main,
+              }}/>
             </Button>
-            <IconButton disabled={nextMonthDisabled} onClick={() => navigateMonth(1)}>
-              <ArrowForwardIosIcon />
+            <IconButton
+              disabled={nextMonthDisabled}
+              onClick={() => navigateMonth(1)}
+              sx={{
+                fontSize: theme.typography.h6.fontSize,
+                color: theme.palette.primary.main,
+              }}
+            >
+              <ArrowCircleRightOutlinedIcon fontSize="large"/>
             </IconButton>
-            <Button variant="outlined" size="small" onClick={() => dispatch(setCurrentMonth(new Date()))}>
-              <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                Today
-              </Typography>
-            </Button>
+            {
+              isToday === false && (
+                <Button variant="outlined" size="small" onClick={() => dispatch(setCurrentMonth(new Date()))}>
+                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                    Today
+                  </Typography>
+                </Button>
+              )
+            }
           </div>
         </div>
 
-        <div>
-          <Typography style={{ fontSize: theme.typography.h6.fontSize, fontWeight: 'bold' }}>
-            To Be Budgeted: <span style={{ color: theme.palette[tbbColor].main }}>{intlFormat(toBeBudgeted)}</span>
-          </Typography>
-        </div>
-      </Stack>
-
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        spacing={2}
-        sx={{ p: 2 }}
-      >
-        <div>
-          <CategoryGroupForm
-            popupState={categoryGroupPopupState}
-            mode={'create'}
-            order={0}
-          />
-          <Button
-            aria-describedby="category-group-add"
-            // variant="outlined"
-            size="small"
-            {...bindTrigger(categoryGroupPopupState)}
+        <Box sx={{
+          py: 0.5,
+          px: 2,
+          borderRadius: 1.5,
+          backgroundColor: getBalanceColor(toBeBudgeted, theme),
+        }}>
+          <Stack
+            direction="row"
+            justifyContent="center"
+            alignItems="center"
+            spacing={1}
           >
-            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-              + Category Group
+            <Typography
+              style={{
+                fontSize: theme.typography.subtitle1.fontSize,
+                // fontWeight: 'bold',
+                color: theme.palette.background.default,
+              }}
+            >
+              To Be Budgeted:
             </Typography>
-          </Button>
-        </div>
+            <Typography
+              style={{
+                fontSize: theme.typography.h6.fontSize,
+                fontWeight: 'bold',
+                color: theme.palette.background.default,
+              }}
+            >
+              {intlFormat(toBeBudgeted)}
+            </Typography>
+          </Stack>
+        </Box>
       </Stack>
     </Box>
   )

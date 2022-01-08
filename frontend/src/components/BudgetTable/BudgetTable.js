@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux"
 import { createSelector } from '@reduxjs/toolkit'
 import MaterialTable, { MTableCell, MTableEditCell, MTableBodyRow } from "@material-table/core";
 import { TableIcons } from '../../utils/Table'
 import { refreshBudget } from "../../redux/slices/Budgets";
-import { updateCategoryMonth, fetchCategoryMonths, selectCategoryMonths } from '../../redux/slices/BudgetMonths'
-import { fetchBudgetMonth } from '../../redux/slices/BudgetMonths'
+import { fetchBudgetMonth, updateCategoryMonth, fetchCategoryMonths, refreshBudgetMonth } from '../../redux/slices/BudgetMonths'
 import { updateCategory,  } from "../../redux/slices/Categories"
 import { updateCategoryGroup, fetchCategories, categoryGroupsSelectors } from '../../redux/slices/CategoryGroups'
+import { categoriesSelectors } from '../../redux/slices/Categories'
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -18,13 +18,21 @@ import { USD } from '@dinero.js/currencies'
 import { FromAPI, inputToDinero, intlFormat } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
 import BudgetTableHeader from './BudgetTableHeader'
-import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state'
+import PopupState, { bindTrigger } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
 import CategoryForm from '../CategoryForm'
 import Tooltip from '@mui/material/Tooltip'
 import _ from 'underscore'
+import { formatMonthFromDateString, getDateFromString } from "../../utils/Date";
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography';
 
 export default function BudgetTable(props) {
+  let isLoading = false
   const theme = useTheme()
 
   /**
@@ -35,24 +43,26 @@ export default function BudgetTable(props) {
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
 
-  const selectCategoryMaps = createSelector(categoryGroupsSelectors.selectAll, categoryGroups => {
+  const nextMonth = getDateFromString(month)
+  nextMonth.setMonth(nextMonth.getMonth() + 1)
+  const nextMonthExists = !availableMonths.includes(formatMonthFromDateString(nextMonth))
+
+  const selectCategoryMaps = createSelector([
+    categoryGroupsSelectors.selectAll,
+    categoriesSelectors.selectAll,
+  ], (categoryGroups, categories) => {
+    const categoriesMap = {}
     const groupMap = {}
-    const map = categoryGroups.reduce(
-      (acc, group) => {
-        if (group.internal) {
-          return acc
-        }
-        groupMap[group.id] = group
-        acc[group.id] = group.name
-        for (const category of group.categories) {
-          acc[category.id] = category.name
-        }
 
-        return acc
-      }, {}
-    )
+    categoryGroups.map(group => {
+      categoriesMap[group.id] = group.name
+      groupMap[group.id] = group
+    })
+    categories.map(category => {
+      categoriesMap[category.id] = category.name
+    })
 
-    return [groupMap, map]
+    return [groupMap, categoriesMap]
   })
   const [categoryGroupsMap, categoriesMap] = useSelector(selectCategoryMaps)
 
@@ -60,10 +70,12 @@ export default function BudgetTable(props) {
     (state, month) => state.budgetMonths.entities[month],
     budgetMonth => {
       if (!budgetMonth) {
+        isLoading = true
         dispatch(fetchBudgetMonth({ month }))
         return {}
       }
 
+      isLoading = false
       return FromAPI.transformBudgetMonth(budgetMonth)
     }
   )
@@ -74,7 +86,6 @@ export default function BudgetTable(props) {
       state => state.categoryMonths.entities,
     ],
     (budgetMonth, categories) => {
-      console.log(budgetMonth)
       if (!budgetMonth) {
         return []
       }
@@ -85,9 +96,9 @@ export default function BudgetTable(props) {
 
   const selectData = createSelector([
     categoryGroupsSelectors.selectAll,
-    (state, month) => budgetMonthSelector(state, month),
+    categoriesSelectors.selectAll,
     (state, month) => categoryMonthsSelector(state, month),
-  ], (groups, budgetMonth, categoryMonths) => {
+  ], (groups, categories, categoryMonths) => {
     let retval = []
     groups.map(group => {
       if (group.internal) {
@@ -105,7 +116,8 @@ export default function BudgetTable(props) {
         balance: dinero({ amount: 0, currency: USD }),
       }
 
-      for (let category of group.categories) {
+      const groupCategories = categories.filter(cat => cat.categoryGroupId === group.id)
+      for (let category of groupCategories) {
         const defaultRow = {
           id: category.id,
           name: category.name,
@@ -204,7 +216,7 @@ export default function BudgetTable(props) {
                       popupState={popupState}
                       mode={'edit'}
                       name={categoriesMap[rowData.categoryId]}
-                      order={categoriesMap[rowData.order]}
+                      order={rowData.order}
                       categoryId={rowData.categoryId}
                     />
                   )
@@ -260,6 +272,7 @@ export default function BudgetTable(props) {
       field: "budgeted",
       sorting: false,
       type: "currency",
+      width: "1px",
       render: rowData => intlFormat(rowData.budgeted),
     },
     {
@@ -268,6 +281,7 @@ export default function BudgetTable(props) {
       sorting: false,
       type: "currency",
       editable: "never",
+      width: "1px",
       render: rowData => intlFormat(rowData.activity),
     },
     {
@@ -277,6 +291,7 @@ export default function BudgetTable(props) {
       type: "currency",
       align: "right",
       editable: "never",
+      width: "1px",
       render: (rowData) => {
         if (!budgetMonth) {
           return <></>
@@ -362,14 +377,14 @@ export default function BudgetTable(props) {
       return
     }
 
+    // await api.updateCategoryMonth(budgetId, newRow.categoryId, month, newRow.budgeted)
     await dispatch(updateCategoryMonth({ categoryId: newRow.categoryId, month, budgeted: newRow.budgeted }))
 
-    // const monthIndex = availableMonths.indexOf(month)
-    // Fetch all months starting with the existing to get cascaded balance updates
     dispatch(refreshBudget())
-    dispatch(fetchBudgetMonth({ month, budgetId }))
-    dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId, month }))
-    // return Promise.all(availableMonths.slice(monthIndex).map(month => dispatch(fetchBudgetMonth({ month }))))
+    dispatch(refreshBudgetMonth({ month, budgetId }))
+    if (nextMonthExists) {
+      dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId, nextMonth }))
+    }
   }
 
   const budgetTableCell = (props) => {
@@ -401,9 +416,16 @@ export default function BudgetTable(props) {
     )
   }
 
+  const setIsLoading = (active) => {
+    isLoading = active
+  }
+
+  console.log(theme.palette)
+
   return (
     <>
       <MaterialTable
+        isLoading={isLoading}
         style={{
           display: "grid",
           gridTemplateColums: "1fr",
@@ -411,13 +433,67 @@ export default function BudgetTable(props) {
           height: "100vh"
         }}
         components={{
-          Toolbar: props => {
-            return (
+          Toolbar: props => (
+            <Box sx={{
+              backgroundColor: theme.palette.background.default,
+            }}>
               <BudgetTableHeader
+                onMonthNavigate={setIsLoading}
                 openCategoryGroupDialog={openCategoryGroupDialog}
               />
-            )
-          },
+
+              <Divider/>
+
+              <Stack
+                direction="row"
+                alignItems="center"
+                sx={{
+                  backgroundColor: theme.palette.action.hover,
+                }}
+              >
+                <ButtonGroup variant="text" aria-label="outlined button group">
+                  <PopupState
+                    variant="popover"
+                    popupId="popover-category-group"
+                  >
+                    {(popupState) => (
+                      <>
+                        <Button
+                          size="small"
+                          {...bindTrigger(popupState)}
+                        >
+                          <Stack
+                            direction="row"
+                            // justifyContent="space-between"
+                            alignItems="center"
+                            spacing={0.5}
+                            // sx={{
+                            //   px: 2,
+                            //   pb: 1,
+                            // }}
+                          >
+                            <AddCircleIcon style={{
+                              fontSize: theme.typography.subtitle2.fontSize,
+                            }} />
+                            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                              Category Group
+                            </Typography>
+                          </Stack>
+                        </Button>
+                          <CategoryGroupForm
+                          popupState={popupState}
+                          mode={'create'}
+                          order={0}
+                        />
+                      </>
+                    )}
+                  </PopupState>
+                </ButtonGroup>
+              </Stack>
+
+              <Divider />
+            </Box>
+          ),
           Row: (props) => (
             <MTableBodyRow
               {...props}
@@ -489,10 +565,9 @@ export default function BudgetTable(props) {
           paging: false,
           search: false,
           defaultExpanded: true,
-          showTitle: false,
-          // toolbar: false,
           draggable: false,
           // sorting: false,
+          // tableLayout: "fixed",
           headerStyle: {
             position: 'sticky',
             top: 0,

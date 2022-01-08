@@ -28,7 +28,7 @@ export const updateCategoryGroup = createAsyncThunk('categories/updateCategoryGr
 
 const categoryGroupsAdapter = createEntityAdapter()
 
-const categoriesSlice = createSlice({
+const categoryGroupsSlice = createSlice({
   name: 'categoryGroups',
 
   initialState: categoryGroupsAdapter.getInitialState(),
@@ -44,11 +44,11 @@ const categoriesSlice = createSlice({
         categoryGroupsAdapter.addOne(state, payload)
       })
       .addCase(updateCategoryGroup.fulfilled, (state, { payload }) => {
-        categoryGroupsAdapter.updateOne(state, payload)
+        categoryGroupsAdapter.upsertOne(state, payload)
       })
   },
 })
 
 export const categoryGroupsSelectors = categoryGroupsAdapter.getSelectors(state => state.categoryGroups)
 
-export default categoriesSlice.reducer
+export default categoryGroupsSlice.reducer

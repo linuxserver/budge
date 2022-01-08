@@ -7,8 +7,11 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import { selectActiveBudget } from '../redux/slices/Budgets';
+import { useTheme } from '@mui/styles'
 
 export default function BudgetDetails(props) {
+  const theme = useTheme()
+
   const budget = useSelector(selectActiveBudget)
   const month = useSelector(state => state.budgets.currentMonth)
   const budgetMonth = useSelector(state => {
@@ -41,7 +44,13 @@ export default function BudgetDetails(props) {
   ];
 
   return (
-    <Box sx={{p: 2}}>
+    <Box sx={{
+      mt: 2,
+      mr: 1,
+      p: 0.1,
+      borderRadius: 2,
+      backgroundColor: theme.palette.action.hover,
+    }}>
       <h3>
         {(new Date(Date.UTC(...month.split('-')))).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }).toUpperCase()} SUMMARY
       </h3>

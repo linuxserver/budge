@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux"
-import { createCategoryGroup, updateCategoryGroup } from "../redux/slices/Categories";
+import { createCategoryGroup, updateCategoryGroup } from "../redux/slices/CategoryGroups";
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import {
@@ -30,7 +30,7 @@ export default function NewCategoryDialog(props) {
         break
       case 'edit':
         await dispatch(updateCategoryGroup({
-          id: props.categoryGroupId,
+          id: props.categoryId,
           name: name,
           order: props.order,
         }))
@@ -71,7 +71,7 @@ export default function NewCategoryDialog(props) {
           alignItems="center"
           spacing={2}
         >
-          <Button onClick={submit}>{props.mode === 'create' ? 'Add' : 'Edit'}</Button>
+          <Button size="small" onClick={submit}>{props.mode === 'create' ? 'Add' : 'Edit'}</Button>
         </Stack>
       </Box>
     </Popover>

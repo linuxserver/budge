@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit'
 import api from '../../api'
 import { normalize, schema } from 'normalizr'
 
@@ -18,6 +18,16 @@ export const fetchBudgetMonth = createAsyncThunk('budgetMonths/fetchMonth', asyn
   }
 })
 
+export const refreshBudgetMonth = createAsyncThunk('budgetMonths/refreshMonth', async ({ month }, { getState }) => {
+  const store = getState()
+  const { categories, ...budgetMonth } = await api.fetchBudgetMonth(store.budgets.activeBudgetId, month)
+  const normalized = normalize(budgetMonth, budgetMonthEntity)
+  return {
+    month,
+    entities: normalized.entities,
+  }
+})
+
 export const fetchBudgetMonths = createAsyncThunk('budgetMonths/fetchMonths', async ({ month }, { getState }) => {
   const store = getState()
   const budgetMonth = await api.fetchBudgetMonth(store.budgets.activeBudgetId, month)
@@ -30,7 +40,6 @@ export const fetchBudgetMonths = createAsyncThunk('budgetMonths/fetchMonths', as
 
 export const fetchCategoryMonths = createAsyncThunk('budgetMonths/fetchCategoryMonths', async ({ categoryId, month = false }, { getState }) => {
   const store = getState()
-  console.log(categoryId, month)
   const categoryMonths = await api.fetchCategoryMonths(categoryId, month, store.budgets.activeBudgetId)
 
   return {
@@ -74,6 +83,9 @@ const budgetMonthsSlice = createSlice({
       .addCase(fetchBudgetMonth.fulfilled, (state, { payload: { month, entities } }) => {
         budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
       })
+      .addCase(refreshBudgetMonth.fulfilled, (state, { payload: { month, entities } }) => {
+        budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
+      })
       .addCase(fetchBudgetMonths.fulfilled, (state, { payload: { month, entities } }) => {
         budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
       })
@@ -98,7 +110,6 @@ const categoryMonthsSlice = createSlice({
         categoryMonthsAdapter.upsertMany(state, entities.categoryMonths)
       })
       .addCase(fetchCategoryMonths.fulfilled, (state, { payload: { entities } }) => {
-        console.log(entities)
         categoryMonthsAdapter.upsertMany(state, entities.categoryMonths)
       })
       .addCase(updateCategoryMonth.fulfilled, (state, { payload: { entities } }) => {

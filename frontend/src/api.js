@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { FromAPI, ToAPI } from './utils/Currency'
+import { ToAPI } from './utils/Currency'
 
 const axios = Axios.create({
   withCredentials: true
@@ -110,8 +110,27 @@ export default class API {
     return response.data.data
   }
 
+  static async updateTransactions(transactions, budgetId) {
+    const response = await axios.put(`/api/budgets/${budgetId}/transactions`, {
+      transactions: transactions.map(transaction => ToAPI.transformTransaction(transaction)),
+    })
+
+    return response.data.data
+  }
+
   static async deleteTransaction(transactionId, budgetId) {
     const response = await axios.delete(`/api/budgets/${budgetId}/transactions/${transactionId}`)
+
+    return response.data.data
+  }
+
+  static async deleteTransactions(ids, budgetId) {
+    console.log(ids)
+    const response = await axios.delete(`/api/budgets/${budgetId}/transactions`, {
+      data: {
+        ids,
+      }
+    })
 
     return response.data.data
   }

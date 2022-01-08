@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import './App.css';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import Toolbar from '@mui/material/Toolbar';
-import Header from './components/Header'
 import Drawer from './components/Drawer'
 import Budget from './pages/Budget'
 import Account from './pages/Account'
@@ -15,7 +13,8 @@ import {
 import Login from './components/Login'
 import { useDispatch, useSelector } from 'react-redux'
 import AddAccountDialog from './components/AddAccountDialog'
-import { useTheme, ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
 
 const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
 
@@ -23,6 +22,9 @@ export default function App(props) {
   const theme = createTheme({
     palette: {
       mode: 'dark'
+    },
+    typography: {
+      fontFamily: "Lato",
     },
   })
   const colorMode = React.useContext(ColorModeContext);
@@ -36,6 +38,10 @@ export default function App(props) {
    * Redux store block
    */
   const initComplete = useSelector(state => state.users.initComplete)
+
+  const closeNewAccountDialog = () => {
+    setNewAccountDialogOpen(false)
+  }
 
   return (
     <div className="App">
@@ -51,7 +57,7 @@ export default function App(props) {
               {/* <Header /> */}
               <Drawer onAddAccountClick={() => setNewAccountDialogOpen(true)}/>
               <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
-                <AddAccountDialog isOpen={newAccountDialogOpen} close={() => setNewAccountDialogOpen(false)}/>
+                <AddAccountDialog isOpen={newAccountDialogOpen} close={closeNewAccountDialog}/>
                 <Routes>
                   <Route path="/" element={<Budget/>} />
                   <Route path="/accounts/:accountId" element={<Account/>} />

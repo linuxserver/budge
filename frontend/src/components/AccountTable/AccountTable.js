@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import MaterialTable, { MTableBodyRow, MTableEditField } from "@material-table/core";
-import { useDispatch, useSelector, shallowEqual } from 'react-redux'
-import { accountsSelectors, fetchAccounts, createTransaction, deleteTransaction, updateTransaction } from "../../redux/slices/Accounts";
+import MaterialTable, { MTableBody, MTableBodyRow, MTableEditField, MTableToolbar } from "@material-table/core";
+import { useDispatch, useSelector } from 'react-redux'
+import { accountsSelectors, fetchAccounts, createTransaction, deleteTransaction, deleteTransactions, updateTransaction, updateTransactions } from "../../redux/slices/Accounts";
 import { createPayee, fetchPayees, selectPayeesMap } from "../../redux/slices/Payees";
 import { TableIcons } from '../../utils/Table'
 import { formatMonthFromDateString } from "../../utils/Date";
@@ -26,6 +26,21 @@ import _ from 'underscore'
 import { payeesSelectors } from "../../redux/slices/Payees";
 import { createSelector } from "@reduxjs/toolkit";
 import { categoriesSelectors } from "../../redux/slices/Categories";
+import { ExportCsv } from "@material-table/exporters";
+import SaveAltIcon from '@mui/icons-material/SaveAlt';
+import Divider from '@mui/material/Divider';
+import Stack from '@mui/material/Stack'
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import AddCircleIcon from "@mui/icons-material/AddCircle"
+import EditIcon from '@mui/icons-material/Edit';
+import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
 function StatusIconButton(props) {
   const handleClick = (e) => {
@@ -48,6 +63,7 @@ function StatusIconButton(props) {
 
 export default function Account(props) {
   // const whyDidYouRender = true
+  let tableProps = null
 
   const theme = useTheme()
   const dispatch = useDispatch()
@@ -55,6 +71,7 @@ export default function Account(props) {
   const account = useSelector(state => accountsSelectors.selectById(state, props.accountId))
   const accounts = useSelector(accountsSelectors.selectAll)
 
+  const [bulkEnabled, setBulkEnabled] = useState(false)
   const [showReconciled, setShowReconciled] = useState(false)
   const toggleReconciled = () => {
     setShowReconciled(!showReconciled)
@@ -67,14 +84,25 @@ export default function Account(props) {
     (state, accountId, reconciled) => reconciled,
   ], (transactions, reconciled) => {
     if (!showReconciled) {
-      return Object.values(transactions).filter(transaction => transaction.status !== 2).map(trx => FromAPI.transformTransaction(trx))
+      return Object.values(transactions).filter(transaction => transaction.status !== 2).map(trx => {
+        return {
+          ...FromAPI.transformTransaction(trx),
+          ...(trx.categoryId === null && { categoryId: '0' }),
+        }
+      })
     }
 
-    return Object.values(transactions).map(trx => FromAPI.transformTransaction(trx))
+    return Object.values(transactions).map(trx => {
+      return {
+        ...FromAPI.transformTransaction(trx),
+        ...(trx.categoryId === null && { categoryId: '0' }),
+      }
+    })
   })
   const transactions = useSelector(state => selectTransactions(state, props.accountId, showReconciled))
 
   const payeeIds = useSelector(payeesSelectors.selectIds)
+  const categoryIds = useSelector(categoriesSelectors.selectIds)
 
   const selectCategoriesMap = createSelector(categoriesSelectors.selectAll, categories => {
     return categories.reduce(
@@ -86,7 +114,6 @@ export default function Account(props) {
   })
   const categoriesMap = useSelector(selectCategoriesMap)
 
-  // const payeesMap = useSelector(selectPayeesMap)
   const payeesMap = useSelector(selectPayeesMap)
 
   let amountFieldFocused = null
@@ -106,13 +133,34 @@ export default function Account(props) {
       type: "date",
       initialEditValue: new Date(),
       defaultSort: 'desc',
+      width: 1,
       editComponent: props => (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label=""
             value={props.value || null}
             onChange={props.onChange}
-            renderInput={(params) => <TextField variant="standard" {...params} />}
+            InputAdornmentProps={{
+              style: {
+                fontSize: theme.typography.subtitle2.fontSize,
+              },
+            }}
+            renderInput={(params) => {
+              return (
+                <TextField
+                  focus={true}
+                  margin="dense"
+                  variant="standard"
+                  {...params}
+                  InputProps={{
+                    style: {
+                      fontSize: theme.typography.subtitle2.fontSize,
+                    },
+                    ...params.InputProps,
+                  }} // font size of input text
+                />
+              )
+            }}
           />
         </LocalizationProvider>
       ),
@@ -134,7 +182,19 @@ export default function Account(props) {
           }}
           // renderOption={(props, option) => <li {...props}>{option.name}</li>}
           freeSolo
-          renderInput={(params) => <TextField {...params} label="" variant="standard" />}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label=""
+              variant="standard"
+              InputProps={{
+                style: {
+                  fontSize: theme.typography.subtitle2.fontSize,
+                },
+                ...params.InputProps,
+              }}
+            />
+          )}
           value={props.value}
           onInputChange={(e, value) => {
             props.onChange(value)
@@ -144,7 +204,7 @@ export default function Account(props) {
             const updateProps = {}
             if (transferAccount.length === 1 && transferAccount[0].type !== 2) {
               updateProps.categoryId = '0'
-            } else if (props.rowData.categoryId === '0') {
+            } else if (props.rowData.categoryId === 'Category Not Needed') {
               updateProps.categoryId = Object.keys(categoriesMap)[1]
             }
 
@@ -153,7 +213,7 @@ export default function Account(props) {
               payeeId: value,
               ...updateProps,
             }
-
+            console.log(`update props: ${JSON.stringify(updateProps)}`)
             return props.onRowDataChange(newRow)
           }}
           filterOptions={(options, params) => {
@@ -192,17 +252,50 @@ export default function Account(props) {
       field: "categoryId",
       lookup: categoriesMap,
       editComponent: function (props) {
-        const disabled = props.rowData.categoryId === '0'
+        const disabled = props.rowData.categoryId === '0' || props.rowData.categoryId === 'Category Not Needed'
         props.columnDef.lookup = {...categoriesMap}
         if (disabled === false) {
           delete props.columnDef.lookup['0']
         }
 
         return (
-          <MTableEditField
-            { ...props }
-            variant="standard"
+          <Autocomplete
+            {...props}
+            disablePortal
             disabled={disabled}
+            options={categoryIds}
+            getOptionLabel={(option) => {
+              if (categoriesMap[option]) {
+                return categoriesMap[option]
+              }
+
+              return option
+            }}
+            // sx={{ width: 300 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="standard"
+                InputProps={{
+                  style: {
+                    fontSize: theme.typography.subtitle2.fontSize,
+                  },
+                  ...params.InputProps,
+                }}
+              />
+            )}
+            value={props.value}
+            onInputChange={(e, value) => {
+              console.log(`onInputChange value: ${value}`)
+              props.onChange(value)
+            }}
+            onChange={(e, value) => {
+              console.log(`onChange value: ${value}`)
+              return props.onRowDataChange({
+                ...props.rowData,
+                categoryId: value,
+              })
+            }}
           />
         )
       },
@@ -255,6 +348,12 @@ export default function Account(props) {
           />
         )
       },
+      customExport: rowData => {
+        if (isZero(rowData.outflow)) {
+          return ''
+        }
+        return intlFormat(rowData.outflow)
+      },
     },
     {
       title: "Inflow",
@@ -288,10 +387,17 @@ export default function Account(props) {
           />
         )
       },
+      customExport: (rowData) => {
+        if (isZero(rowData.inflow)) {
+          return ''
+        }
+        return intlFormat(rowData.inflow)
+      },
     },
     {
-      title: "Status",
+      title: "",
       field: "status",
+      width: "1px",
       editComponent: props => (<></>), // Doing this so that the button isn't available to click when in edit mode
       render: rowData => {
         let statusIcon = <></>
@@ -321,8 +427,23 @@ export default function Account(props) {
           </Tooltip>
         )
       },
+      customExport: (rowData) => {
+        switch(rowData.status) {
+          case 0:
+            return 'Pending'
+          case 1:
+            return 'Cleared'
+          case 2:
+            return 'Reconciled'
+        }
+      },
     },
-  ]
+  ].map(col => {
+    // col.cellStyle = {
+    //   whiteSpace: 'nowrap'
+    // }
+    return col
+  })
 
   const createNewPayee = async (name) => {
     name = name.replace(/^New: /, '')
@@ -363,6 +484,7 @@ export default function Account(props) {
     await dispatch(fetchBudgetMonth({ month: formatMonthFromDateString(newRow.date) }))
     dispatch(refreshBudget())
     dispatch(fetchAvailableMonths())
+    dispatch(fetchAccounts())
 
     if (newRow.categoryId && newRow.categoryId !== '0') {
       dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId }))
@@ -373,7 +495,6 @@ export default function Account(props) {
   }
 
   const setTransactionStatus = (rowData) => {
-    console.log(rowData)
     if (rowData.status === 2) {
       // already reconciled
       return
@@ -400,6 +521,12 @@ export default function Account(props) {
       } else {
         newRow.payeeId = payee
       }
+    }
+
+    if (!categoriesMap[newRow.categoryId]) {
+      // @TODO: Fix : Because of the 'onInputChange' autocomplete, the edited value gets subbed out for the 'text' value. Make sure this doesn't truly already exist.
+      const category = Object.keys(categoriesMap).find(key => categoriesMap[key] === newRow.categoryId)
+      newRow.categoryId = category
     }
 
     const inflow = dinero(newRow.inflow)
@@ -442,7 +569,11 @@ export default function Account(props) {
     }
 
     dispatch(refreshBudget())
-    dispatch(fetchAvailableMonths())
+    dispatch(fetchAccounts())
+
+    if (oldData.date !== newRow.date) {
+      dispatch(fetchAvailableMonths())
+    }
   }
 
   const onTransactionDelete = async (transaction) => {
@@ -456,6 +587,131 @@ export default function Account(props) {
     dispatch(refreshBudget())
   }
 
+  const getSelectedRows = () => {
+    return tableProps.renderData.filter(row => row.tableData.checked)
+  }
+
+  const afterBulkAction = async (transactions) => {
+    const months = new Set(transactions.map(transaction => formatMonthFromDateString(transaction.date)))
+    const categoryIds = new Set(transactions.map(transaction => transaction.categoryId))
+
+    Promise.all([...months].map(month => dispatch(fetchBudgetMonth({ month }))))
+    Promise.all([...categoryIds].map(categoryId => {
+      if (!categoryId || categoryId === '0') {
+        return
+      }
+      return dispatch(fetchCategoryMonths({ categoryId }))
+    }))
+
+    dispatch(fetchAccounts())
+    dispatch(refreshBudget())
+  }
+
+  const deleteSelected = async () => {
+    const transactions = getSelectedRows()
+    await dispatch(deleteTransactions({ accountId: account.id, transactions }))
+
+    afterBulkAction(transactions)
+  }
+
+  const markSelectedTransactionsCleared = async () => {
+    await bulkEditTransactions(getSelectedRows().map(row => ({
+      ...row,
+      status: 1,
+      amount: toSnapshot(row.amount),
+      inflow: toSnapshot(row.inflow),
+      outflow: toSnapshot(row.outflow),
+    })))
+  }
+
+  const markSelectedTransactionsUncleared = async () => {
+    await bulkEditTransactions(getSelectedRows().map(row => ({
+      ...row,
+      status: 0,
+      amount: toSnapshot(row.amount),
+      inflow: toSnapshot(row.inflow),
+      outflow: toSnapshot(row.outflow),
+    })))
+  }
+
+  const bulkEditTransactions = async (transactions) => {
+    transactions = transactions.map(transaction => {
+      const inflow = dinero(transaction.inflow)
+      const outflow = dinero(transaction.outflow)
+      let amount = null
+      if (isZero(inflow)) {
+        amount = multiply(outflow, -1)
+      } else {
+        amount = inflow
+      }
+
+      return {
+        id: transaction.id,
+        accountId: props.accountId,
+        date: transaction.date,
+        memo: transaction.memo,
+        payeeId: transaction.payeeId,
+        categoryId: transaction.categoryId === '0' ? null : transaction.categoryId,
+        amount,
+        status: transaction.status,
+      }
+    })
+
+    await dispatch(updateTransactions({
+      accountId: account.id,
+      transactions,
+    }))
+
+    afterBulkAction(transactions)
+  }
+
+  /**
+   * This was pulled (and modified) from m-table-body.js. The formatting for the default 'export' action
+   * didn't match other actions, so had to resort to creating this myself.
+   */
+  const getTableData = () => {
+    const cols = columns
+      .filter(
+        (columnDef) =>
+          (!columnDef.hidden || columnDef.export === true) &&
+          columnDef.field &&
+          columnDef.export !== false
+      )
+      .sort((a, b) =>
+        a.tableData.columnOrder > b.tableData.columnOrder ? 1 : -1
+      );
+    const data = (props.exportAllData ? transactions : tableProps.renderData).map(
+      (rowData) =>
+        cols.map((columnDef) => {
+          /*
+          About: column.customExport
+          This bit of code checks if prop customExport in column is a function, and if it is then it
+          uses that function to transform the data, this is useful in cases where a column contains
+          complex objects or array and it needs to be handled before it's passed to the exporter
+          to avoid [object Object] output (e.g. to flatten data).
+          Please note that it is also possible to transform data within under exportMenu
+          using a custom function (exportMenu.exportFunc) for each exporter.
+          */
+          if (typeof columnDef.customExport === 'function') {
+            return columnDef.customExport(rowData);
+          }
+
+          return tableProps.getFieldValue(rowData, columnDef);
+        })
+    );
+
+    return [cols, data];
+  }
+
+  const exportData = () => {
+    const [cols, data] = getTableData()
+    ExportCsv(cols, data, "download")
+  }
+
+  const onSelectionChange = (data) => {
+    // setBulkEnabled(data.length > 0)
+  }
+
   return (
     <div style={{ maxWidth: '100%' }}>
       <MaterialTable
@@ -467,7 +723,8 @@ export default function Account(props) {
         }}
         title={(
           <AccountTableHeader
-            account={FromAPI.transformAccount(account)}
+            accountId={account.id}
+            name={account.name}
           />
         )}
         options={{
@@ -475,32 +732,183 @@ export default function Account(props) {
           draggable: false,
           pageSize: 20,
           addRowPosition: 'first',
+          selection: true,
+          actionsColumnIndex: 99,
           rowStyle: rowData => ({
             fontSize: theme.typography.subtitle2.fontSize,
           }),
           headerStyle: {
-            position: 'sticky',
-            top: 0,
             textTransform: 'uppercase',
             fontSize: theme.typography.caption.fontSize,
           },
+          headerSelectionProps: {
+            size: "small",
+          },
+        }}
+        onSelectionChange={onSelectionChange}
+        localization={{
+          header : {
+            // actions: '',
+          },
+          body: {
+            emptyDataSourceMessage: 'No transactions to display',
+          },
         }}
         components={{
+          // Actions: props => {
+          //   return <></>
+          // },
+          // Header: props => (
+          //   <MTableHeader
+          //     {...props}
+          //   />
+          // ),
+          Body: props => {
+            tableProps = props
+            return <MTableBody {...props} />
+          },
+          Toolbar: (props) => (
+            <Box sx={{
+              backgroundColor: theme.palette.background.default,
+            }}>
+              <MTableToolbar
+                {...{...props, actions: []}}
+                showTextRowsSelected={false}
+              />
+              <Divider/>
+
+              <Stack
+                direction="row"
+                alignItems="center"
+                sx={{
+                  backgroundColor: theme.palette.action.hover,
+                }}
+              >
+                <ButtonGroup variant="text" aria-label="outlined button group">
+                <Button
+                    size="small"
+                    onClick={props.actions[0].onClick}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={0.5}
+                    >
+                      <AddCircleIcon style={{
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      }} />
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Add Transaction
+                      </Typography>
+                    </Stack>
+                  </Button>
+
+                  <Button
+                    size="small"
+                    onClick={exportData}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={0.5}
+                    >
+                      <SaveAltIcon style={{
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      }} />
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Export
+                      </Typography>
+                    </Stack>
+                  </Button>
+
+                  <PopupState variant="popover" popupId="demo-popup-menu">
+                    {(popupState) => (
+                      <>
+                        <Button
+                          size="small"
+                          onClick={toggleReconciled}
+                          {...bindTrigger(popupState)}
+                          // disabled={!bulkEnabled}
+                        >
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={0.5}
+                          >
+                            <EditIcon style={{
+                              fontSize: theme.typography.subtitle2.fontSize,
+                            }} />
+                            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                              Edit
+                            </Typography>
+                          </Stack>
+                        </Button>
+                        <Menu {...bindMenu(popupState)}>
+                          <MenuItem
+                            // disabled={selectedRows.length === 0}
+                            onClick={markSelectedTransactionsCleared}
+                          >Mark Cleared</MenuItem>
+
+                          <MenuItem
+                            // disabled={selectedRows.length === 0}
+                            onClick={markSelectedTransactionsUncleared}
+                          >Mark Uncleared</MenuItem>
+
+                          <MenuItem
+                            // disabled={selectedRows.length === 0}
+                            onClick={deleteSelected}
+                          >Delete Transactions</MenuItem>
+                        </Menu>
+                      </>
+                    )}
+                  </PopupState>
+
+                  <Button
+                    size="small"
+                    onClick={toggleReconciled}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={0.5}
+                    >
+                      {
+                        showReconciled && (
+                          <CheckBoxIcon style={{
+                            fontSize: theme.typography.subtitle2.fontSize,
+                          }} />
+                        )
+                      }
+                      {
+                        !showReconciled && (
+                          <CheckBoxOutlineBlankIcon style={{
+                            fontSize: theme.typography.subtitle2.fontSize,
+                          }} />
+                        )
+                      }
+
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Reconciled
+                      </Typography>
+                    </Stack>
+                  </Button>
+                </ButtonGroup>
+              </Stack>
+
+              <Divider />
+            </Box>
+          ),
           Row: props => (
             <MTableBodyRow
               {...props}
               onRowClick={(e) => {
+                console.log(e)
                 // console.log(props.actions)
-                props.actions[2]().onClick(e, props.data); // <---- trigger edit event
+                props.actions[1]().onClick(e, props.data); // <---- trigger edit event
               }}
             />
           )
         }}
-        // localization={{
-        //   header : {
-        //      actions: ''
-        //   }
-        // }}
         icons={TableIcons}
         columns={columns}
         data={transactions}
@@ -516,22 +924,19 @@ export default function Account(props) {
           },
         }}
         actions={[
-          {
-            icon: () => (
-              <LockIcon
-                style={{
-                  color: showReconciled ? theme.palette.text.primary : theme.palette.text.disabled,
-                }}
-              />
-            ),
-            tooltip: 'Show reconciled transactions',
-            isFreeAction: true,
-            onClick: toggleReconciled
-          },
           // {
-          //   icon: MoreVertIcon,
-          //   tooltip: "More",
-          //   onClick: openRowActions,
+          //   icon: () => (<></>),
+          //   tooltip: 'Edit selected transactions',
+          //   // isFreeAction: true,
+          //   onClick: onSelectedAction,
+          // },
+          // {
+          //   icon: () => (
+          //     <SaveAltIcon />
+          //   ),
+          //   tooltip: 'Export filtered transactions',
+          //   isFreeAction: true,
+          //   onClick: exportData
           // },
         ]}
       />

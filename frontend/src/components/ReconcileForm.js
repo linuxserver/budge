@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux"
-import { createCategory, updateCategory } from "../redux/slices/Categories";
+import { useDispatch } from "react-redux"
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import Popover from '@mui/material/Popover'
 import Box from '@mui/material/Box';
 import {
@@ -67,8 +64,8 @@ export default function ReconcileForm(props) {
               {intlFormat(props.balance)}?
             </Typography>
             <ButtonGroup variant="contained" aria-label="outlined primary button group">
-              <Button onClick={submit}>Yes</Button>
-              <Button onClick={() => setBalanceCorrectAnswer(false)}>No</Button>
+              <Button size="small" onClick={submit}>Yes</Button>
+              <Button size="small" onClick={() => setBalanceCorrectAnswer(false)}>No</Button>
             </ButtonGroup>
           </Stack>
         )

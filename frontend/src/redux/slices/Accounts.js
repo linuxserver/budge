@@ -50,6 +50,21 @@ export const updateTransaction = createAsyncThunk('transactions/updateTransactio
   }
 })
 
+export const updateTransactions = createAsyncThunk('transactions/updateTransactions', async ({ accountId, transactions }, { getState }) => {
+  const state = getState()
+  const response = await api.updateTransactions(transactions, state.budgets.activeBudgetId)
+
+  console.log('returned')
+  console.log({
+    accountId,
+    transactions: response,
+  })
+  return {
+    accountId,
+    transactions: response,
+  }
+})
+
 export const deleteTransaction = createAsyncThunk('transactions/deleteTransaction', async ({ transaction }, { getState }) => {
   const state = getState()
   const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
@@ -57,6 +72,17 @@ export const deleteTransaction = createAsyncThunk('transactions/deleteTransactio
   return {
     transactionId: transaction.id,
     accountId: transaction.accountId,
+  }
+})
+
+export const deleteTransactions = createAsyncThunk('transactions/deleteTransactions', async ({ transactions, accountId }, { getState }) => {
+  const state = getState()
+  const transactionIds = transactions.map(transaction => transaction.id)
+  await api.deleteTransactions(transactionIds, state.budgets.activeBudgetId)
+
+  return {
+    transactionIds,
+    accountId,
   }
 })
 
@@ -89,9 +115,9 @@ const accountsSlice = createSlice({
         })
       })
       .addCase(editAccount.fulfilled, (state, { payload }) => {
-        accountsAdapter.updateOne(state, {
+        accountsAdapter.upsertOne(state, {
+          ...state.entities[payload.id],
           ...payload,
-          transactions: state.accounts.entities[payload.id].transactions,
         })
       })
       .addCase(fetchAccounts.fulfilled, (state, { payload }) => {
@@ -99,7 +125,7 @@ const accountsSlice = createSlice({
           ...account,
           transactions: state.entities[account.id] ? state.entities[account.id].transactions : transactionsAdapter.getInitialState(),
         }))
-        accountsAdapter.setAll(state, accounts)
+        accountsAdapter.upsertMany(state, accounts)
       })
       .addCase(fetchAccountTransactions.fulfilled, (state, { payload: { accountId, transactions }}) => {
         const accountEntry = state.entities[accountId];
@@ -119,10 +145,22 @@ const accountsSlice = createSlice({
           transactionsAdapter.setOne(accountEntry.transactions, transaction);
         }
       })
+      .addCase(updateTransactions.fulfilled, (state, { payload: { accountId, transactions } }) => {
+        const accountEntry = state.entities[accountId];
+        if (accountEntry) {
+          transactionsAdapter.upsertMany(accountEntry.transactions, transactions);
+        }
+      })
       .addCase(deleteTransaction.fulfilled, (state, { payload: { transactionId, accountId } }) => {
         const accountEntry = state.entities[accountId];
         if (accountEntry) {
           transactionsAdapter.removeOne(accountEntry.transactions, transactionId)
+        }
+      })
+      .addCase(deleteTransactions.fulfilled, (state, { payload: { transactionIds, accountId } }) => {
+        const accountEntry = state.entities[accountId];
+        if (accountEntry) {
+          transactionsAdapter.removeMany(accountEntry.transactions, transactionIds)
         }
       })
   },
