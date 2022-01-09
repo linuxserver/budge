@@ -35,6 +35,17 @@ import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { styled } from '@mui/material/styles'
+
+const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
+  backgroundColor: theme.palette.action.hover,
+  minHeight: '0 !important',
+  padding: '0 !important',
+  margin: '0',
+  '& .MuiInputBase-input': {
+    padding: '0 !important',
+  },
+}))
 
 export default function BudgetTable(props) {
   let isLoading = false
@@ -425,7 +436,48 @@ export default function BudgetTable(props) {
           gridTemplateRows: 'auto 1fr auto',
           height: '100vh',
         }}
-        title={<BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />}
+        title={
+          <Stack
+            direction="row"
+            alignItems="center"
+            sx={
+              {
+                // backgroundColor: theme.palette.action.hover,
+              }
+            }
+          >
+            <ButtonGroup variant="text" aria-label="outlined button group">
+              <PopupState variant="popover" popupId="popover-category-group">
+                {popupState => (
+                  <>
+                    <Button size="small" {...bindTrigger(popupState)}>
+                      <Stack
+                        direction="row"
+                        // justifyContent="space-between"
+                        alignItems="center"
+                        spacing={0.5}
+                        // sx={{
+                        //   px: 2,
+                        //   pb: 1,
+                        // }}
+                      >
+                        <AddCircleIcon
+                          style={{
+                            fontSize: theme.typography.subtitle2.fontSize,
+                          }}
+                        />
+                        <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                          Category Group
+                        </Typography>
+                      </Stack>
+                    </Button>
+                    <CategoryGroupForm popupState={popupState} mode={'create'} order={0} />
+                  </>
+                )}
+              </PopupState>
+            </ButtonGroup>
+          </Stack>
+        }
         components={{
           Toolbar: props => (
             <Box
@@ -433,56 +485,20 @@ export default function BudgetTable(props) {
                 backgroundColor: theme.palette.background.default,
               }}
             >
-              <MTableToolbar
+              <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
+
+              <Divider />
+
+              <StyledMTableToolbar
                 {...props}
                 localization={{
                   searchPlaceholder: 'Filter categories',
                 }}
-                classes={{
-                  title: 'budget-table-title',
+                styles={{
+                  searchField: {},
                 }}
+                searchFieldVariant="outlined"
               />
-
-              <Divider />
-
-              <Stack
-                direction="row"
-                alignItems="center"
-                sx={{
-                  backgroundColor: theme.palette.action.hover,
-                }}
-              >
-                <ButtonGroup variant="text" aria-label="outlined button group">
-                  <PopupState variant="popover" popupId="popover-category-group">
-                    {popupState => (
-                      <>
-                        <Button size="small" {...bindTrigger(popupState)}>
-                          <Stack
-                            direction="row"
-                            // justifyContent="space-between"
-                            alignItems="center"
-                            spacing={0.5}
-                            // sx={{
-                            //   px: 2,
-                            //   pb: 1,
-                            // }}
-                          >
-                            <AddCircleIcon
-                              style={{
-                                fontSize: theme.typography.subtitle2.fontSize,
-                              }}
-                            />
-                            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                              Category Group
-                            </Typography>
-                          </Stack>
-                        </Button>
-                        <CategoryGroupForm popupState={popupState} mode={'create'} order={0} />
-                      </>
-                    )}
-                  </PopupState>
-                </ButtonGroup>
-              </Stack>
 
               <Divider />
             </Box>

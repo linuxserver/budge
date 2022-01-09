@@ -66,7 +66,7 @@ export default function BudgetTableHeader(props) {
         // backgroundColor: theme.palette.background.default
       }}
     >
-      <Stack direction="row" justifyContent="space-around" alignItems="center" spacing={2} sx={{ p: 2 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ p: 2 }}>
         <div>
           <BudgetMonthPicker
             popupState={monthPickerPopupState}
@@ -143,7 +143,7 @@ export default function BudgetTableHeader(props) {
             </Typography>
             <Typography
               style={{
-                fontSize: theme.typography.h6.fontSize,
+                fontSize: theme.typography.h5.fontSize,
                 fontWeight: 'bold',
                 color: theme.palette.background.default,
               }}

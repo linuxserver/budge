@@ -49,6 +49,17 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
+import { styled } from '@mui/material/styles'
+
+const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
+  backgroundColor: theme.palette.action.hover,
+  minHeight: '0 !important',
+  padding: '0 !important',
+  margin: '0',
+  '& .MuiInputBase-input': {
+    padding: '0 !important',
+  },
+}))
 
 function StatusIconButton(props) {
   const handleClick = e => {
@@ -741,7 +752,7 @@ export default function Account(props) {
 
   const exportData = () => {
     const [cols, data] = getTableData()
-    ExportCsv(cols, data, 'download')
+    ExportCsv(cols, data, `${account.name} Transactions`)
   }
 
   const onSelectionChange = data => {
@@ -757,7 +768,114 @@ export default function Account(props) {
           gridTemplateRows: 'auto 1fr auto',
           height: '100vh',
         }}
-        title={<AccountTableHeader accountId={account.id} name={account.name} />}
+        title={
+          <Stack
+            direction="row"
+            alignItems="center"
+            sx={
+              {
+                // backgroundColor: theme.palette.action.hover,
+              }
+            }
+          >
+            <ButtonGroup variant="text" aria-label="outlined button group">
+              <Button size="small">
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <AddCircleIcon
+                    style={{
+                      fontSize: theme.typography.subtitle2.fontSize,
+                    }}
+                  />
+                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                    Add Transaction
+                  </Typography>
+                </Stack>
+              </Button>
+
+              <Button size="small" onClick={exportData}>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <SaveAltIcon
+                    style={{
+                      fontSize: theme.typography.subtitle2.fontSize,
+                    }}
+                  />
+                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                    Export
+                  </Typography>
+                </Stack>
+              </Button>
+
+              <PopupState variant="popover" popupId="demo-popup-menu">
+                {popupState => (
+                  <>
+                    <Button
+                      size="small"
+                      onClick={toggleReconciled}
+                      {...bindTrigger(popupState)}
+                      // disabled={!bulkEnabled}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <EditIcon
+                          style={{
+                            fontSize: theme.typography.subtitle2.fontSize,
+                          }}
+                        />
+                        <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                          Edit
+                        </Typography>
+                      </Stack>
+                    </Button>
+                    <Menu {...bindMenu(popupState)}>
+                      <MenuItem
+                        // disabled={selectedRows.length === 0}
+                        onClick={markSelectedTransactionsCleared}
+                      >
+                        Mark Cleared
+                      </MenuItem>
+
+                      <MenuItem
+                        // disabled={selectedRows.length === 0}
+                        onClick={markSelectedTransactionsUncleared}
+                      >
+                        Mark Uncleared
+                      </MenuItem>
+
+                      <MenuItem
+                        // disabled={selectedRows.length === 0}
+                        onClick={deleteSelected}
+                      >
+                        Delete Transactions
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
+              </PopupState>
+
+              <Button size="small" onClick={toggleReconciled}>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  {showReconciled && (
+                    <CheckBoxIcon
+                      style={{
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      }}
+                    />
+                  )}
+                  {!showReconciled && (
+                    <CheckBoxOutlineBlankIcon
+                      style={{
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      }}
+                    />
+                  )}
+
+                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                    Reconciled
+                  </Typography>
+                </Stack>
+              </Button>
+            </ButtonGroup>
+          </Stack>
+        }
         options={{
           padding: 'dense',
           draggable: false,
@@ -803,113 +921,18 @@ export default function Account(props) {
                 backgroundColor: theme.palette.background.default,
               }}
             >
-              <MTableToolbar {...{ ...props, actions: [] }} showTextRowsSelected={false} />
+              <AccountTableHeader accountId={account.id} name={account.name} />
+
               <Divider />
 
-              <Stack
-                direction="row"
-                alignItems="center"
-                sx={{
-                  backgroundColor: theme.palette.action.hover,
+              <StyledMTableToolbar
+                {...{ ...props, actions: [] }}
+                showTextRowsSelected={false}
+                localization={{
+                  searchPlaceholder: 'Filter transactions',
                 }}
-              >
-                <ButtonGroup variant="text" aria-label="outlined button group">
-                  <Button size="small" onClick={props.actions[0].onClick}>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <AddCircleIcon
-                        style={{
-                          fontSize: theme.typography.subtitle2.fontSize,
-                        }}
-                      />
-                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                        Add Transaction
-                      </Typography>
-                    </Stack>
-                  </Button>
-
-                  <Button size="small" onClick={exportData}>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <SaveAltIcon
-                        style={{
-                          fontSize: theme.typography.subtitle2.fontSize,
-                        }}
-                      />
-                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                        Export
-                      </Typography>
-                    </Stack>
-                  </Button>
-
-                  <PopupState variant="popover" popupId="demo-popup-menu">
-                    {popupState => (
-                      <>
-                        <Button
-                          size="small"
-                          onClick={toggleReconciled}
-                          {...bindTrigger(popupState)}
-                          // disabled={!bulkEnabled}
-                        >
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <EditIcon
-                              style={{
-                                fontSize: theme.typography.subtitle2.fontSize,
-                              }}
-                            />
-                            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                              Edit
-                            </Typography>
-                          </Stack>
-                        </Button>
-                        <Menu {...bindMenu(popupState)}>
-                          <MenuItem
-                            // disabled={selectedRows.length === 0}
-                            onClick={markSelectedTransactionsCleared}
-                          >
-                            Mark Cleared
-                          </MenuItem>
-
-                          <MenuItem
-                            // disabled={selectedRows.length === 0}
-                            onClick={markSelectedTransactionsUncleared}
-                          >
-                            Mark Uncleared
-                          </MenuItem>
-
-                          <MenuItem
-                            // disabled={selectedRows.length === 0}
-                            onClick={deleteSelected}
-                          >
-                            Delete Transactions
-                          </MenuItem>
-                        </Menu>
-                      </>
-                    )}
-                  </PopupState>
-
-                  <Button size="small" onClick={toggleReconciled}>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      {showReconciled && (
-                        <CheckBoxIcon
-                          style={{
-                            fontSize: theme.typography.subtitle2.fontSize,
-                          }}
-                        />
-                      )}
-                      {!showReconciled && (
-                        <CheckBoxOutlineBlankIcon
-                          style={{
-                            fontSize: theme.typography.subtitle2.fontSize,
-                          }}
-                        />
-                      )}
-
-                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                        Reconciled
-                      </Typography>
-                    </Stack>
-                  </Button>
-                </ButtonGroup>
-              </Stack>
+                searchFieldVariant="outlined"
+              />
 
               <Divider />
             </Box>
