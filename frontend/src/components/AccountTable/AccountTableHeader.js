@@ -91,6 +91,7 @@ export default function BudgetTableHeader({ accountId, name }) {
                   color: getBalanceColor(account.cleared, theme),
                   fontWeight: 'bold',
                 }}
+                variant="h6"
               >
                 {intlFormat(account.cleared)}
               </Typography>
@@ -119,6 +120,7 @@ export default function BudgetTableHeader({ accountId, name }) {
                   color: getBalanceColor(account.uncleared, theme),
                   fontWeight: 'bold',
                 }}
+                variant="h6"
               >
                 {intlFormat(account.uncleared)}
               </Typography>
@@ -147,6 +149,7 @@ export default function BudgetTableHeader({ accountId, name }) {
                   color: getBalanceColor(account.balance, theme),
                   fontWeight: 'bold',
                 }}
+                variant="h6"
               >
                 {intlFormat(account.balance)}
               </Typography>

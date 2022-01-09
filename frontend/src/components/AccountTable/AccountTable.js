@@ -759,6 +759,10 @@ export default function Account(props) {
     // setBulkEnabled(data.length > 0)
   }
 
+  const addTransactionClick = () => {
+    tableProps.actions[0].onClick()
+  }
+
   return (
     <div style={{ maxWidth: '100%' }}>
       <MaterialTable
@@ -779,7 +783,7 @@ export default function Account(props) {
             }
           >
             <ButtonGroup variant="text" aria-label="outlined button group">
-              <Button size="small">
+              <Button size="small" onClick={addTransactionClick}>
                 <Stack direction="row" alignItems="center" spacing={0.5}>
                   <AddCircleIcon
                     style={{
