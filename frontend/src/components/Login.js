@@ -112,7 +112,7 @@ export default function Login(props) {
     )
     // Create initial budget
     const newBudget = (await dispatch(createBudget({ name: 'My Budget' }))).payload
-    dispatch(setActiveBudget(newBudget.id))
+    await dispatch(setActiveBudget(newBudget.id))
 
     // Create initial items such as category group, categories, etc.
     const newCategoryGroup = (
