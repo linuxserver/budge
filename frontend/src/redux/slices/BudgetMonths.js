@@ -81,7 +81,7 @@ export const refreshBudgetCategory = createAsyncThunk(
 
     const normalizedCategoryMonths = normalize(categoryMonths, [categoryMonthEntity])
     const normalizedBudgetMonth = normalize(budgetMonth, budgetMonthEntity)
-    console.log('here')
+
     return {
       month,
       categoryId,

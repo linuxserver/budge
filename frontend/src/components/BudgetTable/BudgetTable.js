@@ -82,7 +82,6 @@ export default function BudgetTable(props) {
     }
 
     isLoading = false
-    // return budgetMonth
     return FromAPI.transformBudgetMonth(budgetMonth)
   })
   const selectCategoryMonths = createDeepEqualSelector([state => state.categoryMonths.entities], categoryMonths => {
@@ -102,7 +101,10 @@ export default function BudgetTable(props) {
     [categoryGroupsSelectors.selectAll, categoriesSelectors.selectAll, selectCategoryMonths],
     (groups, categories, categoryMonths) => {
       let retval = []
-      const underfunded = isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)
+      const underfunded = !budgetMonth.id
+        ? false
+        : isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)
+
       groups.map(group => {
         if (group.internal) {
           return

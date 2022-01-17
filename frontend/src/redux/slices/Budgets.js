@@ -26,8 +26,6 @@ export const setActiveBudget = createAsyncThunk('budgets/setActiveBudget', async
 })
 
 export const setCurrentMonth = createAsyncThunk('budgets/setCurrentMonth', async ({ month }, { dispatch }) => {
-  console.log('here')
-  console.log(month)
   dispatch(fetchBudgetMonth({ month }))
   return month
 })
