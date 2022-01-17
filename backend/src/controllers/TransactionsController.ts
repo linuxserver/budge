@@ -196,7 +196,10 @@ export class TransactionsController extends Controller {
           }),
         )
 
-        await transactionalEntityManager.getRepository(Transaction).save(transactions)
+        for (const transaction of transactions) {
+          await transactionalEntityManager.getRepository(Transaction).save(transaction)
+        }
+        // await transactionalEntityManager.getRepository(Transaction).save(transactions)
 
         return transactions
       })

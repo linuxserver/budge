@@ -272,7 +272,10 @@ export class BudgetsController extends Controller {
       }
     }
 
-    let budgetMonth = await getRepository(BudgetMonth).findOne({ budgetId, month })
+    let budgetMonth = await getRepository(BudgetMonth).findOne({
+      where: { budgetId, month },
+      relations: ['categories'],
+    })
     if (!budgetMonth) {
       // If we don't have a budget month, then no transactions were created against that month,
       // so send down an 'empty' budget month for the UI to work with
