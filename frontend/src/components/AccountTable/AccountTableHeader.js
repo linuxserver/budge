@@ -43,14 +43,20 @@ export default function BudgetTableHeader({ accountId, name }) {
     dispatch(editAccount({ id: account.id, name: accountName }))
   }
 
+  console.log(theme)
+
   return (
-    <Box>
+    <Box sx={{ backgroundColor: theme.palette.background.header }} p={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ px: 2 }}>
         <Stack direction="row" justifyContent="flex-start" alignItems="center" spacing={2}>
           <div>
-            <h3 style={{ cursor: 'pointer', display: 'inline-block' }} {...bindTrigger(editAccountPopupState)}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 'bold', color: 'white', cursor: 'pointer', display: 'inline-block' }}
+              {...bindTrigger(editAccountPopupState)}
+            >
               {account.name}
-            </h3>
+            </Typography>
             <Popover
               {...bindPopover(editAccountPopupState)}
               anchorOrigin={{
@@ -99,6 +105,7 @@ export default function BudgetTableHeader({ accountId, name }) {
                 variant="caption"
                 sx={{
                   fontWeight: 'bold',
+                  color: theme.palette.grey[200],
                 }}
               >
                 Cleared
@@ -106,7 +113,14 @@ export default function BudgetTableHeader({ accountId, name }) {
             </Stack>
           </div>
 
-          <div>+</div>
+          <Box
+            sx={{
+              ...theme.typography.h6,
+              color: theme.palette.grey[200],
+            }}
+          >
+            +
+          </Box>
 
           <div>
             <Stack
@@ -128,6 +142,7 @@ export default function BudgetTableHeader({ accountId, name }) {
                 variant="caption"
                 sx={{
                   fontWeight: 'bold',
+                  color: theme.palette.grey[200],
                 }}
               >
                 Uncleared
@@ -135,7 +150,14 @@ export default function BudgetTableHeader({ accountId, name }) {
             </Stack>
           </div>
 
-          <div>=</div>
+          <Box
+            sx={{
+              ...theme.typography.h6,
+              color: theme.palette.grey[200],
+            }}
+          >
+            =
+          </Box>
 
           <div>
             <Stack
@@ -157,6 +179,7 @@ export default function BudgetTableHeader({ accountId, name }) {
                 variant="caption"
                 sx={{
                   fontWeight: 'bold',
+                  color: theme.palette.grey[200],
                 }}
               >
                 Working Balance
@@ -166,7 +189,7 @@ export default function BudgetTableHeader({ accountId, name }) {
         </Stack>
 
         <div>
-          <Button {...bindTrigger(reconcilePopupState)} variant="outlined">
+          <Button {...bindTrigger(reconcilePopupState)} color="secondary" variant="outlined">
             <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
               Reconcile
             </Typography>

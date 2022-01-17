@@ -60,7 +60,7 @@ export default function NewCategoryDialog(props) {
       }}
       BackdropProps={{ onClick: () => props.popupState.close() }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ px: 2, py: 1 }}>
         <TextField
           autoFocus
           fullWidth
@@ -95,7 +95,7 @@ export default function NewCategoryDialog(props) {
             )
           })}
         </Select>
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0}>
           <Button size="small" onClick={submit}>
             {props.mode === 'create' ? 'Add' : 'Edit'}
           </Button>

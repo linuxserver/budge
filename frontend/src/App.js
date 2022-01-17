@@ -16,10 +16,53 @@ const ColorModeContext = React.createContext({ toggleColorMode: () => {} })
 export default function App(props) {
   const theme = createTheme({
     palette: {
-      mode: 'dark',
+      mode: 'light',
+      background: {
+        drawer: '#333333',
+        header: '#505a5e',
+      },
+      primary: {
+        main: '#333333',
+      },
+      secondary: {
+        main: '#ffffff',
+      },
+      success: {
+        main: '#32ae7b',
+      },
+      error: {
+        main: '#d66466',
+      },
+      warning: {
+        main: '#FAEF6E',
+      },
+      text: {
+        primary: '#222222',
+      },
+    },
+    components: {
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: '#333333',
+            color: 'white',
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            borderColor: 'white',
+          },
+        },
+      },
     },
     typography: {
-      fontFamily: 'Lato',
+      // fontFamily: 'Lato',
+      fontFamily: 'Nunito',
+      // fontFamily: 'Varela Round',
+      // fontFamily: 'IBM Plex Sans Condensed',
+      // fontFamily: 'Roboto',
     },
   })
   const colorMode = React.useContext(ColorModeContext)

@@ -53,7 +53,7 @@ export default function NewCategoryDialog(props) {
       }}
       BackdropProps={{ onClick: () => props.popupState.close() }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ px: 2, py: 1 }}>
         <TextField
           autoFocus
           fullWidth

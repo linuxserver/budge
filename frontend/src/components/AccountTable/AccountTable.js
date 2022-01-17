@@ -1,5 +1,11 @@
 import React, { useState } from 'react'
-import MaterialTable, { MTableBody, MTableBodyRow, MTableEditField, MTableToolbar } from '@material-table/core'
+import MaterialTable, {
+  MTableBody,
+  MTableBodyRow,
+  MTableEditField,
+  MTableToolbar,
+  MTableEditRow,
+} from '@material-table/core'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   accountsSelectors,
@@ -58,6 +64,10 @@ const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
   margin: '0',
   '& .MuiInputBase-input': {
     padding: '0 !important',
+    width: '140px',
+  },
+  '& .MuiInputAdornment-root .MuiIconButton-root': {
+    padding: 0,
   },
 }))
 
@@ -239,7 +249,6 @@ export default function Account(props) {
               payeeId: value,
               ...updateProps,
             }
-            console.log(`update props: ${JSON.stringify(updateProps)}`)
             return props.onRowDataChange(newRow)
           }}
           filterOptions={(options, params) => {
@@ -316,11 +325,9 @@ export default function Account(props) {
                   )}
                   value={props.value}
                   onInputChange={(e, value) => {
-                    console.log(`onInputChange value: ${value}`)
                     props.onChange(value)
                   }}
                   onChange={(e, value) => {
-                    console.log(`onChange value: ${value}`)
                     return props.onRowDataChange({
                       ...props.rowData,
                       categoryId: value,
@@ -473,9 +480,10 @@ export default function Account(props) {
       },
     },
   ].map(col => {
-    // col.cellStyle = {
-    //   whiteSpace: 'nowrap'
-    // }
+    col.cellStyle = {
+      paddingTop: 0,
+      paddingBottom: 0,
+    }
     return col
   })
 
@@ -887,6 +895,9 @@ export default function Account(props) {
           addRowPosition: 'first',
           selection: true,
           actionsColumnIndex: 99,
+          editCellStyle: rowData => ({
+            padding: 0,
+          }),
           rowStyle: rowData => ({
             fontSize: theme.typography.subtitle2.fontSize,
           }),
@@ -920,14 +931,10 @@ export default function Account(props) {
             return <MTableBody {...props} />
           },
           Toolbar: props => (
-            <Box
-              sx={{
-                backgroundColor: theme.palette.background.default,
-              }}
-            >
+            <Box>
               <AccountTableHeader accountId={account.id} name={account.name} />
 
-              <Divider />
+              <Divider sx={{ borderColor: theme.palette.background.header }} />
 
               <StyledMTableToolbar
                 {...{ ...props, actions: [] }}
@@ -938,19 +945,19 @@ export default function Account(props) {
                 searchFieldVariant="outlined"
               />
 
-              <Divider />
+              <Divider sx={{ borderColor: theme.palette.background.header }} />
             </Box>
           ),
           Row: props => (
             <MTableBodyRow
               {...props}
               onRowClick={e => {
-                console.log(e)
                 // console.log(props.actions)
                 props.actions[1]().onClick(e, props.data) // <---- trigger edit event
               }}
             />
           ),
+          EditRow: props => <MTableEditRow {...props} />,
         }}
         icons={TableIcons}
         columns={columns}

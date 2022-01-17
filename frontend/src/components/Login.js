@@ -7,7 +7,13 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { setUser, login, logout, setInitComplete } from '../redux/slices/Users'
-import { createBudget, fetchAvailableMonths, fetchBudgets, setActiveBudget } from '../redux/slices/Budgets'
+import {
+  createBudget,
+  fetchAvailableMonths,
+  fetchBudgets,
+  setActiveBudget,
+  setCurrentMonth,
+} from '../redux/slices/Budgets'
 import { setAccounts, fetchAccountTransactions } from '../redux/slices/Accounts'
 import { fetchPayees } from '../redux/slices/Payees'
 import { fetchCategories, createCategoryGroup } from '../redux/slices/CategoryGroups'
@@ -15,6 +21,7 @@ import { createCategory } from '../redux/slices/Categories'
 import api from '../api'
 import { useDispatch } from 'react-redux'
 import AlertDialog from './AlertDialog'
+import { formatMonthFromDateString } from '../utils/Date'
 
 export default function Login(props) {
   /**
@@ -53,7 +60,8 @@ export default function Login(props) {
   const initUser = async () => {
     const budgets = (await dispatch(fetchBudgets())).payload
     // @TODO: better way to set 'default' budget? Maybe a flag on the budget object
-    await dispatch(setActiveBudget(budgets[0].id))
+    await dispatch(setActiveBudget({ budgetId: budgets[0].id }))
+    dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))
     await dispatch(setAccounts(budgets[0].accounts))
 
     // @TODO: get all categories

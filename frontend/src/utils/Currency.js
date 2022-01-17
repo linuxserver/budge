@@ -86,6 +86,7 @@ export class FromAPI {
   }
 
   static transformCategoryMonth(categoryMonth) {
+    console.log(categoryMonth)
     return {
       ...categoryMonth,
       budgeted: dinero({ amount: categoryMonth.budgeted, currency: USD }),

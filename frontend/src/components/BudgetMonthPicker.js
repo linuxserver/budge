@@ -31,7 +31,7 @@ export default function BudgetMonthPicker(props) {
       return
     }
 
-    await dispatch(setCurrentMonth(month))
+    dispatch(setCurrentMonth({ month }))
   }
 
   return (

@@ -68,11 +68,6 @@ export const updateTransactions = createAsyncThunk(
     const state = getState()
     const response = await api.updateTransactions(transactions, state.budgets.activeBudgetId)
 
-    console.log('returned')
-    console.log({
-      accountId,
-      transactions: response,
-    })
     return {
       accountId,
       transactions: response,

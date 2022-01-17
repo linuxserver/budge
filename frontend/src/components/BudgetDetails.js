@@ -8,6 +8,8 @@ import TableContainer from '@mui/material/TableContainer'
 import TableRow from '@mui/material/TableRow'
 import { selectActiveBudget } from '../redux/slices/Budgets'
 import { useTheme } from '@mui/styles'
+import Stack from '@mui/material/Stack'
+import { isPositive, isZero } from 'dinero.js'
 
 export default function BudgetDetails(props) {
   const theme = useTheme()
@@ -18,39 +20,21 @@ export default function BudgetDetails(props) {
     return state.budgetMonths.entities[month] || null
   })
 
-  const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
   const income = budgetMonth ? valueToDinero(budgetMonth.income) : inputToDinero(0)
   const activity = budgetMonth ? valueToDinero(budgetMonth.activity) : inputToDinero(0)
   const budgeted = budgetMonth ? valueToDinero(budgetMonth.budgeted) : inputToDinero(0)
   const underfunded = budgetMonth ? valueToDinero(budgetMonth.underfunded) : inputToDinero(0)
 
-  const rows = [
-    {
-      field: 'Income',
-      value: intlFormat(income),
-    },
-    {
-      field: 'Activity',
-      value: intlFormat(activity),
-    },
-    {
-      field: 'Budgeted',
-      value: intlFormat(budgeted),
-    },
-    {
-      field: 'Underfunded',
-      value: intlFormat(underfunded),
-    },
-  ]
-
   return (
-    <Box
+    <Stack
+      spacing={2}
       sx={{
         mt: 2,
         mr: 1,
-        p: 0.1,
+        px: 2,
         borderRadius: 2,
-        backgroundColor: theme.palette.action.hover,
+        backgroundColor: theme.palette.background.drawer,
+        color: 'white',
       }}
     >
       <h3>
@@ -59,18 +43,68 @@ export default function BudgetDetails(props) {
           .toUpperCase()}{' '}
         SUMMARY
       </h3>
+
       <TableContainer>
         <Table aria-label="simple table">
           <TableBody>
-            {rows.map(row => (
-              <TableRow key={row.field} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell align="left">{row.field}</TableCell>
-                <TableCell align="right">{row.value}</TableCell>
-              </TableRow>
-            ))}
+            <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+              <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
+                Income
+              </TableCell>
+              <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
+                {intlFormat(income)}
+              </TableCell>
+            </TableRow>
+
+            <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+              <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
+                Activity
+              </TableCell>
+              <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
+                {intlFormat(activity)}
+              </TableCell>
+            </TableRow>
+
+            <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+              <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
+                Budgeted
+              </TableCell>
+              <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
+                {intlFormat(budgeted)}
+              </TableCell>
+            </TableRow>
+
+            <TableRow
+              sx={{
+                '&:last-child td, &:last-child th': { border: 0 },
+              }}
+            >
+              <TableCell
+                align="left"
+                sx={{
+                  ...(isPositive(underfunded) &&
+                    !isZero(underfunded) && {
+                      color: theme.palette.error.main,
+                    }),
+                }}
+              >
+                Underfunded
+              </TableCell>
+              <TableCell
+                align="right"
+                sx={{
+                  ...(isPositive(underfunded) &&
+                    !isZero(underfunded) && {
+                      color: theme.palette.error.main,
+                    }),
+                }}
+              >
+                {intlFormat(underfunded)}
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
-    </Box>
+    </Stack>
   )
 }

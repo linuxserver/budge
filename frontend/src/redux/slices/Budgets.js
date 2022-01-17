@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } from '@reduxjs/toolkit'
 import api from '../../api'
 import { formatMonthFromDateString } from '../../utils/Date'
+import { fetchBudgetMonth } from './BudgetMonths'
 
 export const createBudget = createAsyncThunk('budgets/create', async ({ name }) => {
   return await api.createBudget(name)
@@ -20,6 +21,17 @@ export const fetchAvailableMonths = createAsyncThunk('budgets/fetchMonths', asyn
   return await api.fetchBudgetMonths(store.budgets.activeBudgetId)
 })
 
+export const setActiveBudget = createAsyncThunk('budgets/setActiveBudget', async ({ budgetId }, { dispatch }) => {
+  return budgetId
+})
+
+export const setCurrentMonth = createAsyncThunk('budgets/setCurrentMonth', async ({ month }, { dispatch }) => {
+  console.log('here')
+  console.log(month)
+  dispatch(fetchBudgetMonth({ month }))
+  return month
+})
+
 export const budgetsAdapter = createEntityAdapter()
 
 const budgetsSlice = createSlice({
@@ -32,12 +44,8 @@ const budgetsSlice = createSlice({
   }),
 
   reducers: {
-    setActiveBudget: (state, action) => {
-      state.activeBudgetId = action.payload
-    },
-
-    setCurrentMonth: (state, { payload }) => {
-      state.currentMonth = formatMonthFromDateString(payload)
+    setActiveBudget: (state, { payload }) => {
+      state.activeBudgetId = payload
     },
   },
 
@@ -58,10 +66,14 @@ const budgetsSlice = createSlice({
       .addCase(fetchAvailableMonths.fulfilled, (state, { payload }) => {
         state.availableMonths = payload.map(budgetMonth => budgetMonth.month).sort()
       })
+      .addCase(setActiveBudget.fulfilled, (state, { payload }) => {
+        state.activeBudgetId = payload
+      })
+      .addCase(setCurrentMonth.fulfilled, (state, { payload }) => {
+        state.currentMonth = payload
+      })
   },
 })
-
-export const { setActiveBudget, setCurrentMonth } = budgetsSlice.actions
 
 export const budgetSelectors = budgetsAdapter.getSelectors(state => state.budgets)
 export const selectActiveBudget = createSelector(

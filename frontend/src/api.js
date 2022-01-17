@@ -131,7 +131,6 @@ export default class API {
   }
 
   static async deleteTransactions(ids, budgetId) {
-    console.log(ids)
     const response = await axios.delete(`/api/budgets/${budgetId}/transactions`, {
       data: {
         ids,

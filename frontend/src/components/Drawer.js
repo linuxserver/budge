@@ -86,7 +86,7 @@ export default function AppDrawer(props) {
     const balance = accounts.reduce((total, account) => {
       return add(valueToDinero(account.balance), total)
     }, inputToDinero(0))
-    const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.text.secondary
+    const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
 
     return (
       <List dense={true}>
@@ -95,7 +95,11 @@ export default function AppDrawer(props) {
             <div>
               <Grid container direction="row" justifyContent="space-between" alignItems="center">
                 <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
-                  {accountsListOpen[label] ? <ExpandMore fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
+                  {accountsListOpen[label] ? (
+                    <ExpandMore color="secondary" fontSize="small" />
+                  ) : (
+                    <ChevronRightIcon color="secondary" fontSize="small" />
+                  )}
                 </ListItemIcon>
                 <ListItemText
                   primary={label}
@@ -112,8 +116,8 @@ export default function AppDrawer(props) {
                 edge="end"
                 secondary={intlFormat(balance)}
                 secondaryTypographyProps={{
-                  // fontWeight: 'bold',
-                  color: balanceColor,
+                  fontWeight: 'bold',
+                  sx: { color: balanceColor },
                 }}
               />
             </div>
@@ -141,7 +145,7 @@ export default function AppDrawer(props) {
 
   const AccountItem = account => {
     const balance = valueToDinero(account.balance)
-    const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.text.secondary
+    const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
     return (
       <ListItemButton
         key={`account-${account.id}`}
@@ -172,7 +176,7 @@ export default function AppDrawer(props) {
               primary={account.name}
               primaryTypographyProps={{
                 style: {
-                  // fontWeight: 'bold',
+                  fontWeight: 'bold',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -185,7 +189,7 @@ export default function AppDrawer(props) {
             <ListItemText
               secondary={intlFormat(balance)}
               secondaryTypographyProps={{
-                // fontWeight: 'bold',
+                fontWeight: 'bold',
                 color: balanceColor,
               }}
             />
@@ -193,6 +197,10 @@ export default function AppDrawer(props) {
         </Grid>
       </ListItemButton>
     )
+  }
+
+  if (!budget) {
+    return <></>
   }
 
   return (
@@ -230,7 +238,7 @@ export default function AppDrawer(props) {
             selected={selectedItem === menuItemConfig.name}
           >
             <ListItemIcon style={{ minWidth: '40px' }}>
-              {index % 2 === 0 ? <AccountBalanceIcon /> : <MailIcon />}
+              {index % 2 === 0 ? <AccountBalanceIcon color="secondary" /> : <MailIcon color="secondary" />}
             </ListItemIcon>
             <ListItemText primary={menuItemConfig.name} />
           </ListItemButton>
@@ -247,6 +255,7 @@ export default function AppDrawer(props) {
         <ListItemButton>
           <ListItemIcon size="small" style={{ minWidth: '20px' }}>
             <AddCircleIcon
+              color="secondary"
               style={{
                 fontSize: theme.typography.subtitle2.fontSize,
               }}
@@ -260,7 +269,7 @@ export default function AppDrawer(props) {
         <ListItem disablePadding>
           <ListItemButton>
             <ListItemIcon>
-              <LogoutIcon />
+              <LogoutIcon color="secondary" />
             </ListItemIcon>
             <ListItemText primary="Log Out" onClick={logout} />
           </ListItemButton>

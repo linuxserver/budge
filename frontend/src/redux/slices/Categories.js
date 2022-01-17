@@ -37,7 +37,6 @@ const categoriesSlice = createSlice({
     })
 
     builder.addCase(updateCategory.fulfilled, (state, { payload }) => {
-      console.log(payload)
       categoriesAdapter.upsertOne(state, payload)
     })
   },
