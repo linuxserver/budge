@@ -1,20 +1,11 @@
 import React, { useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { createSelector } from '@reduxjs/toolkit'
-import MaterialTable, { MTableCell, MTableEditCell, MTableBodyRow, MTableToolbar } from '@material-table/core'
-import { TableIcons } from '../../utils/Table'
 import { refreshBudget } from '../../redux/slices/Budgets'
-import {
-  fetchBudgetMonth,
-  updateCategoryMonth,
-  fetchCategoryMonths,
-  refreshBudgetMonth,
-  refreshBudgetCategory,
-} from '../../redux/slices/BudgetMonths'
+import { updateCategoryMonth, refreshBudgetCategory } from '../../redux/slices/BudgetMonths'
 import { updateCategory } from '../../redux/slices/Categories'
 import { updateCategoryGroup, fetchCategories, categoryGroupsSelectors } from '../../redux/slices/CategoryGroups'
 import { categoriesSelectors } from '../../redux/slices/Categories'
-import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import Chip from '@mui/material/Chip'
@@ -28,7 +19,7 @@ import PopupState, { bindTrigger } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
 import CategoryForm from '../CategoryForm'
 import Tooltip from '@mui/material/Tooltip'
-import _ from 'underscore'
+import _ from 'lodash'
 import { formatMonthFromDateString, getDateFromString } from '../../utils/Date'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
@@ -48,32 +39,6 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-
-const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
-  backgroundColor: theme.palette.action.hover,
-  minHeight: '0 !important',
-  padding: '0 !important',
-  margin: '0',
-  '& .MuiInputBase-input': {
-    padding: '0 !important',
-    width: '130px',
-    // '::-webkit-input-placeholder': {
-    //   fontStyle: 'italic',
-    // },
-    // ':-moz-placeholder': {
-    //   fontStyle: 'italic',
-    // },
-    // '::-moz-placeholder': {
-    //   fontStyle: 'italic',
-    // },
-    // ':-ms-input-placeholder': {
-    //   fontStyle: 'italic',
-    // },
-  },
-  '& .MuiInputAdornment-root .MuiIconButton-root': {
-    padding: 0,
-  },
-}))
 
 export default function BudgetTable(props) {
   let isLoading = false
@@ -137,6 +102,7 @@ export default function BudgetTable(props) {
     [categoryGroupsSelectors.selectAll, categoriesSelectors.selectAll, selectCategoryMonths],
     (groups, categories, categoryMonths) => {
       let retval = []
+      const underfunded = isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)
       groups.map(group => {
         if (group.internal) {
           return
@@ -184,6 +150,7 @@ export default function BudgetTable(props) {
 
           if (category.trackingAccountId) {
             groupRow.trackingAccountId = true
+            groupRow.underfunded = underfunded
           }
 
           groupRow.subRows.push({
@@ -192,6 +159,7 @@ export default function BudgetTable(props) {
             order: category.order,
             groupId: group.id,
             trackingAccountId: category.trackingAccountId,
+            underfunded,
           })
         }
 
@@ -398,7 +366,7 @@ export default function BudgetTable(props) {
 
             let color = 'default'
             if (props.row.original.trackingAccountId) {
-              if (isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)) {
+              if (props.row.original.underfunded) {
                 color = 'warning'
               } else if (isZero(balance) || isNegative(balance)) {
                 color = 'default'
@@ -504,10 +472,14 @@ export default function BudgetTable(props) {
       data,
       autoResetExpanded: false,
       initialState: {
-        expanded: data.reduce((result, current, index) => {
-          result[index] = true
-          return result
-        }, {}),
+        expanded: useMemo(
+          () =>
+            data.reduce((result, current, index) => {
+              result[index] = true
+              return result
+            }, {}),
+          [],
+        ),
       },
     },
     // useGroupBy,
