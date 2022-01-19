@@ -305,8 +305,9 @@ export default function BudgetTable(props) {
               <Box sx={{ textAlign: 'right' }}>
                 <BudgetTableAssignedCell
                   budgeted={value}
-                  onSubmit={budgeted => {
+                  onSubmit={(budgeted, month) => {
                     onBudgetEdit(
+                      month,
                       {
                         ...FromAPI.transformCategoryMonth({
                           ...props.row.original,
@@ -454,7 +455,7 @@ export default function BudgetTable(props) {
     dispatch(fetchCategories())
   }
 
-  const onBudgetEdit = async (newRow, oldRow) => {
+  const onBudgetEdit = async (month, newRow, oldRow) => {
     if (equal(newRow.budgeted, oldRow.budgeted)) {
       // Only update if the amount budgeted was changed
       return
@@ -570,7 +571,7 @@ export default function BudgetTable(props) {
                 return (
                   <TableRow
                     {...row.getRowProps({
-                      ...(row.canExpand === true && { sx: { backgroundColor: theme.palette.action.hover } }),
+                      ...(!row.original.groupId && { sx: { backgroundColor: theme.palette.action.hover } }),
                     })}
                     draggable="true"
                     onDragStart={e => {

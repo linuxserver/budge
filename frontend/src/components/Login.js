@@ -61,7 +61,7 @@ export default function Login(props) {
     const budgets = (await dispatch(fetchBudgets())).payload
     // @TODO: better way to set 'default' budget? Maybe a flag on the budget object
     await dispatch(setActiveBudget({ budgetId: budgets[0].id }))
-    dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))
+    await dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))
     await dispatch(setAccounts(budgets[0].accounts))
 
     // @TODO: get all categories
@@ -112,7 +112,7 @@ export default function Login(props) {
     )
     // Create initial budget
     const newBudget = (await dispatch(createBudget({ name: 'My Budget' }))).payload
-    await dispatch(setActiveBudget(newBudget.id))
+    await dispatch(setActiveBudget({ budgetId: newBudget.id }))
 
     // Create initial items such as category group, categories, etc.
     const newCategoryGroup = (

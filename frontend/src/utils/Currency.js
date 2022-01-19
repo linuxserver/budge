@@ -79,9 +79,6 @@ export class FromAPI {
       activity: dinero({ amount: budgetMonth.activity, currency: USD }),
       budgeted: dinero({ amount: budgetMonth.budgeted, currency: USD }),
       underfunded: dinero({ amount: budgetMonth.underfunded, currency: USD }),
-      // ...(budgetMonth.categories && {
-      //   categories: Object.values(budgetMonth.categories.entities).map(categoryMonth => FromAPI.transformCategoryMonth(categoryMonth))
-      // }),
     }
   }
 

@@ -12,9 +12,9 @@ import Typography from '@mui/material/Typography'
 import { usePopupState, bindTrigger } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
-import ArrowCircleLeftOutlinedIcon from '@mui/icons-material/ArrowCircleLeftOutlined'
-import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOutlined'
 import ExpandMore from '@mui/icons-material/ExpandMore'
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIosNew'
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 
 export default function BudgetTableHeader(props) {
   const theme = useTheme()
@@ -25,10 +25,6 @@ export default function BudgetTableHeader(props) {
   const budget = useSelector(selectActiveBudget)
 
   const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
-  let tbbColor = 'success'
-  if (isNegative(toBeBudgeted)) {
-    tbbColor = 'error'
-  }
 
   const nextMonth = getDateFromString(month)
   nextMonth.setMonth(nextMonth.getMonth() + 1)
@@ -78,7 +74,7 @@ export default function BudgetTableHeader(props) {
                 // color: theme.palette.primary.main,
               }}
             >
-              <ArrowCircleLeftOutlinedIcon fontSize="large" />
+              <ArrowBackIosIcon fontSize="large" variant="outlined" />
             </IconButton>
             <Button
               {...bindTrigger(monthPickerPopupState)}
@@ -105,7 +101,7 @@ export default function BudgetTableHeader(props) {
                 // color: theme.palette.primary.main,
               }}
             >
-              <ArrowCircleRightOutlinedIcon fontSize="large" />
+              <ArrowForwardIosIcon fontSize="large" />
             </IconButton>
             {isToday === false && (
               <Button
@@ -128,9 +124,7 @@ export default function BudgetTableHeader(props) {
             py: 0.5,
             px: 2,
             borderRadius: 1.5,
-            backgroundColor: !isZero(toBeBudgeted)
-              ? getBalanceColor(toBeBudgeted, theme)
-              : theme.palette.action.disabled,
+            backgroundColor: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
           }}
         >
           <Stack direction="column" justifyContent="center" alignItems="center" spacing={0}>
