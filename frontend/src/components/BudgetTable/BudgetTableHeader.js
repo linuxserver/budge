@@ -53,7 +53,7 @@ export default function BudgetTableHeader(props) {
     <Box
       sx={{
         width: '100%',
-        backgroundColor: theme.palette.background.header,
+        backgroundColor: theme.palette.background.tableHeader,
       }}
     >
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ p: 2 }}>
@@ -66,7 +66,6 @@ export default function BudgetTableHeader(props) {
           />
           <div className="budget-month-navigation">
             <IconButton
-              color="secondary"
               disabled={prevMonthDisabled}
               onClick={() => navigateMonth(-1)}
               sx={{
@@ -78,7 +77,6 @@ export default function BudgetTableHeader(props) {
             </IconButton>
             <Button
               {...bindTrigger(monthPickerPopupState)}
-              color="secondary"
               sx={{
                 fontSize: theme.typography.h6.fontSize,
                 fontWeight: 'bold',
@@ -93,7 +91,6 @@ export default function BudgetTableHeader(props) {
               <ExpandMore />
             </Button>
             <IconButton
-              color="secondary"
               disabled={nextMonthDisabled}
               onClick={() => navigateMonth(1)}
               sx={{
@@ -106,8 +103,8 @@ export default function BudgetTableHeader(props) {
             {isToday === false && (
               <Button
                 variant="outlined"
-                color="secondary"
                 size="small"
+                color="secondary"
                 onClick={() => dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))}
                 sx={{ ml: 1 }}
               >
@@ -132,7 +129,7 @@ export default function BudgetTableHeader(props) {
               style={{
                 fontSize: theme.typography.h5.fontSize,
                 fontWeight: 'bold',
-                // color: theme.palette.background.default,
+                color: theme.palette.background.default,
               }}
             >
               {intlFormat(toBeBudgeted)}
@@ -141,7 +138,7 @@ export default function BudgetTableHeader(props) {
               style={{
                 fontSize: theme.typography.subtitle1.fontSize,
                 // fontWeight: 'bold',
-                // color: theme.palette.background.default,
+                color: theme.palette.background.default,
               }}
             >
               Available To Budget

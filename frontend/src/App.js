@@ -14,12 +14,65 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 const ColorModeContext = React.createContext({ toggleColorMode: () => {} })
 
 export default function App(props) {
-  const theme = createTheme({
+  const theme = useSelector(state => state.app.theme)
+
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+      background: {
+        drawer: 'rgb(28, 33, 40)',
+        tableHeader: 'rgb(28, 33, 40)',
+        tableBody: 'rgb(34, 39, 46)',
+        details: 'rgb(28, 33, 40)',
+      },
+      secondary: {
+        main: '#ffffff',
+      },
+      success: {
+        main: '#32ae7b',
+      },
+      error: {
+        main: '#d66466',
+      },
+      warning: {
+        main: '#FAEF6E',
+      },
+    },
+    components: {
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: 'rgb(28, 33, 40)',
+            color: 'white',
+          },
+        },
+      },
+      // MuiDivider: {
+      //   styleOverrides: {
+      //     root: {
+      //       borderColor: 'white',
+      //     },
+      //   },
+      // },
+    },
+    typography: {
+      // fontFamily: 'Lato',
+      fontFamily: 'Nunito',
+      // fontFamily: 'Varela Round',
+      // fontFamily: 'IBM Plex Sans Condensed',
+      // fontFamily: 'Roboto',
+    },
+  })
+
+  const lightTheme = createTheme({
     palette: {
       mode: 'light',
       background: {
         drawer: '#333333',
         header: '#505a5e',
+        tableBody: '#ffffff',
+        tableHeader: '#505a5e',
+        details: '#333333',
       },
       primary: {
         main: '#333333',
@@ -36,9 +89,6 @@ export default function App(props) {
       warning: {
         main: '#FAEF6E',
       },
-      text: {
-        primary: '#222222',
-      },
     },
     components: {
       MuiDrawer: {
@@ -46,13 +96,6 @@ export default function App(props) {
           paper: {
             backgroundColor: '#333333',
             color: 'white',
-          },
-        },
-      },
-      MuiDivider: {
-        styleOverrides: {
-          root: {
-            borderColor: 'white',
           },
         },
       },
@@ -65,7 +108,6 @@ export default function App(props) {
       // fontFamily: 'Roboto',
     },
   })
-  const colorMode = React.useContext(ColorModeContext)
 
   /**
    * State block
@@ -83,7 +125,7 @@ export default function App(props) {
 
   return (
     <div className="App">
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
         {!initComplete && <Login />}
         {initComplete && (
           <Router>

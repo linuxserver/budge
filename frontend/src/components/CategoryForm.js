@@ -46,7 +46,6 @@ export default function NewCategoryDialog(props) {
         break
     }
 
-    setName('')
     props.popupState.close()
   }
 
@@ -79,7 +78,6 @@ export default function NewCategoryDialog(props) {
           value={categoryGroup}
           label="Category Group"
           onChange={event => {
-            console.log(event.target.value)
             setCategoryGroup(event.target.value)
           }}
         >

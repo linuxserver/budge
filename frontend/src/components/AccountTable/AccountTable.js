@@ -57,7 +57,7 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import { styled } from '@mui/material/styles'
 
 const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
-  backgroundColor: theme.palette.action.hover,
+  backgroundColor: theme.palette.background.tableBody,
   minHeight: '0 !important',
   padding: '0 !important',
   margin: '0',
@@ -778,6 +778,7 @@ export default function Account(props) {
           gridTemplateColums: '1fr',
           gridTemplateRows: 'auto 1fr auto',
           height: '100vh',
+          backgroundColor: theme.palette.background.tableBody,
         }}
         title={
           <Stack
@@ -785,12 +786,12 @@ export default function Account(props) {
             alignItems="center"
             sx={
               {
-                // backgroundColor: theme.palette.action.hover,
+                // backgroundColor: theme.palette.background.header,
               }
             }
           >
             <ButtonGroup variant="text" aria-label="outlined button group">
-              <Button size="small" onClick={addTransactionClick}>
+              <Button color="primary" size="small" onClick={addTransactionClick}>
                 <Stack direction="row" alignItems="center" spacing={0.5}>
                   <AddCircleIcon
                     style={{
@@ -925,15 +926,20 @@ export default function Account(props) {
           },
         }}
         components={{
+          Container: Box,
           Body: props => {
             tableProps = props
             return <MTableBody {...props} />
           },
           Toolbar: props => (
-            <Box>
+            <Box
+              sx={{
+                backgroundColor: theme.palette.background.tableHeader,
+              }}
+            >
               <AccountTableHeader accountId={account.id} name={account.name} />
 
-              <Divider sx={{ borderColor: theme.palette.background.header }} />
+              <Divider />
 
               <StyledMTableToolbar
                 {...{ ...props, actions: [] }}
@@ -944,7 +950,7 @@ export default function Account(props) {
                 searchFieldVariant="outlined"
               />
 
-              <Divider sx={{ borderColor: theme.palette.background.header }} />
+              <Divider />
             </Box>
           ),
           Row: props => (

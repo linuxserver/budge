@@ -43,10 +43,8 @@ export default function BudgetTableHeader({ accountId, name }) {
     dispatch(editAccount({ id: account.id, name: accountName }))
   }
 
-  console.log(theme)
-
   return (
-    <Box sx={{ backgroundColor: theme.palette.background.header }} p={2}>
+    <Box sx={{}} p={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ px: 2 }}>
         <Stack direction="row" justifyContent="flex-start" alignItems="center" spacing={2}>
           <div>

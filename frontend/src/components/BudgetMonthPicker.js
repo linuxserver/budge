@@ -4,7 +4,7 @@ import AdapterDateFns from '@mui/lab/AdapterDateFns'
 import LocalizationProvider from '@mui/lab/LocalizationProvider'
 import StaticDatePicker from '@mui/lab/StaticDatePicker'
 import TextField from '@mui/material/TextField'
-import { getDateFromString } from '../utils/Date'
+import { formatMonthFromDateString, getDateFromString } from '../utils/Date'
 import { bindPopover } from 'material-ui-popup-state/hooks'
 import { useDispatch } from 'react-redux'
 import { setCurrentMonth } from '../redux/slices/Budgets'
@@ -31,7 +31,7 @@ export default function BudgetMonthPicker(props) {
       return
     }
 
-    dispatch(setCurrentMonth({ month }))
+    dispatch(setCurrentMonth({ month: formatMonthFromDateString(month) }))
   }
 
   return (

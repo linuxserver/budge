@@ -9,12 +9,19 @@ export default function Budget(props) {
   const theme = useTheme()
 
   return (
-    <Box sx={{ backgroundColor: theme.palette.background.header, maxWidth: '100%' }}>
+    <Box sx={{ backgroundColor: theme.palette.background.tableBody, maxWidth: '100%' }}>
       <Grid container spacing={2}>
         <Grid item xs={8}>
           <BudgetTable />
         </Grid>
-        <Grid item xs={4} spacing={2}>
+        <Grid
+          item
+          xs={4}
+          sx={{
+            backgroundColor: theme.palette.background.details,
+            borderLeft: `1px solid ${theme.palette.action.hover}`,
+          }}
+        >
           <BudgetDetails />
         </Grid>
       </Grid>

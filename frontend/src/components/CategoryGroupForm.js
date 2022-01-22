@@ -39,7 +39,6 @@ export default function NewCategoryDialog(props) {
         break
     }
 
-    setName('')
     props.popupState.close()
   }
 

@@ -5,6 +5,7 @@ import categories from './Categories'
 import categoryGroups from './CategoryGroups'
 import payees from './Payees'
 import { budgetMonths, categoryMonths } from './BudgetMonths'
+import app from './App'
 
 export const reducers = {
   users,
@@ -15,4 +16,5 @@ export const reducers = {
   payees,
   budgetMonths,
   categoryMonths,
+  app,
 }

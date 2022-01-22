@@ -14,7 +14,6 @@ import { isPositive, isZero } from 'dinero.js'
 export default function BudgetDetails(props) {
   const theme = useTheme()
 
-  const budget = useSelector(selectActiveBudget)
   const month = useSelector(state => state.budgets.currentMonth)
   const budgetMonth = useSelector(state => {
     return state.budgetMonths.entities[month] || null
@@ -25,15 +24,16 @@ export default function BudgetDetails(props) {
   const budgeted = budgetMonth ? valueToDinero(budgetMonth.budgeted) : inputToDinero(0)
   const underfunded = budgetMonth ? valueToDinero(budgetMonth.underfunded) : inputToDinero(0)
 
+  console.log(theme)
   return (
     <Stack
       spacing={2}
       sx={{
         mt: 2,
-        mr: 1,
+        mr: 2,
         px: 2,
         borderRadius: 2,
-        backgroundColor: theme.palette.background.drawer,
+        backgroundColor: theme.palette.background.details,
         color: 'white',
       }}
     >

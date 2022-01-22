@@ -5,10 +5,24 @@ import { useTheme } from '@mui/styles'
 import { isZero, toUnit } from 'dinero.js'
 import { styled } from '@mui/material/styles'
 import { useSelector } from 'react-redux'
+import InputAdornment from '@mui/material/InputAdornment'
+import CalculateIcon from '@mui/icons-material/Calculate'
+import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined'
+import IconButton from '@mui/material/IconButton'
+import mexp from 'math-expression-evaluator'
 
 const BudgetCell = styled(TextField)(({ theme }) => ({
   '& .MuiInput-root:before': {
     borderBottom: '0px',
+  },
+  '.MuiInputAdornment-root .MuiSvgIcon-root': {
+    display: 'none',
+  },
+  '&:hover .MuiInputAdornment-root .MuiSvgIcon-root': {
+    display: 'flex',
+  },
+  '& .Mui-focused .MuiInputAdornment-root .MuiSvgIcon-root': {
+    display: 'flex',
   },
 }))
 
@@ -31,15 +45,28 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
   }
 
   const onChange = e => {
-    setRowValue(e.target.value)
+    const operators = ['+', '-', '*', '/']
+    const value = e.target.value
+
+    if (operators.includes(value)) {
+      if (operators.includes(rowValue[rowValue.length - 1])) {
+        setRowValue(`${rowValue.slice(0, -1)}${value}`)
+      } else {
+        setRowValue(`${rowValue}${value}`)
+      }
+    } else {
+      setRowValue(e.target.value)
+    }
   }
 
   const onKeyPress = e => {
     if (e.key === 'Enter') {
-      const newValue = inputToDinero(rowValue)
-      setRowValue(intlFormat(newValue))
-      onSubmit(newValue, month)
-      e.target.blur()
+      try {
+        const newValue = inputToDinero(mexp.eval(rowValue))
+        setRowValue(intlFormat(newValue))
+        onSubmit(newValue, month)
+        e.target.blur()
+      } catch (e) {}
     }
   }
 
@@ -57,11 +84,20 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
         sx: {
           textAlign: 'right',
           fontSize: theme.typography.subtitle2.fontSize,
-          fontWeight: 'bold',
+          // fontWeight: 'bold',
           padding: 0,
           borderBottom: 0,
           ...(isZero(budgeted) && { color: theme.palette.grey[600] }),
         },
+      }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            {/* <IconButton> */}
+            <CalculateOutlinedIcon color="secondary" fontSize="small" />
+            {/* </IconButton> */}
+          </InputAdornment>
+        ),
       }}
     />
   )

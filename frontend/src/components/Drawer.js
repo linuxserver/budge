@@ -24,7 +24,10 @@ import MenuItem from '@mui/material/MenuItem'
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { accountsSelectors, editAccount, fetchAccounts } from '../redux/slices/Accounts'
+import { setTheme } from '../redux/slices/App'
 import { selectActiveBudget } from '../redux/slices/Budgets'
+import Brightness4Icon from '@mui/icons-material/Brightness4'
+import Brightness7Icon from '@mui/icons-material/Brightness7'
 
 const drawerWidth = 300
 
@@ -32,6 +35,8 @@ export default function AppDrawer(props) {
   const dispatch = useDispatch()
   const theme = useTheme()
   const navigate = useNavigate()
+
+  const currentTheme = useSelector(state => state.app.theme)
 
   const menuItems = [
     { name: 'Budget', path: '/' },
@@ -76,6 +81,10 @@ export default function AppDrawer(props) {
     }
   }
 
+  const toggleTheme = () => {
+    dispatch(setTheme(currentTheme === 'dark' ? 'light' : 'dark'))
+  }
+
   const logout = async () => {
     await api.logout()
     navigate('/')
@@ -96,9 +105,9 @@ export default function AppDrawer(props) {
               <Grid container direction="row" justifyContent="space-between" alignItems="center">
                 <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
                   {accountsListOpen[label] ? (
-                    <ExpandMore color="secondary" fontSize="small" />
+                    <ExpandMore sx={{ color: theme.palette.secondary.main }} fontSize="small" />
                   ) : (
-                    <ChevronRightIcon color="secondary" fontSize="small" />
+                    <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} fontSize="small" />
                   )}
                 </ListItemIcon>
                 <ListItemText
@@ -218,9 +227,9 @@ export default function AppDrawer(props) {
             <React.Fragment>
               <ListItemButton {...bindTrigger(popupState)}>
                 <ListItemText primary={budget.name} />
-                <ExpandMore />
+                <ExpandMore sx={{ color: theme.palette.secondary.main }} />
               </ListItemButton>
-              <Menu {...bindMenu(popupState)}>
+              <Menu MenuListProps={{ dense: true }} {...bindMenu(popupState)}>
                 {/* <MenuItem onClick={popupState.close}>Profile</MenuItem>
                 <MenuItem onClick={popupState.close}>My account</MenuItem> */}
                 <MenuItem onClick={logout}>Logout</MenuItem>
@@ -238,7 +247,7 @@ export default function AppDrawer(props) {
             selected={selectedItem === menuItemConfig.name}
           >
             <ListItemIcon style={{ minWidth: '40px' }}>
-              {index % 2 === 0 ? <AccountBalanceIcon color="secondary" /> : <MailIcon color="secondary" />}
+              {index % 2 === 0 ? <AccountBalanceIcon sx={{ color: theme.palette.secondary.main }} /> : <MailIcon />}
             </ListItemIcon>
             <ListItemText primary={menuItemConfig.name} />
           </ListItemButton>
@@ -255,8 +264,8 @@ export default function AppDrawer(props) {
         <ListItemButton>
           <ListItemIcon size="small" style={{ minWidth: '20px' }}>
             <AddCircleIcon
-              color="secondary"
               style={{
+                color: theme.palette.secondary.main,
                 fontSize: theme.typography.subtitle2.fontSize,
               }}
             />
@@ -269,7 +278,19 @@ export default function AppDrawer(props) {
         <ListItem disablePadding>
           <ListItemButton>
             <ListItemIcon>
-              <LogoutIcon color="secondary" />
+              {currentTheme === 'dark' ? (
+                <Brightness7Icon sx={{ color: theme.palette.secondary.main }} />
+              ) : (
+                <Brightness4Icon sx={{ color: theme.palette.secondary.main }} />
+              )}
+            </ListItemIcon>
+            <ListItemText primary="Toggle Theme" onClick={toggleTheme} />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton>
+            <ListItemIcon>
+              <LogoutIcon sx={{ color: theme.palette.secondary.main }} />
             </ListItemIcon>
             <ListItemText primary="Log Out" onClick={logout} />
           </ListItemButton>

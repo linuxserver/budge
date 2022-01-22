@@ -10,8 +10,7 @@ import IconButton from '@mui/material/IconButton'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
-import { dinero, add, equal, isPositive, isNegative, isZero, toUnit } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
+import { equal, isPositive, isNegative, isZero } from 'dinero.js'
 import { FromAPI, intlFormat, valueToDinero } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
 import BudgetTableHeader from './BudgetTableHeader'
@@ -27,10 +26,9 @@ import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { styled } from '@mui/material/styles'
 import { createDeepEqualSelector } from '../../utils/Store'
 import BudgetTableAssignedCell from './BudgetTableAssignedCell'
-import { useExpanded, useGroupBy, useTable } from 'react-table'
+import { useExpanded, useTable } from 'react-table'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
@@ -39,6 +37,12 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { styled } from '@mui/material/styles'
+
+const BudgetTableCell = styled(TableCell)(({ theme }) => ({
+  paddingTop: '4px',
+  paddingBottom: '4px',
+}))
 
 export default function BudgetTable(props) {
   let isLoading = false
@@ -227,7 +231,7 @@ export default function BudgetTable(props) {
                           ...(!props.row.original.trackingAccountId && {
                             cursor: 'pointer',
                           }),
-                          fontWeight: 'bold',
+                          // fontWeight: 'bold',
                         }}
                         {...(!props.row.original.trackingAccountId && bindTrigger(popupState))}
                       >
@@ -283,7 +287,7 @@ export default function BudgetTable(props) {
         {
           accessor: 'budgeted',
           style: {
-            width: '125px',
+            width: '150px',
           },
           Header: props => <Box sx={{ textAlign: 'right' }}>ASSIGNED</Box>,
           Cell: props => {
@@ -294,7 +298,7 @@ export default function BudgetTable(props) {
                   sx={{
                     ...(isZero(value) && { color: theme.palette.grey[600] }),
                     textAlign: 'right',
-                    fontWeight: 'bold',
+                    // fontWeight: 'bold',
                   }}
                 >
                   {intlFormat(value)}
@@ -325,7 +329,7 @@ export default function BudgetTable(props) {
         {
           accessor: 'activity',
           style: {
-            width: '125px',
+            width: '150px',
           },
           Header: props => <Box sx={{ textAlign: 'right' }}>ACTIVITY</Box>,
           Cell: props => {
@@ -335,7 +339,7 @@ export default function BudgetTable(props) {
                 sx={{
                   ...(isZero(value) && { color: theme.palette.grey[600] }),
                   textAlign: 'right',
-                  fontWeight: 'bold',
+                  // fontWeight: 'bold',
                 }}
               >
                 {intlFormat(value)}
@@ -346,13 +350,13 @@ export default function BudgetTable(props) {
         {
           accessor: 'balance',
           style: {
-            width: '125px',
+            width: '150px',
           },
           Header: props => <Box sx={{ textAlign: 'right' }}>BALANCE</Box>,
           Cell: props => {
             const balance = valueToDinero(props.cell.value)
             const value = intlFormat(balance)
-            const fontColor = isZero(balance) ? theme.palette.grey[800] : theme.palette.text.primary
+            const fontColor = isZero(balance) ? theme.palette.grey[800] : theme.palette.background.default
 
             // if (!props.row.original.groupId) {
             //   return (
@@ -386,21 +390,19 @@ export default function BudgetTable(props) {
               }
             }
 
-            const chip = (
-              <Box sx={{ textAlign: 'right' }}>
-                <Chip
-                  size="small"
-                  label={value}
-                  color={color}
-                  sx={{
-                    height: 'auto',
-                    color: fontColor,
-                    fontWeight: 'bold',
-                    ...(theme.typography.fontFamily !== 'Lato' && { pt: '2px' }),
-                    ...(color === 'default' && { backgroundColor: theme.palette.grey[500] }),
-                  }}
-                />
-              </Box>
+            let chip = (
+              <Chip
+                size="small"
+                label={value}
+                color={color}
+                sx={{
+                  height: 'auto',
+                  color: fontColor,
+                  // fontWeight: 'bold',
+                  ...(theme.typography.fontFamily !== 'Lato' && { pt: '2px' }),
+                  ...(color === 'default' && { backgroundColor: theme.palette.grey[500] }),
+                }}
+              />
               // <Typography
               //   sx={{
               //     fontSize: theme.typography.subtitle2.fontSize,
@@ -412,12 +414,16 @@ export default function BudgetTable(props) {
               // </Typography>
             )
 
-            // Tooltip for CC warning
-            if (props.row.original.trackingAccountId && color === 'warning') {
-              return <Tooltip title="Month is underfunded, this amount may not be accurate">{chip}</Tooltip>
+            if (!props.row.original.groupId) {
+              chip = <Typography variant="subtitle2">{value}</Typography>
             }
 
-            return chip
+            // Tooltip for CC warning
+            if (props.row.original.trackingAccountId && color === 'warning') {
+              chip = <Tooltip title="Month is underfunded, this amount may not be accurate">{chip}</Tooltip>
+            }
+
+            return <Box sx={{ textAlign: 'right' }}>{chip}</Box>
           },
         },
       ].map(column => {
@@ -496,7 +502,7 @@ export default function BudgetTable(props) {
   return (
     <Box
       sx={{
-        backgroundColor: 'white',
+        // backgroundColor: theme.palette.background.tableBody,
         display: 'grid',
         gridTemplateColums: '1fr',
         gridTemplateRows: 'auto 1fr auto',
@@ -504,13 +510,15 @@ export default function BudgetTable(props) {
       }}
     >
       <Box
-        sx={{
-          backgroundColor: theme.palette.background.default,
-        }}
+        sx={
+          {
+            // backgroundColor: theme.palette.background.tableBody,
+          }
+        }
       >
         <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
 
-        <Divider sx={{ borderColor: theme.palette.background.header }} />
+        <Divider sx={{ borderColor: theme.palette.action.hover }} />
 
         <Stack direction="row" alignItems="center">
           <ButtonGroup variant="text" aria-label="outlined button group">
@@ -536,7 +544,7 @@ export default function BudgetTable(props) {
           </ButtonGroup>
         </Stack>
 
-        <Divider sx={{ borderColor: theme.palette.background.header }} />
+        <Divider sx={{ borderColor: theme.palette.action.hover }} />
       </Box>
 
       <Box
@@ -593,14 +601,14 @@ export default function BudgetTable(props) {
                   >
                     {row.cells.map(cell => {
                       return (
-                        <TableCell
+                        <BudgetTableCell
                           {...cell.getCellProps()}
                           sx={{
                             ...(cell.column.style && { ...cell.column.style }),
                           }}
                         >
                           {cell.render('Cell')}
-                        </TableCell>
+                        </BudgetTableCell>
                       )
                     })}
                   </TableRow>
