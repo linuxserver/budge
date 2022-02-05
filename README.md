@@ -25,4 +25,4 @@ BudgE (pronounced "budgie") is an open source "budgeting with envelopes" persona
 - [ ] Mobile view for transaction input on the go!
 
 # Getting Started
-Documentation to come
+See [linuxserver/docker-Budge](https://github.com/linuxserver/docker-BudgE).
