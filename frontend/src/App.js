@@ -20,6 +20,7 @@ export default function App(props) {
     palette: {
       mode: 'dark',
       background: {
+        paper: 'rgb(28, 33, 40)',
         drawer: 'rgb(28, 33, 40)',
         tableHeader: 'rgb(28, 33, 40)',
         tableBody: 'rgb(34, 39, 46)',
@@ -71,8 +72,8 @@ export default function App(props) {
         drawer: '#333333',
         header: '#505a5e',
         tableBody: '#ffffff',
-        tableHeader: '#505a5e',
-        details: '#333333',
+        tableHeader: '#333333',
+        details: '#505a5e',
       },
       primary: {
         main: '#333333',

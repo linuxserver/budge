@@ -10,6 +10,7 @@ import { selectActiveBudget } from '../redux/slices/Budgets'
 import { useTheme } from '@mui/styles'
 import Stack from '@mui/material/Stack'
 import { isPositive, isZero } from 'dinero.js'
+import Alert from '@mui/material/Alert'
 
 export default function BudgetDetails(props) {
   const theme = useTheme()
@@ -26,85 +27,95 @@ export default function BudgetDetails(props) {
 
   console.log(theme)
   return (
-    <Stack
-      spacing={2}
-      sx={{
-        mt: 2,
-        mr: 2,
-        px: 2,
-        borderRadius: 2,
-        backgroundColor: theme.palette.background.details,
-        color: 'white',
-      }}
-    >
-      <h3>
-        {new Date(Date.UTC(...month.split('-')))
-          .toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
-          .toUpperCase()}{' '}
-        SUMMARY
-      </h3>
+    <Stack justifyContent="space-between" alignItems="center" spacing={2} sx={{ width: '100%', height: '100%', p: 2 }}>
+      <Stack
+        spacing={2}
+        sx={{
+          width: '100%',
+          height: '100%',
+          mt: 2,
+          mr: 2,
+          px: 2,
+          borderRadius: 2,
+          backgroundColor: theme.palette.background.details,
+          color: 'white',
+        }}
+      >
+        <h3>
+          {new Date(Date.UTC(...month.split('-')))
+            .toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+            .toUpperCase()}{' '}
+          SUMMARY
+        </h3>
 
-      <TableContainer>
-        <Table aria-label="simple table">
-          <TableBody>
-            <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-              <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
-                Income
-              </TableCell>
-              <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
-                {intlFormat(income)}
-              </TableCell>
-            </TableRow>
+        <TableContainer>
+          <Table aria-label="simple table">
+            <TableBody>
+              <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
+                  Income
+                </TableCell>
+                <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
+                  {intlFormat(income)}
+                </TableCell>
+              </TableRow>
 
-            <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-              <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
-                Activity
-              </TableCell>
-              <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
-                {intlFormat(activity)}
-              </TableCell>
-            </TableRow>
+              <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
+                  Activity
+                </TableCell>
+                <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
+                  {intlFormat(activity)}
+                </TableCell>
+              </TableRow>
 
-            <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-              <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
-                Budgeted
-              </TableCell>
-              <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
-                {intlFormat(budgeted)}
-              </TableCell>
-            </TableRow>
+              <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
+                  Budgeted
+                </TableCell>
+                <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
+                  {intlFormat(budgeted)}
+                </TableCell>
+              </TableRow>
 
-            <TableRow
-              sx={{
-                '&:last-child td, &:last-child th': { border: 0 },
-              }}
-            >
-              <TableCell
-                align="left"
+              <TableRow
                 sx={{
-                  ...(isPositive(underfunded) &&
-                    !isZero(underfunded) && {
-                      color: theme.palette.error.main,
-                    }),
+                  '&:last-child td, &:last-child th': { border: 0 },
                 }}
               >
-                Underfunded
-              </TableCell>
-              <TableCell
-                align="right"
-                sx={{
-                  ...(isPositive(underfunded) &&
-                    !isZero(underfunded) && {
-                      color: theme.palette.error.main,
-                    }),
-                }}
-              >
-                {intlFormat(underfunded)}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
+                <TableCell
+                  align="left"
+                  sx={{
+                    color: theme.palette.secondary.main,
+                  }}
+                >
+                  Underfunded
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{
+                    color: theme.palette.secondary.main,
+                  }}
+                >
+                  {intlFormat(underfunded)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Stack>
+      <Box
+        sx={{
+          width: '100%',
+        }}
+      >
+        {isPositive(underfunded) && !isZero(underfunded) && (
+          <Alert variant="filled" severity="error">
+            You have overspent your budget this month! Your budget may not be accurate until you resolve any negative
+            balances.
+          </Alert>
+        )}
+      </Box>
     </Stack>
   )
 }

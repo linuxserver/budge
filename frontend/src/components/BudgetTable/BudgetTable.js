@@ -186,6 +186,7 @@ export default function BudgetTable(props) {
     dropRow: -1, // drag target
   }
 
+  console.log(data)
   const columns = useMemo(
     () =>
       [
@@ -211,7 +212,11 @@ export default function BudgetTable(props) {
                   },
                 })}
               >
-                {row.isExpanded ? <ExpandMore /> : <ChevronRightIcon />}
+                {row.isExpanded ? (
+                  <ExpandMore sx={{ verticalAlign: 'middle' }} />
+                ) : (
+                  <ChevronRightIcon sx={{ verticalAlign: 'middle' }} />
+                )}
               </Box>
             ) : null,
         },
@@ -223,20 +228,24 @@ export default function BudgetTable(props) {
               <Grid container>
                 <PopupState variant="popover" popupId={`popover-${props.row.original.categoryId}`}>
                   {popupState => (
-                    <div>
-                      <div
+                    <Box>
+                      <Box
                         style={{
                           display: 'inline-block',
                           paddingRight: '5px',
                           ...(!props.row.original.trackingAccountId && {
                             cursor: 'pointer',
                           }),
-                          // fontWeight: 'bold',
+                          ...(!props.row.original.groupId && {
+                            fontSize: theme.typography.subtitle1.fontSize,
+                            fontWeight: 'bold',
+                          }),
                         }}
                         {...(!props.row.original.trackingAccountId && bindTrigger(popupState))}
                       >
                         {props.row.values.name}
-                      </div>
+                      </Box>
+
                       {!props.row.original.groupId && (
                         <CategoryGroupForm
                           popupState={popupState}
@@ -256,7 +265,7 @@ export default function BudgetTable(props) {
                           categoryGroupId={props.row.original.groupId}
                         />
                       )}
-                    </div>
+                    </Box>
                   )}
                 </PopupState>
                 {!props.row.original.groupId && !props.row.original.trackingAccountId && (
@@ -356,20 +365,7 @@ export default function BudgetTable(props) {
           Cell: props => {
             const balance = valueToDinero(props.cell.value)
             const value = intlFormat(balance)
-            const fontColor = isZero(balance) ? theme.palette.grey[800] : theme.palette.background.default
-
-            // if (!props.row.original.groupId) {
-            //   return (
-            //     <Box
-            //       sx={{
-            //         mr: 1,
-            //         color: theme.palette.grey[600],
-            //       }}
-            //     >
-            //       {value}
-            //     </Box>
-            //   )
-            // }
+            const fontColor = isZero(balance) ? theme.palette.grey[800] : 'black'
 
             let color = 'default'
             if (props.row.original.trackingAccountId) {
@@ -408,6 +404,7 @@ export default function BudgetTable(props) {
               //     fontSize: theme.typography.subtitle2.fontSize,
               //     ...(color !== 'default' && { fontWeight: '900' }),
               //     color: color === 'default' ? theme.palette.grey[600] : theme.palette[color].main,
+              //     fontWeight: 'bold',
               //   }}
               // >
               //   {value}
@@ -416,6 +413,15 @@ export default function BudgetTable(props) {
 
             if (!props.row.original.groupId) {
               chip = <Typography variant="subtitle2">{value}</Typography>
+
+              if (props.row.original.trackingAccountId === true) {
+                // in case we want to add additional text or tooltip to the CC payment balance?
+                chip = (
+                  <Box>
+                    <Typography variant="subtitle2">{value}</Typography>
+                  </Box>
+                )
+              }
             }
 
             // Tooltip for CC warning
@@ -502,122 +508,119 @@ export default function BudgetTable(props) {
   return (
     <Box
       sx={{
-        // backgroundColor: theme.palette.background.tableBody,
+        backgroundColor: theme.palette.background.tableBody,
         display: 'grid',
         gridTemplateColums: '1fr',
         gridTemplateRows: 'auto 1fr auto',
         height: '100vh',
       }}
     >
-      <Box
-        sx={
-          {
-            // backgroundColor: theme.palette.background.tableBody,
-          }
-        }
-      >
-        <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
+      <TableContainer component={Box}>
+        <Table stickyHeader {...getTableProps()} size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell colSpan={5} sx={{ padding: 0 }}>
+                <Box
+                  sx={{
+                    backgroundColor: theme.palette.background.tableBody,
+                  }}
+                >
+                  <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
 
-        <Divider sx={{ borderColor: theme.palette.action.hover }} />
+                  <Divider sx={{ borderColor: theme.palette.action.hover }} />
 
-        <Stack direction="row" alignItems="center">
-          <ButtonGroup variant="text" aria-label="outlined button group">
-            <PopupState variant="popover" popupId="popover-category-group">
-              {popupState => (
-                <>
-                  <Button size="small" {...bindTrigger(popupState)}>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <AddCircleIcon
-                        style={{
-                          fontSize: theme.typography.subtitle2.fontSize,
-                        }}
-                      />
-                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                        Category Group
-                      </Typography>
-                    </Stack>
-                  </Button>
-                  <CategoryGroupForm popupState={popupState} mode={'create'} order={0} />
-                </>
-              )}
-            </PopupState>
-          </ButtonGroup>
-        </Stack>
+                  <Stack direction="row" alignItems="center">
+                    <ButtonGroup variant="text" aria-label="outlined button group">
+                      <PopupState variant="popover" popupId="popover-category-group">
+                        {popupState => (
+                          <>
+                            <Button size="small" {...bindTrigger(popupState)}>
+                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <AddCircleIcon
+                                  style={{
+                                    fontSize: theme.typography.subtitle2.fontSize,
+                                  }}
+                                />
+                                <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                                  Category Group
+                                </Typography>
+                              </Stack>
+                            </Button>
+                            <CategoryGroupForm popupState={popupState} mode={'create'} order={0} />
+                          </>
+                        )}
+                      </PopupState>
+                    </ButtonGroup>
+                  </Stack>
 
-        <Divider sx={{ borderColor: theme.palette.action.hover }} />
-      </Box>
-
-      <Box
-        sx={{
-          overflowY: 'auto',
-        }}
-      >
-        <TableContainer component={Box}>
-          <Table {...getTableProps()} size="small">
-            <TableHead>
-              {headerGroups.map(headerGroup => (
-                <TableRow {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map(column => {
+                  {/* <Divider sx={{ borderColor: theme.palette.action.hover }} /> */}
+                </Box>
+              </TableCell>
+            </TableRow>
+            {headerGroups.map(headerGroup => (
+              <TableRow {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map(column => {
+                  return (
+                    <TableCell
+                      {...column.getHeaderProps()}
+                      sx={{
+                        ...(column.id === 'expander' && { width: '10px' }),
+                        fontSize: theme.typography.caption.fontSize,
+                        top: 128,
+                        backgroundColor: theme.palette.background.tableBody,
+                      }}
+                    >
+                      {column.render('Header')}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableHead>
+          <TableBody>
+            {rows.map((row, i) => {
+              prepareRow(row)
+              return (
+                <TableRow
+                  {...row.getRowProps({
+                    ...(!row.original.groupId && { sx: { backgroundColor: theme.palette.action.hover } }),
+                  })}
+                  draggable="true"
+                  onDragStart={e => {
+                    DragState.row = row.original
+                  }}
+                  onDragEnter={e => {
+                    e.preventDefault()
+                    if (row.original.id !== DragState.row.id) {
+                      DragState.dropRow = row.original
+                    }
+                  }}
+                  onDragEnd={e => {
+                    if (DragState.dropRow !== -1) {
+                      reorderRows(DragState.row, DragState.dropRow)
+                    }
+                    DragState.row = -1
+                    DragState.dropRow = -1
+                  }}
+                >
+                  {row.cells.map(cell => {
                     return (
-                      <TableCell
-                        {...column.getHeaderProps()}
+                      <BudgetTableCell
+                        {...cell.getCellProps()}
                         sx={{
-                          ...(column.id === 'expander' && { width: '10px' }),
-                          fontSize: theme.typography.caption.fontSize,
+                          ...(cell.column.style && { ...cell.column.style }),
                         }}
                       >
-                        {column.render('Header')}
-                      </TableCell>
+                        {cell.render('Cell')}
+                      </BudgetTableCell>
                     )
                   })}
                 </TableRow>
-              ))}
-            </TableHead>
-            <TableBody>
-              {rows.map((row, i) => {
-                prepareRow(row)
-                return (
-                  <TableRow
-                    {...row.getRowProps({
-                      ...(!row.original.groupId && { sx: { backgroundColor: theme.palette.action.hover } }),
-                    })}
-                    draggable="true"
-                    onDragStart={e => {
-                      DragState.row = row.original
-                    }}
-                    onDragEnter={e => {
-                      e.preventDefault()
-                      if (row.original.id !== DragState.row.id) {
-                        DragState.dropRow = row.original
-                      }
-                    }}
-                    onDragEnd={e => {
-                      if (DragState.dropRow !== -1) {
-                        reorderRows(DragState.row, DragState.dropRow)
-                      }
-                      DragState.row = -1
-                      DragState.dropRow = -1
-                    }}
-                  >
-                    {row.cells.map(cell => {
-                      return (
-                        <BudgetTableCell
-                          {...cell.getCellProps()}
-                          sx={{
-                            ...(cell.column.style && { ...cell.column.style }),
-                          }}
-                        >
-                          {cell.render('Cell')}
-                        </BudgetTableCell>
-                      )
-                    })}
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   )
 }

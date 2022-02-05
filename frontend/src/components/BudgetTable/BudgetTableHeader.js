@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { selectActiveBudget, setCurrentMonth } from '../../redux/slices/Budgets'
 import IconButton from '@mui/material/IconButton'
 import { formatMonthFromDateString, getDateFromString } from '../../utils/Date'
-import { isNegative, isZero } from 'dinero.js'
+import { isZero } from 'dinero.js'
 import { getBalanceColor, inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
 import BudgetMonthPicker from '../BudgetMonthPicker'
 import Button from '@mui/material/Button'
@@ -129,7 +129,7 @@ export default function BudgetTableHeader(props) {
               style={{
                 fontSize: theme.typography.h5.fontSize,
                 fontWeight: 'bold',
-                color: theme.palette.background.default,
+                color: 'black',
               }}
             >
               {intlFormat(toBeBudgeted)}
@@ -137,8 +137,7 @@ export default function BudgetTableHeader(props) {
             <Typography
               style={{
                 fontSize: theme.typography.subtitle1.fontSize,
-                // fontWeight: 'bold',
-                color: theme.palette.background.default,
+                color: 'black',
               }}
             >
               Available To Budget
