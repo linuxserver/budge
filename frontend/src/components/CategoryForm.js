@@ -93,7 +93,7 @@ export default function NewCategoryDialog(props) {
             )
           })}
         </Select>
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0}>
+        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0} sx={{ pt: 2 }}>
           <Button size="small" onClick={submit}>
             {props.mode === 'create' ? 'Add' : 'Edit'}
           </Button>

@@ -223,6 +223,29 @@ export default function BudgetTable(props) {
         {
           accessor: 'name',
           Header: 'CATEGORY',
+          Header: () => (
+            <PopupState variant="popover" popupId="popover-category-group">
+              {popupState => (
+                <>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.5}
+                    {...bindTrigger(popupState)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <Typography style={{ fontSize: theme.typography.caption.fontSize }}>CATEGORY</Typography>
+                    <AddCircleIcon
+                      style={{
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      }}
+                    />
+                  </Stack>
+                  <CategoryGroupForm popupState={popupState} mode={'create'} order={0} />
+                </>
+              )}
+            </PopupState>
+          ),
           Cell: props => {
             return (
               <Grid container>
@@ -526,34 +549,6 @@ export default function BudgetTable(props) {
                   }}
                 >
                   <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
-
-                  <Divider sx={{ borderColor: theme.palette.action.hover }} />
-
-                  <Stack direction="row" alignItems="center">
-                    <ButtonGroup variant="text" aria-label="outlined button group">
-                      <PopupState variant="popover" popupId="popover-category-group">
-                        {popupState => (
-                          <>
-                            <Button size="small" {...bindTrigger(popupState)}>
-                              <Stack direction="row" alignItems="center" spacing={0.5}>
-                                <AddCircleIcon
-                                  style={{
-                                    fontSize: theme.typography.subtitle2.fontSize,
-                                  }}
-                                />
-                                <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                                  Category Group
-                                </Typography>
-                              </Stack>
-                            </Button>
-                            <CategoryGroupForm popupState={popupState} mode={'create'} order={0} />
-                          </>
-                        )}
-                      </PopupState>
-                    </ButtonGroup>
-                  </Stack>
-
-                  {/* <Divider sx={{ borderColor: theme.palette.action.hover }} /> */}
                 </Box>
               </TableCell>
             </TableRow>
@@ -566,7 +561,7 @@ export default function BudgetTable(props) {
                       sx={{
                         ...(column.id === 'expander' && { width: '10px' }),
                         fontSize: theme.typography.caption.fontSize,
-                        top: 128,
+                        top: 101,
                         backgroundColor: theme.palette.background.tableBody,
                       }}
                     >

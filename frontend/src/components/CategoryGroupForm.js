@@ -60,13 +60,13 @@ export default function NewCategoryDialog(props) {
           id="name"
           value={name}
           onChange={event => setName(event.target.value)}
-          label="Name"
+          label="Group"
           type="text"
           variant="standard"
         />
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2} sx={{ pt: 2 }}>
           <Button size="small" onClick={submit}>
-            {props.mode === 'create' ? 'Add' : 'Edit'}
+            {props.mode === 'create' ? 'Add Group' : 'Edit Group'}
           </Button>
         </Stack>
       </Box>
