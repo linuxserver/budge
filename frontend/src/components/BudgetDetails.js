@@ -27,7 +27,7 @@ export default function BudgetDetails(props) {
 
   console.log(theme)
   return (
-    <Stack justifyContent="space-between" alignItems="center" spacing={2} sx={{ width: '100%', height: '100%', p: 2 }}>
+    <Stack justifyContent="space-between" alignItems="center" sx={{ width: '100%', height: '100%', p: 2, pl: 0 }}>
       <Stack
         spacing={2}
         sx={{
