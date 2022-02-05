@@ -10,7 +10,6 @@ export class CategorySubscriber implements EntitySubscriberInterface<Category> {
   }
 
   async afterInsert(event: InsertEvent<Category>) {
-    console.log('new category was created')
     const category = event.entity
     const manager = event.manager
 
@@ -25,7 +24,6 @@ export class CategorySubscriber implements EntitySubscriberInterface<Category> {
       }),
     )
 
-    console.log(`inserting ${categoryMonths.length} new category months`)
     await manager.insert(CategoryMonth, categoryMonths)
   }
 }

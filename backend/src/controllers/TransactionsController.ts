@@ -275,7 +275,9 @@ export class TransactionsController extends Controller {
         .getRepository(Transaction)
         .find({ where: { id: In(requestBody.ids) } })
       requestBody.ids.map(id => TransactionCache.enableTransfers(id))
-      await getManager().getRepository(Transaction).remove(transactions)
+      for (const transaction of transactions) {
+        await getManager().getRepository(Transaction).remove(transaction)
+      }
 
       return {
         message: 'success',

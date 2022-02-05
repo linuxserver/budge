@@ -6,7 +6,9 @@ import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../models/Budget
 import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../models/BudgetMonth'
-import { getRepository, MoreThanOrEqual } from 'typeorm'
+import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
+import { BudgetMonths } from '../repositories/BudgetMonths'
+import { getMonthStringFromNow } from '../utils'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -120,13 +122,17 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      let budget: Budget = await getRepository(Budget).findOne(id)
+      const budget: Budget = await getRepository(Budget).findOne(id)
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
           message: 'Not found',
         }
       }
+
+      // Ensure that a budget month for next month exists
+      // @TODO: create ALL budget months since the last one - what if someone hasn't logged in for several months?
+      await getCustomRepository(BudgetMonths).findOrCreate(id, getMonthStringFromNow(1))
 
       return {
         message: 'success',

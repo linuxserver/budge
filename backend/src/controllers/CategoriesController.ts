@@ -381,7 +381,6 @@ export class CategoriesController extends Controller {
           ...(from && { month: MoreThanOrEqual(from) }),
         },
       }
-      console.log(findParams)
       const categoryMonths = await getRepository(CategoryMonth).find(findParams)
 
       return {

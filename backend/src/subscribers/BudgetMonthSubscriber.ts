@@ -24,43 +24,48 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
   }
 
   async afterInsert(event: InsertEvent<BudgetMonth>) {
-    // console.log('created new budget month')
-    // const budgetMonth = event.entity
-    // const manager = event.manager
-    // const prevMonth = getDateFromString(budgetMonth.month)
-    // prevMonth.setMonth(prevMonth.getMonth() - 1)
-    // const prevBudgetMonth = await manager.findOne(BudgetMonth, {
-    //   budgetId: budgetMonth.budgetId,
-    //   month: formatMonthFromDateString(prevMonth),
-    // })
-    // if (!prevBudgetMonth) {
-    //   return
-    // }
-    // // Find all categories with previous balances to update the new month with
-    // const previousCategoryMonths = await manager.getRepository(CategoryMonth).find({
-    //   budgetMonthId: prevBudgetMonth.id,
-    // })
-    // for (const previousCategoryMonth of previousCategoryMonths) {
-    //   if (isZero(previousCategoryMonth.balance)) {
-    //     continue
-    //   }
-    //   if (isPositive(previousCategoryMonth.balance)) {
-    //     await manager.insert(CategoryMonth, {
-    //       budgetMonthId: budgetMonth.id,
-    //       month: budgetMonth.month,
-    //       balance: previousCategoryMonth.balance,
-    //     })
-    //   }
-    //   const category = await manager.findOne(Category, {
-    //     id: previousCategoryMonth.categoryId,
-    //   })
-    //   if (isNegative(previousCategoryMonth.balance) && category.trackingAccountId) {
-    //     await manager.insert(CategoryMonth, {
-    //       budgetMonthId: budgetMonth.id,
-    //       month: budgetMonth.month,
-    //       balance: previousCategoryMonth.balance,
-    //     })
-    //   }
-    // }
+    const budgetMonth = event.entity
+    const manager = event.manager
+    const prevMonth = getDateFromString(budgetMonth.month)
+    prevMonth.setMonth(prevMonth.getMonth() - 1)
+
+    const prevBudgetMonth = await manager.findOne(BudgetMonth, {
+      budgetId: budgetMonth.budgetId,
+      month: formatMonthFromDateString(prevMonth),
+    })
+
+    if (!prevBudgetMonth) {
+      return
+    }
+
+    // Find all categories with previous balances to update the new month with
+    const previousCategoryMonths = await manager.getRepository(CategoryMonth).find({
+      budgetMonthId: prevBudgetMonth.id,
+    })
+
+    // Create a category month for each category in this new budget month
+    for (const previousCategoryMonth of previousCategoryMonths) {
+      let prevBalance = dinero({ amount: 0, currency: USD })
+      if (isPositive(previousCategoryMonth.balance)) {
+        prevBalance = previousCategoryMonth.balance
+      } else {
+        const category = await manager.findOne(Category, {
+          id: previousCategoryMonth.categoryId,
+        })
+
+        if (isNegative(previousCategoryMonth.balance) && category.trackingAccountId) {
+          prevBalance = previousCategoryMonth.balance
+        }
+      }
+
+      await manager.insert(CategoryMonth, {
+        budgetMonthId: budgetMonth.id,
+        categoryId: previousCategoryMonth.categoryId,
+        month: budgetMonth.month,
+        balance: prevBalance,
+        activity: dinero({ amount: 0, currency: USD }),
+        budgeted: dinero({ amount: 0, currency: USD }),
+      })
+    }
   }
 }
