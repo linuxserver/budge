@@ -1,10 +1,7 @@
 # BudgE
-BudgE (pronounced "budgie") is an open source "budgeting with envelopes" personal finance app.
+BudgE (pronounced "budgie", like the bird) is an open source "budgeting with envelopes" personal finance app.
 
 :warning: BudgE still under active development and considered an 'alpha' version until more tests can be written to ensure functionality is maintained. :warning:
-
-![Budget](images/budget.png)
-![Account](images/account.png)
 
 # Current Features
 - Multi user support
