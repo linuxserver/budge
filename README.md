@@ -7,6 +7,7 @@ BudgE (pronounced "budgie") is a "budgeting with envelopes" personal finance app
 ![Account](images/account.png)
 
 # Current Features
+- Multi user support
 - Envelope budgeting with monthly rollover
 - Transaction management for accounts
 - Standard bank account management
@@ -15,6 +16,7 @@ BudgE (pronounced "budgie") is a "budgeting with envelopes" personal finance app
 - Transaction export
 
 # Planned Features
+- [ ] Multiple budges per user (already started)
 - [ ] CSV file import
 - [ ] Goals
 - [ ] Reports
@@ -23,4 +25,4 @@ BudgE (pronounced "budgie") is a "budgeting with envelopes" personal finance app
 - [ ] Mobile view for transaction input on the go!
 
 # Getting Started
-There is a live demo located at
+Documentation to come
