@@ -11,7 +11,7 @@ async function readCSV(file) {
     let rows = []
     let first = true
     fs.createReadStream(file)
-      .pipe(csv({bom: true}))
+      .pipe(csv({ bom: true }))
       .on('data', function (row) {
         if (first === true) {
           first = false
@@ -46,9 +46,12 @@ class BudgE {
   }
 
   async login(email, password) {
-    const response = (await this.makeRequest(`login`, 'post', { json: {
-      email, password
-    }}))
+    const response = await this.makeRequest(`login`, 'post', {
+      json: {
+        email,
+        password,
+      },
+    })
     this.token = response.token
 
     const budgets = await this.getBudgets()
@@ -67,19 +70,26 @@ class BudgE {
     return response
   }
 
-  async findOrCreateAccount (name, type, balance, date) {
+  async findOrCreateAccount(name, type, balance, date) {
     const accounts = (await this.makeRequest(`budgets/${this.budgetId}/accounts`)).data
     let filtered = accounts.filter(account => account.name === name)
     if (filtered.length === 1) {
       return filtered[0]
     }
 
-    return (await this.makeRequest(`budgets/${this.budgetId}/accounts`, 'post', { json: {
-      name, type, balance: balance.toJSON().amount, date: date.toISOString().split('T')[0]
-    } })).data
+    return (
+      await this.makeRequest(`budgets/${this.budgetId}/accounts`, 'post', {
+        json: {
+          name,
+          type,
+          balance: balance.toJSON().amount,
+          date: date.toISOString().split('T')[0],
+        },
+      })
+    ).data
   }
 
-  async findOrCreateCategoryGroup (name) {
+  async findOrCreateCategoryGroup(name) {
     const categoryGroups = (await this.makeRequest(`budgets/${this.budgetId}/categories`)).data
 
     let filtered = categoryGroups.filter(group => group.name === name)
@@ -88,14 +98,16 @@ class BudgE {
     }
 
     try {
-      return (await this.makeRequest(`budgets/${this.budgetId}/categories/groups`, 'post', { json: { name, order: 0 } })).data
+      return (
+        await this.makeRequest(`budgets/${this.budgetId}/categories/groups`, 'post', { json: { name, order: 0 } })
+      ).data
     } catch (err) {
       console.log(err.response.body)
       process.exit()
     }
   }
 
-  async findOrCreateCategory (name, categoryGroupId) {
+  async findOrCreateCategory(name, categoryGroupId) {
     const categoryGroups = (await this.makeRequest(`budgets/${this.budgetId}/categories`)).data
     const categories = categoryGroups.reduce((acc, group) => {
       return acc.concat(group.categories)
@@ -108,7 +120,11 @@ class BudgE {
 
     try {
       console.log(`Creating category ${name}`)
-      return (await this.makeRequest(`budgets/${this.budgetId}/categories`, 'post', { json: { name, categoryGroupId, order: 0 } })).data
+      return (
+        await this.makeRequest(`budgets/${this.budgetId}/categories`, 'post', {
+          json: { name, categoryGroupId, order: 0 },
+        })
+      ).data
     } catch (err) {
       console.log(err.response.body)
       process.exit()
@@ -132,7 +148,11 @@ class BudgE {
   }
 
   async updateCategoryMonth(categoryId, month, budgeted) {
-    return (await this.makeRequest(`budgets/${this.budgetId}/categories/${categoryId}/${month}`, 'put', { json: { budgeted } })).data
+    return (
+      await this.makeRequest(`budgets/${this.budgetId}/categories/${categoryId}/${month}`, 'put', {
+        json: { budgeted },
+      })
+    ).data
   }
 
   async makeRequest(url, method = 'get', options = {}) {
@@ -141,7 +161,7 @@ class BudgE {
       headers: {
         'x-access-token': this.token,
         Accept: 'application/json',
-      }
+      },
     })
 
     return JSON.parse(response.body)
@@ -194,8 +214,8 @@ class YNAB {
 
       let retval = []
       for (const date in dates) {
-        const year = (new Date(date)).getFullYear()
-        const month = (new Date(date)).getMonth() + 1
+        const year = new Date(date).getFullYear()
+        const month = new Date(date).getMonth() + 1
         retval.push({
           budgeted: dates[date],
           month: `${year}-${month}-01`,
@@ -226,9 +246,8 @@ class YNAB {
         name: group,
         categories: groups[group].map(category => {
           return { name: category }
-        })
+        }),
       })
-
     }
 
     return retval
@@ -250,15 +269,15 @@ class YNAB {
       budgetDate.setHours(12)
 
       retval.push({
-        "name": row[3],
-        "month": budgetDate,
-        "budgeted": parseInt(row[4].replace('$', '').replace('.', '')),
-        "activity": parseInt(row[5].replace('$', '').replace('.', '')),
-        "balance": parseInt(row[6].replace('$', '').replace('.', '')),
+        name: row[3],
+        month: budgetDate,
+        budgeted: parseInt(row[4].replace('$', '').replace('.', '')),
+        activity: parseInt(row[5].replace('$', '').replace('.', '')),
+        balance: parseInt(row[6].replace('$', '').replace('.', '')),
       })
     }
 
-    retval = retval.sort(function(a,b){
+    retval = retval.sort(function (a, b) {
       return b.date - a.date
     })
 
@@ -281,16 +300,16 @@ class YNAB {
     const rows = await readCSV(this.budgetFile)
     for (const row of rows) {
       let budgetDate = new Date(row[0])
-      if (`${budgetDate.getFullYear()}-${(budgetDate.getMonth()) + 1}-01` !== month) {
+      if (`${budgetDate.getFullYear()}-${budgetDate.getMonth() + 1}-01` !== month) {
         continue
       }
 
       if (categoryName === row[3]) {
         return {
-          "name": categoryName,
-          "budgeted": parseFloat(row[4].replace('$', '')) * 1000,
-          "activity": parseFloat(row[5].replace('$', '')) * 1000,
-          "balance": parseFloat(row[6].replace('$', '')) * 1000,
+          name: categoryName,
+          budgeted: parseFloat(row[4].replace('$', '')) * 1000,
+          activity: parseFloat(row[5].replace('$', '')) * 1000,
+          balance: parseFloat(row[6].replace('$', '')) * 1000,
         }
       }
     }
@@ -326,19 +345,19 @@ class YNAB {
           break
       }
       retval.push({
-        "original_date": row[2],
-        "date": getDateFromCSVString(row[2]),
-        "amount": dinero({ amount, currency: USD }),
-        "memo": row[7],
-        "status": status,
-        "account_name": row[0],
-        "payee_name": row[3],
-        "category_name": row[6],
+        original_date: row[2],
+        date: getDateFromCSVString(row[2]),
+        amount: dinero({ amount, currency: USD }),
+        memo: row[7],
+        status: status,
+        account_name: row[0],
+        payee_name: row[3],
+        category_name: row[6],
       })
     }
 
-    return retval.sort(function(a,b){
-      return b.date - a.date;
+    return retval.sort(function (a, b) {
+      return b.date - a.date
     })
   }
 
@@ -349,23 +368,27 @@ class YNAB {
     return (await this.makeRequest('transactions')).transactions.map(transaction => ({
       ...transaction,
       amount: dinero({ amount: transaction.amount, currency: USD, scale: 3 }),
-      date: getDateFromAPIString(transaction.date)
+      date: getDateFromAPIString(transaction.date),
     }))
   }
 
   async makeRequest(endpoint, method = 'get') {
     process.exit()
     console.log(`YNAB REQUEST: https://api.youneedabudget.com/v1/budgets/${this.budgetId}/${endpoint}`)
-    return JSON.parse((await got[method](`https://api.youneedabudget.com/v1/budgets/${this.budgetId}/${endpoint}`, {
-      headers: {
-        Authorization: `Bearer ${this.token}`
-      }
-    })).body).data
+    return JSON.parse(
+      (
+        await got[method](`https://api.youneedabudget.com/v1/budgets/${this.budgetId}/${endpoint}`, {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+          },
+        })
+      ).body,
+    ).data
   }
 }
 
-(async () => {
-  const loginInfo = (await prompt.get([
+;(async () => {
+  const loginInfo = await prompt.get([
     {
       description: 'Budg-E URL (ex: https://budg-e.mydomain.com)',
       name: 'host',
@@ -375,45 +398,50 @@ class YNAB {
       description: 'Budg-E email',
       name: 'email',
       required: true,
-    }, {
+    },
+    {
       description: 'Budg-E password',
       name: 'password',
       hidden: true,
-    }]
-  ))
+    },
+  ])
 
   const budge = new BudgE(loginInfo.host)
   await budge.login(loginInfo.email, loginInfo.password)
 
-  const fileInfo = (await prompt.get([{
+  const fileInfo = await prompt.get([
+    {
       description: 'Budget CSV Location',
       name: 'budget',
       required: true,
-      default: "budget.csv",
-    }, {
+      default: 'budget.csv',
+    },
+    {
       description: 'Register CSV Location',
       name: 'register',
       required: true,
-      default: "register.csv",
-    }]
-  ))
+      default: 'register.csv',
+    },
+  ])
   const ynab = new YNAB('', '', fileInfo.register, fileInfo.budget)
 
   if (!fs.existsSync(fileInfo.register) || !fs.existsSync(fileInfo.budget)) {
-    console.log("Budget or register file does not exist.")
+    console.log('Budget or register file does not exist.')
     process.exit(1)
   }
 
   const importMap = []
   let ynab_accounts = await ynab.getAccounts()
   for (let ynab_account of ynab_accounts) {
-    const run = (await prompt.get({
-      name: 'yesno',
-      message: `Import account ${ynab_account.name}?`,
-      validator: /y[es]*|n[o]?/,
-      warning: 'Must respond yes or no',
-      default: 'no'
-    })).yesno
+    const run = (
+      await prompt.get({
+        name: 'yesno',
+        message: `Import account ${ynab_account.name}?`,
+        validator: /y[es]*|n[o]?/,
+        warning: 'Must respond yes or no',
+        default: 'no',
+      })
+    ).yesno
 
     if (run === 'no') {
       continue
@@ -429,26 +457,30 @@ class YNAB {
         break
       case undefined:
         console.log(`\nAccount '${ynab_account.name}' type is unknown, specify the account type: `)
-        newAccountType = (await prompt.get({
-          name: 'accounttype',
-          message: 'Account type is unknown, specify the account type: 0 = Bank, 1 = Credit Card, 2 = Tracking',
-          validator: /0|1|2/,
-          warning: 'Must respond 0, 1, or 2',
-          default: 0,
-        })).accounttype
+        newAccountType = (
+          await prompt.get({
+            name: 'accounttype',
+            message: 'Account type is unknown, specify the account type: 0 = Bank, 1 = Credit Card, 2 = Tracking',
+            validator: /0|1|2/,
+            warning: 'Must respond 0, 1, or 2',
+            default: 0,
+          })
+        ).accounttype
         break
       default:
         console.log(`skipping account ${ynab_account.name}: ${ynab_account.type}`)
         continue
     }
 
-    const transfer = (await prompt.get({
-      name: 'transfer',
-      message: `Run transfers for account ${ynab_account.name}?`,
-      validator: /y[es]*|n[o]?/,
-      warning: 'Must respond yes or no',
-      default: 'no'
-    })).transfer
+    const transfer = (
+      await prompt.get({
+        name: 'transfer',
+        message: `Run transfers for account ${ynab_account.name}?`,
+        validator: /y[es]*|n[o]?/,
+        warning: 'Must respond yes or no',
+        default: 'no',
+      })
+    ).transfer
 
     importMap.push({
       ...ynab_account,
@@ -470,7 +502,7 @@ class YNAB {
     }
   }
 
-  const transactions = (await ynab.getTransactions()).sort(function(a,b){
+  const transactions = (await ynab.getTransactions()).sort(function (a, b) {
     return a.date - b.date
   })
 
@@ -480,13 +512,23 @@ class YNAB {
 
     // Create account with starting balance
     for (let transaction of transactions) {
-      if (transaction.payee_name == "Starting Balance" && transaction.account_name === ynab_account.name) {
+      if (transaction.payee_name == 'Starting Balance' && transaction.account_name === ynab_account.name) {
         console.log(`Setting starting balance of account ${ynab_account.name} to ${toUnit(transaction.amount)}`)
 
         if (ynab_account.new_account_type == 1) {
-          account = await budge.findOrCreateAccount(ynab_account.name, ynab_account.new_account_type, multiply(transaction.amount, -1), transaction.date)
+          account = await budge.findOrCreateAccount(
+            ynab_account.name,
+            ynab_account.new_account_type,
+            multiply(transaction.amount, -1),
+            transaction.date,
+          )
         } else {
-          account = await budge.findOrCreateAccount(ynab_account.name, ynab_account.new_account_type, transaction.amount, transaction.date)
+          account = await budge.findOrCreateAccount(
+            ynab_account.name,
+            ynab_account.new_account_type,
+            transaction.amount,
+            transaction.date,
+          )
         }
       }
     }
@@ -497,7 +539,7 @@ class YNAB {
 
     // Pull in transactions, but skip transfers until all accounts are in
     for (let transaction of transactions) {
-      if (transaction.payee_name == "Starting Balance" || transaction.account_name !== ynab_account.name) {
+      if (transaction.payee_name == 'Starting Balance' || transaction.account_name !== ynab_account.name) {
         continue
       }
 
@@ -505,7 +547,11 @@ class YNAB {
         continue
       }
 
-      console.log(`Importing transaction: ${transaction.payee_name}, ${toUnit(transaction.amount)}, ${transaction.date.toISOString().split('T')[0]}`)
+      console.log(
+        `Importing transaction: ${transaction.payee_name}, ${toUnit(transaction.amount)}, ${
+          transaction.date.toISOString().split('T')[0]
+        }`,
+      )
       let category = null
       if (transaction.category_name === 'Ready to Assign') {
         transaction.category_name = 'To be Budgeted'
@@ -537,7 +583,11 @@ class YNAB {
           continue
         }
 
-        console.log(`Importing transaction: ${transaction.payee_name}, ${toUnit(transaction.amount)}, ${transaction.date.toISOString().split('T')[0]}`)
+        console.log(
+          `Importing transaction: ${transaction.payee_name}, ${toUnit(transaction.amount)}, ${
+            transaction.date.toISOString().split('T')[0]
+          }`,
+        )
         let category = null
         if (transaction.category_name === 'Ready to Assign') {
           transaction.category_name = 'To be Budgeted'
