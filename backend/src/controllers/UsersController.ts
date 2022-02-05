@@ -1,5 +1,5 @@
 import { UserResponse } from '../models/User'
-import { Get, Route, Path, Security, Post, Patch, Body, Controller, Tags, Request, Example } from 'tsoa'
+import { Get, Route, Path, Security, Post, Put, Body, Controller, Tags, Request, Example } from 'tsoa'
 import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
@@ -85,7 +85,7 @@ export class UsersController extends Controller {
    * @example email "alex@example.com"
    */
   @Security('jwtRequired')
-  @Patch('{email}')
+  @Put()
   @Example<UserResponse>({
     message: 'success',
     data: {
@@ -96,18 +96,9 @@ export class UsersController extends Controller {
     },
   })
   public async updateUser(
-    @Path() email: string,
     @Body() requestBody: UserUpdateRequest,
     @Request() request: ExpressRequest,
   ): Promise<UserResponse | ErrorResponse> {
-    // currently, only allowed to edit your own user
-    if (request.user.email !== email) {
-      this.setStatus(404)
-      return {
-        message: 'Not found',
-      }
-    }
-
     if (requestBody.password && requestBody.currentPassword) {
       if (!request.user.checkPassword(requestBody.currentPassword)) {
         this.setStatus(400)
@@ -116,18 +107,22 @@ export class UsersController extends Controller {
         }
       }
 
-      requestBody.password = User.hashPassword(requestBody.password)
+      request.user.password = requestBody.password
     } else {
       delete requestBody.password
     }
 
     delete requestBody.currentPassword
 
+    if (requestBody.email) {
+      request.user.email = requestBody.email
+    }
+
     try {
-      let user: User = await getRepository(User).findOne(request.user.id)
-      user = await getRepository(User).merge(user, { ...requestBody })
+      await getRepository(User).save(request.user)
+
       return {
-        data: await user.toResponseModel(),
+        data: await request.user.toResponseModel(),
         message: 'success',
       }
     } catch (err) {
