@@ -73,7 +73,7 @@ export default function App(props) {
         header: '#505a5e',
         tableBody: '#ffffff',
         tableHeader: '#333333',
-        details: '#505a5e',
+        details: '#333333',
       },
       primary: {
         main: '#333333',

@@ -5,6 +5,10 @@ export const login = createAsyncThunk('user/login', async ({ email, password }) 
   return await api.login(email, password)
 })
 
+export const updateUser = createAsyncThunk('user/update', async ({ email, password, currentPassword }) => {
+  return await api.updateUser(email, password, currentPassword)
+})
+
 const userSlice = createSlice({
   name: 'users',
   initialState: {
@@ -29,6 +33,10 @@ const userSlice = createSlice({
   },
   extraReducers: {
     [login.fulfilled]: (state, action) => {
+      state.user = action.payload
+    },
+
+    [updateUser.fulfilled]: (state, action) => {
       state.user = action.payload
     },
 

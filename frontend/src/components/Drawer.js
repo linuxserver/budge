@@ -21,13 +21,16 @@ import { useTheme } from '@mui/styles'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state'
+import { usePopupState, bindTrigger, bindMenu } from 'material-ui-popup-state/hooks'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { accountsSelectors, editAccount, fetchAccounts } from '../redux/slices/Accounts'
 import { setTheme } from '../redux/slices/App'
 import { selectActiveBudget } from '../redux/slices/Budgets'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
+import Modal from '@mui/material/Modal'
+import Box from '@mui/material/Box'
+import Settings from './Settings/Settings'
 
 const drawerWidth = 300
 
@@ -48,6 +51,12 @@ export default function AppDrawer(props) {
    */
   const [accountsListOpen, setAccountsListOpen] = useState({ BUDGET: true, TRACKING: true })
   const [selectedItem, setSelectedItem] = useState('Budget')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const menuPopupState = usePopupState({
+    variant: 'popover',
+    popupId: 'drawer-menu',
+  })
 
   /**
    * Redux block
@@ -152,6 +161,15 @@ export default function AppDrawer(props) {
     dispatch(fetchAccounts())
   }
 
+  const openSettings = () => {
+    menuPopupState.close()
+    setSettingsOpen(true)
+  }
+
+  const closeSettings = () => {
+    setSettingsOpen(false)
+  }
+
   const AccountItem = account => {
     const balance = valueToDinero(account.balance)
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
@@ -213,89 +231,87 @@ export default function AppDrawer(props) {
   }
 
   return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-      }}
-    >
-      <List>
-        <PopupState variant="popover" popupId="demo-popup-menu">
-          {popupState => (
-            <React.Fragment>
-              <ListItemButton {...bindTrigger(popupState)}>
-                <ListItemText primary={budget.name} />
-                <ExpandMore sx={{ color: theme.palette.secondary.main }} />
-              </ListItemButton>
-              <Menu MenuListProps={{ dense: true }} {...bindMenu(popupState)}>
-                {/* <MenuItem onClick={popupState.close}>Profile</MenuItem>
-                <MenuItem onClick={popupState.close}>My account</MenuItem> */}
-                <MenuItem onClick={logout}>Logout</MenuItem>
-              </Menu>
-            </React.Fragment>
-          )}
-        </PopupState>
-      </List>
+    <>
+      <Settings close={setSettingsOpen} open={settingsOpen} close={closeSettings} />
 
-      <List>
-        {menuItems.map((menuItemConfig, index) => (
-          <ListItemButton
-            key={menuItemConfig.name}
-            onClick={() => listItemClicked(menuItemConfig.name, menuItemConfig.path)}
-            selected={selectedItem === menuItemConfig.name}
-          >
-            <ListItemIcon style={{ minWidth: '40px' }}>
-              {index % 2 === 0 ? <AccountBalanceIcon sx={{ color: theme.palette.secondary.main }} /> : <MailIcon />}
-            </ListItemIcon>
-            <ListItemText primary={menuItemConfig.name} />
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+        }}
+      >
+        <List>
+          <ListItemButton {...bindTrigger(menuPopupState)}>
+            <ListItemText primary={budget.name} />
+            <ExpandMore sx={{ color: theme.palette.secondary.main }} />
           </ListItemButton>
-        ))}
-      </List>
 
-      <Divider />
+          <Menu MenuListProps={{ dense: true }} {...bindMenu(menuPopupState)}>
+            <MenuItem onClick={openSettings}>Settings</MenuItem>
+            <MenuItem onClick={logout}>Log Out</MenuItem>
+          </Menu>
+        </List>
 
-      {budgetAccounts.length > 0 && AccountList('BUDGET', budgetAccounts)}
+        <List>
+          {menuItems.map((menuItemConfig, index) => (
+            <ListItemButton
+              key={menuItemConfig.name}
+              onClick={() => listItemClicked(menuItemConfig.name, menuItemConfig.path)}
+              selected={selectedItem === menuItemConfig.name}
+            >
+              <ListItemIcon style={{ minWidth: '40px' }}>
+                {index % 2 === 0 ? <AccountBalanceIcon sx={{ color: theme.palette.secondary.main }} /> : <MailIcon />}
+              </ListItemIcon>
+              <ListItemText primary={menuItemConfig.name} />
+            </ListItemButton>
+          ))}
+        </List>
 
-      {trackingAccounts.length > 0 && AccountList('TRACKING', trackingAccounts)}
+        <Divider />
 
-      <List dense={true}>
-        <ListItemButton>
-          <ListItemIcon size="small" style={{ minWidth: '20px' }}>
-            <AddCircleIcon
-              style={{
-                color: theme.palette.secondary.main,
-                fontSize: theme.typography.subtitle2.fontSize,
-              }}
-            />
-          </ListItemIcon>
-          <ListItemText primary="Add Account" onClick={() => props.onAddAccountClick()} />
-        </ListItemButton>
-      </List>
+        {budgetAccounts.length > 0 && AccountList('BUDGET', budgetAccounts)}
 
-      <List dense={true} style={{ marginTop: 'auto' }}>
-        <ListItem disablePadding>
+        {trackingAccounts.length > 0 && AccountList('TRACKING', trackingAccounts)}
+
+        <List dense={true}>
           <ListItemButton>
-            <ListItemIcon>
-              {currentTheme === 'dark' ? (
-                <Brightness7Icon sx={{ color: theme.palette.secondary.main }} />
-              ) : (
-                <Brightness4Icon sx={{ color: theme.palette.secondary.main }} />
-              )}
+            <ListItemIcon size="small" style={{ minWidth: '20px' }}>
+              <AddCircleIcon
+                style={{
+                  color: theme.palette.secondary.main,
+                  fontSize: theme.typography.subtitle2.fontSize,
+                }}
+              />
             </ListItemIcon>
-            <ListItemText primary="Toggle Theme" onClick={toggleTheme} />
+            <ListItemText primary="Add Account" onClick={() => props.onAddAccountClick()} />
           </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <LogoutIcon sx={{ color: theme.palette.secondary.main }} />
-            </ListItemIcon>
-            <ListItemText primary="Log Out" onClick={logout} />
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </Drawer>
+        </List>
+
+        <List dense={true} style={{ marginTop: 'auto' }}>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                {currentTheme === 'dark' ? (
+                  <Brightness7Icon sx={{ color: theme.palette.secondary.main }} />
+                ) : (
+                  <Brightness4Icon sx={{ color: theme.palette.secondary.main }} />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Toggle Theme" onClick={toggleTheme} />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                <LogoutIcon sx={{ color: theme.palette.secondary.main }} />
+              </ListItemIcon>
+              <ListItemText primary="Log Out" onClick={logout} />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Drawer>
+    </>
   )
 }
