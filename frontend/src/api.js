@@ -36,6 +36,15 @@ export default class API {
     return response.data.data
   }
 
+  static async updateUser(email, password, currentPassword) {
+    const response = await axios.put('/api/users', {
+      email,
+      ...(password && currentPassword && { password, currentPassword }),
+    })
+
+    return response.data.data
+  }
+
   static async createBudget(name) {
     const response = await axios.post(`/api/budgets`, {
       name,
