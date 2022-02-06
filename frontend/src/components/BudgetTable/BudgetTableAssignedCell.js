@@ -90,15 +90,15 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
           ...(isZero(budgeted) && { color: theme.palette.grey[600] }),
         },
       }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            {/* <IconButton> */}
-            <CalculateOutlinedIcon color="secondary" fontSize="small" />
-            {/* </IconButton> */}
-          </InputAdornment>
-        ),
-      }}
+      // InputProps={{
+      //   startAdornment: (
+      //     <InputAdornment position="start">
+      //       {/* <IconButton> */}
+      //       <CalculateOutlinedIcon color="primary" fontSize="small" />
+      //       {/* </IconButton> */}
+      //     </InputAdornment>
+      //   ),
+      // }}
     />
   )
 }

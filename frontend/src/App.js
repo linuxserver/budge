@@ -11,8 +11,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import AddAccountDialog from './components/AddAccountDialog'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 
-const ColorModeContext = React.createContext({ toggleColorMode: () => {} })
-
 export default function App(props) {
   const theme = useSelector(state => state.app.theme)
 
@@ -29,15 +27,15 @@ export default function App(props) {
       secondary: {
         main: '#ffffff',
       },
-      success: {
-        main: '#32ae7b',
-      },
+      // success: {
+      //   main: '#16a085',
+      // },
       error: {
-        main: '#d66466',
+        main: '#e74c3c',
       },
-      warning: {
-        main: '#FAEF6E',
-      },
+      // warning: {
+      //   main: '#ffa84a',
+      // },
     },
     components: {
       MuiDrawer: {
@@ -57,7 +55,6 @@ export default function App(props) {
       // },
     },
     typography: {
-      // fontFamily: 'Lato',
       fontFamily: 'Nunito',
       // fontFamily: 'Varela Round',
       // fontFamily: 'IBM Plex Sans Condensed',
@@ -70,10 +67,15 @@ export default function App(props) {
       mode: 'light',
       background: {
         drawer: '#333333',
-        header: '#505a5e',
+        header: '#536067',
         tableBody: '#ffffff',
         tableHeader: '#333333',
         details: '#333333',
+        detailsContent: '#333333',
+      },
+      action: {
+        // disabledBackground: 'set color of background here',
+        // disabled: '#616161',
       },
       primary: {
         main: '#333333',
@@ -82,13 +84,13 @@ export default function App(props) {
         main: '#ffffff',
       },
       success: {
-        main: '#32ae7b',
+        main: '#16a085',
       },
       error: {
-        main: '#d66466',
+        main: '#e74c3c',
       },
       warning: {
-        main: '#FAEF6E',
+        main: '#ffa84a',
       },
     },
     components: {
@@ -102,7 +104,6 @@ export default function App(props) {
       },
     },
     typography: {
-      // fontFamily: 'Lato',
       fontFamily: 'Nunito',
       // fontFamily: 'Varela Round',
       // fontFamily: 'IBM Plex Sans Condensed',
