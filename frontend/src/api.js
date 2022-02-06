@@ -116,6 +116,14 @@ export default class API {
     return response.data.data
   }
 
+  static async createTransactions(transactions, budgetId) {
+    const response = await axios.post(`/api/budgets/${budgetId}/transactions/bulk`, {
+      transactions: transactions.map(transaction => ToAPI.transformTransaction(transaction)),
+    })
+
+    return response.data.data
+  }
+
   static async updateTransaction(transaction, budgetId) {
     const response = await axios.put(
       `/api/budgets/${budgetId}/transactions/${transaction.id}`,

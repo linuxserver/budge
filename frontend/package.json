@@ -15,6 +15,7 @@
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
     "axios": "^0.24.0",
+    "csv-parse": "^5.0.4",
     "dinero.js": "^2.0.0-alpha.8",
     "filefy": "^0.1.11",
     "lodash": "^4.17.21",

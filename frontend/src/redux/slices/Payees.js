@@ -1,8 +1,9 @@
 import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } from '@reduxjs/toolkit'
 import api from '../../api'
 
-export const createPayee = createAsyncThunk('payees/create', async ({ name, budgetId }) => {
-  return await api.createPayee(name, budgetId)
+export const createPayee = createAsyncThunk('payees/create', async ({ name }, { getState }) => {
+  const store = getState()
+  return await api.createPayee(name, store.budgets.activeBudgetId)
 })
 
 export const fetchPayees = createAsyncThunk('payees/fetch', async (_, { getState }) => {
