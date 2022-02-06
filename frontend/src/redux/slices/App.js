@@ -4,11 +4,12 @@ const appSlice = createSlice({
   name: 'app',
 
   initialState: {
-    theme: 'light',
+    theme: localStorage.getItem('theme') || 'light',
   },
 
   reducers: {
     setTheme: (state, { payload }) => {
+      localStorage.setItem('theme', payload)
       state.theme = payload
     },
   },

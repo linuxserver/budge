@@ -60,6 +60,8 @@ export default function BudgetTable(props) {
   nextMonth.setMonth(nextMonth.getMonth() + 1)
   const nextMonthExists = availableMonths.includes(formatMonthFromDateString(nextMonth))
 
+  const currentTheme = useSelector(state => state.app.theme)
+
   const selectCategoryMaps = createDeepEqualSelector(
     [categoryGroupsSelectors.selectAll, categoriesSelectors.selectAll],
     (categoryGroups, categories) => {
@@ -186,7 +188,6 @@ export default function BudgetTable(props) {
     dropRow: -1, // drag target
   }
 
-  console.log(data)
   const columns = useMemo(
     () =>
       [
@@ -222,7 +223,6 @@ export default function BudgetTable(props) {
         },
         {
           accessor: 'name',
-          Header: 'CATEGORY',
           Header: () => (
             <PopupState variant="popover" popupId="popover-category-group">
               {popupState => (
@@ -234,7 +234,7 @@ export default function BudgetTable(props) {
                     {...bindTrigger(popupState)}
                     sx={{ cursor: 'pointer' }}
                   >
-                    <Typography style={{ fontSize: theme.typography.caption.fontSize }}>CATEGORY</Typography>
+                    <Typography style={{ fontSize: theme.typography.caption.fontSize }}>ENVELOPE</Typography>
                     <AddCircleIcon
                       style={{
                         fontSize: theme.typography.subtitle2.fontSize,
@@ -321,7 +321,7 @@ export default function BudgetTable(props) {
           style: {
             width: '150px',
           },
-          Header: props => <Box sx={{ textAlign: 'right' }}>ASSIGNED</Box>,
+          Header: props => <Box sx={{ textAlign: 'right' }}>BUDGETED</Box>,
           Cell: props => {
             const value = valueToDinero(props.row.values.budgeted)
             if (!props.row.original.groupId) {
@@ -384,7 +384,7 @@ export default function BudgetTable(props) {
           style: {
             width: '150px',
           },
-          Header: props => <Box sx={{ textAlign: 'right' }}>BALANCE</Box>,
+          Header: props => <Box sx={{ textAlign: 'right' }}>AVAILABLE</Box>,
           Cell: props => {
             const balance = valueToDinero(props.cell.value)
             const value = intlFormat(balance)
@@ -410,28 +410,15 @@ export default function BudgetTable(props) {
             }
 
             let chip = (
-              <Chip
-                size="small"
-                label={value}
-                color={color}
+              <Typography
                 sx={{
-                  height: 'auto',
-                  color: fontColor,
-                  // fontWeight: 'bold',
-                  ...(theme.typography.fontFamily !== 'Lato' && { pt: '2px' }),
-                  ...(color === 'default' && { backgroundColor: theme.palette.grey[500] }),
+                  fontSize: theme.typography.subtitle2.fontSize,
+                  color: color === 'default' ? theme.palette.grey[600] : theme.palette[color].main,
+                  fontWeight: 900,
                 }}
-              />
-              // <Typography
-              //   sx={{
-              //     fontSize: theme.typography.subtitle2.fontSize,
-              //     ...(color !== 'default' && { fontWeight: '900' }),
-              //     color: color === 'default' ? theme.palette.grey[600] : theme.palette[color].main,
-              //     fontWeight: 'bold',
-              //   }}
-              // >
-              //   {value}
-              // </Typography>
+              >
+                {value}
+              </Typography>
             )
 
             if (!props.row.original.groupId) {
@@ -459,7 +446,7 @@ export default function BudgetTable(props) {
         column.id = column.id || column.accessor
         return column
       }),
-    [],
+    [currentTheme],
   )
 
   const reorderRows = async (from, to) => {

@@ -28,11 +28,11 @@ import { setTheme } from '../redux/slices/App'
 import { selectActiveBudget } from '../redux/slices/Budgets'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
-import Modal from '@mui/material/Modal'
-import Box from '@mui/material/Box'
 import Settings from './Settings/Settings'
+import SettingsIcon from '@mui/icons-material/Settings'
+import MailOutlineIcon from '@mui/icons-material/MailOutline'
 
-const drawerWidth = 300
+const drawerWidth = 350
 
 export default function AppDrawer(props) {
   const dispatch = useDispatch()
@@ -42,14 +42,14 @@ export default function AppDrawer(props) {
   const currentTheme = useSelector(state => state.app.theme)
 
   const menuItems = [
-    { name: 'Budget', path: '/' },
+    { name: 'Envelopes', path: '/' },
     // { name: 'All Accounts', path: '/accounts'},
   ]
 
   /**
    * State block
    */
-  const [accountsListOpen, setAccountsListOpen] = useState({ BUDGET: true, TRACKING: true })
+  const [accountsListOpen, setAccountsListOpen] = useState({ ACCOUNTS: true, TRACKING: true })
   const [selectedItem, setSelectedItem] = useState('Budget')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -67,10 +67,10 @@ export default function AppDrawer(props) {
   const trackingAccounts = accounts.filter(account => account.type === 2)
 
   const listItemClicked = (name, url) => {
-    if (name === 'BUDGET') {
+    if (name === 'ACCOUNTS') {
       setAccountsListOpen({
         ...accountsListOpen,
-        BUDGET: !accountsListOpen.BUDGET,
+        ACCOUNTS: !accountsListOpen.ACCOUNTS,
       })
       return
     }
@@ -170,6 +170,11 @@ export default function AppDrawer(props) {
     setSettingsOpen(false)
   }
 
+  const onAddAccountClick = () => {
+    menuPopupState.close()
+    props.onAddAccountClick()
+  }
+
   const AccountItem = account => {
     const balance = valueToDinero(account.balance)
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
@@ -243,15 +248,20 @@ export default function AppDrawer(props) {
         }}
       >
         <List>
-          <ListItemButton {...bindTrigger(menuPopupState)}>
+          <ListItem>
             <ListItemText primary={budget.name} />
-            <ExpandMore sx={{ color: theme.palette.secondary.main }} />
-          </ListItemButton>
+            <SettingsIcon
+              // {...bindTrigger(menuPopupState)}
+              onClick={openSettings}
+              sx={{ color: theme.palette.secondary.main }}
+              sx={{ cursor: 'pointer' }}
+            />
+          </ListItem>
 
-          <Menu MenuListProps={{ dense: true }} {...bindMenu(menuPopupState)}>
+          {/* <Menu MenuListProps={{ dense: true }} {...bindMenu(menuPopupState)}>
             <MenuItem onClick={openSettings}>Settings</MenuItem>
-            <MenuItem onClick={logout}>Log Out</MenuItem>
-          </Menu>
+            <MenuItem onClick={onAddAccountClick}>Add Account</MenuItem>
+          </Menu> */}
         </List>
 
         <List>
@@ -262,7 +272,7 @@ export default function AppDrawer(props) {
               selected={selectedItem === menuItemConfig.name}
             >
               <ListItemIcon style={{ minWidth: '40px' }}>
-                {index % 2 === 0 ? <AccountBalanceIcon sx={{ color: theme.palette.secondary.main }} /> : <MailIcon />}
+                {index % 2 === 0 ? <MailIcon sx={{ color: theme.palette.secondary.main }} /> : <MailIcon />}
               </ListItemIcon>
               <ListItemText primary={menuItemConfig.name} />
             </ListItemButton>
@@ -271,7 +281,7 @@ export default function AppDrawer(props) {
 
         <Divider />
 
-        {budgetAccounts.length > 0 && AccountList('BUDGET', budgetAccounts)}
+        {budgetAccounts.length > 0 && AccountList('ACCOUNTS', budgetAccounts)}
 
         {trackingAccounts.length > 0 && AccountList('TRACKING', trackingAccounts)}
 

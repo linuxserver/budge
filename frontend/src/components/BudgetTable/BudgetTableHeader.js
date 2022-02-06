@@ -70,7 +70,7 @@ export default function BudgetTableHeader(props) {
               onClick={() => navigateMonth(-1)}
               sx={{
                 fontSize: theme.typography.h6.fontSize,
-                // color: theme.palette.primary.main,
+                color: 'white',
               }}
             >
               <ArrowBackIosIcon fontSize="large" variant="outlined" />
@@ -88,14 +88,14 @@ export default function BudgetTableHeader(props) {
                 year: 'numeric',
                 month: 'short',
               })}
-              <ExpandMore />
             </Button>
             <IconButton
               disabled={nextMonthDisabled}
               onClick={() => navigateMonth(1)}
               sx={{
                 fontSize: theme.typography.h6.fontSize,
-                // color: theme.palette.primary.main,
+                // [`.Mui-disabled`]: { color: theme.palette.grey[500] },
+                color: 'white',
               }}
             >
               <ArrowForwardIosIcon fontSize="large" />
@@ -121,7 +121,7 @@ export default function BudgetTableHeader(props) {
             py: 0.5,
             px: 2,
             borderRadius: 1.5,
-            backgroundColor: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
+            // backgroundColor: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
           }}
         >
           <Stack direction="column" justifyContent="center" alignItems="center" spacing={0}>
@@ -129,7 +129,8 @@ export default function BudgetTableHeader(props) {
               style={{
                 fontSize: theme.typography.h5.fontSize,
                 fontWeight: 'bold',
-                color: 'black',
+                // color: 'black',
+                color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
               }}
             >
               {intlFormat(toBeBudgeted)}
@@ -137,7 +138,8 @@ export default function BudgetTableHeader(props) {
             <Typography
               style={{
                 fontSize: theme.typography.subtitle1.fontSize,
-                color: 'black',
+                // color: 'black',
+                color: 'white',
               }}
             >
               Available To Budget

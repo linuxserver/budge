@@ -27,23 +27,20 @@ export default function BudgetDetails(props) {
 
   console.log(theme)
   return (
-    <Stack justifyContent="space-between" alignItems="center" sx={{ width: '100%', height: '100%', p: 2, pl: 0 }}>
+    <Stack justifyContent="space-between" alignItems="center" sx={{ width: '100%', height: '100%', px: 2, py: 2 }}>
       <Stack
         spacing={2}
         sx={{
           width: '100%',
-          height: '100%',
-          mt: 2,
-          mr: 2,
           px: 2,
-          borderRadius: 2,
-          backgroundColor: theme.palette.background.details,
+          // borderRadius: 2,
+          backgroundColor: theme.palette.background.detailsContent,
           color: 'white',
         }}
       >
         <h3>
           {new Date(Date.UTC(...month.split('-')))
-            .toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+            .toLocaleDateString(undefined, { year: 'numeric', month: 'long' })
             .toUpperCase()}{' '}
           SUMMARY
         </h3>

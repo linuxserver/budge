@@ -947,7 +947,6 @@ export default function Account(props) {
                 localization={{
                   searchPlaceholder: 'Filter transactions',
                 }}
-                searchFieldVariant="outlined"
               />
 
               <Divider />
