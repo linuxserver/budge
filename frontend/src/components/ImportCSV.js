@@ -35,7 +35,7 @@ import { fetchBudgetMonths } from '../redux/slices/BudgetMonths'
 export default function ImportCSV({ accountId, open, close }) {
   const dispatch = useDispatch()
 
-  const [stage, setStage] = useState('IMPORT')
+  const [stage, setStage] = useState('UPLOAD')
   const [headersIncluded, setHeadersIncluded] = useState(false)
   const [columnsMap, setColumnsMap] = useState([])
   const [data, setData] = useState([])
