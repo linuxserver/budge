@@ -49,6 +49,19 @@ export const createTransaction = createAsyncThunk(
   },
 )
 
+export const createTransactions = createAsyncThunk(
+  'transactions/createTransactions',
+  async ({ transactions }, { getState }) => {
+    const state = getState()
+    const response = await api.createTransactions(transactions, state.budgets.activeBudgetId)
+
+    return {
+      accountId: response.accountId,
+      transactions: response,
+    }
+  },
+)
+
 export const updateTransaction = createAsyncThunk(
   'transactions/updateTransaction',
   async ({ transaction }, { getState }) => {
@@ -158,6 +171,12 @@ const accountsSlice = createSlice({
         const accountEntry = state.entities[accountId]
         if (accountEntry) {
           transactionsAdapter.addOne(accountEntry.transactions, transaction)
+        }
+      })
+      .addCase(createTransactions.fulfilled, (state, { payload: { accountId, transactions } }) => {
+        const accountEntry = state.entities[accountId]
+        if (accountEntry) {
+          transactionsAdapter.upsertMany(accountEntry.transactions, transactions)
         }
       })
       .addCase(updateTransaction.fulfilled, (state, { payload: { accountId, transaction } }) => {

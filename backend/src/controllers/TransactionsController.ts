@@ -76,6 +76,67 @@ export class TransactionsController extends Controller {
   }
 
   /**
+   * Create multiple transaction
+   */
+  @Security('jwtRequired')
+  @Post('transactions/bulk')
+  @Example<TransactionsResponse>({
+    message: 'success',
+    data: [
+      {
+        id: 'abc123',
+        accountId: 'def456',
+        payeeId: 'xyz890',
+        amount: 10000,
+        date: '2011-10-05T14:48:00.000Z',
+        memo: 'Mortgage payment',
+        categoryId: null,
+        status: TransactionStatus.Pending,
+        created: '2011-10-05T14:48:00.000Z',
+        updated: '2011-10-05T14:48:00.000Z',
+      },
+    ],
+  })
+  public async createTransactions(
+    @Path() budgetId: string,
+    @Body() requestBody: TransactionsRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<TransactionsResponse | ErrorResponse> {
+    try {
+      const budget = await getRepository(Budget).findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
+      const transactions = requestBody.transactions.map(transaction => {
+        return getRepository(Transaction).create({
+          budgetId,
+          ...transaction,
+          amount: dinero({ amount: transaction.amount, currency: USD }),
+          date: new Date(transaction.date),
+        })
+      })
+
+      await getManager().transaction(async transactionalEntityManager => {
+        for (const transaction of transactions) {
+          await transactionalEntityManager.getRepository(Transaction).insert(transaction)
+        }
+      })
+
+      return {
+        message: 'success',
+        data: await Promise.all(transactions.map((transaction: Transaction) => transaction.toResponseModel())),
+      }
+    } catch (err) {
+      console.log(err)
+      return { message: err.message }
+    }
+  }
+
+  /**
    * Update a transaction
    */
   @Security('jwtRequired')

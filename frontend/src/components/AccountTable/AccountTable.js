@@ -55,6 +55,8 @@ import MenuItem from '@mui/material/MenuItem'
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import { styled } from '@mui/material/styles'
+import UploadIcon from '@mui/icons-material/Upload'
+import ImportCSV from '../ImportCSV'
 
 const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
   backgroundColor: theme.palette.background.tableBody,
@@ -103,6 +105,14 @@ export default function Account(props) {
   const [showReconciled, setShowReconciled] = useState(false)
   const toggleReconciled = () => {
     setShowReconciled(!showReconciled)
+  }
+
+  const [importerOpen, setImporterOpen] = useState(false)
+  const openImporter = () => {
+    setImporterOpen(true)
+  }
+  const closeImporter = () => {
+    setImporterOpen(false)
   }
 
   const budgetId = useSelector(state => state.budgets.activeBudgetId)
@@ -492,7 +502,6 @@ export default function Account(props) {
       await dispatch(
         createPayee({
           name,
-          budgetId,
         }),
       )
     ).payload
@@ -772,6 +781,7 @@ export default function Account(props) {
 
   return (
     <div style={{ maxWidth: '100%' }}>
+      <ImportCSV accountId={props.accountId} open={importerOpen} close={closeImporter}></ImportCSV>
       <MaterialTable
         style={{
           display: 'grid',
@@ -800,6 +810,19 @@ export default function Account(props) {
                   />
                   <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
                     Add Transaction
+                  </Typography>
+                </Stack>
+              </Button>
+
+              <Button size="small" onClick={openImporter}>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <UploadIcon
+                    style={{
+                      fontSize: theme.typography.subtitle2.fontSize,
+                    }}
+                  />
+                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                    Import
                   </Typography>
                 </Stack>
               </Button>
