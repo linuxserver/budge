@@ -178,8 +178,8 @@ export default function ImportCSV({ accountId, open, close }) {
   }
 
   const onClose = () => {
-    setStage('UPLOAD')
     close()
+    setStage('UPLOAD')
   }
 
   return (
@@ -187,14 +187,8 @@ export default function ImportCSV({ accountId, open, close }) {
       <DialogTitle>Import from CSV</DialogTitle>
       <Box
         sx={{
-          // position: 'absolute',
-          // top: '50%',
-          // left: '50%',
-          // transform: 'translate(-50%, -50%)',
           minWidth: '600px',
-          bgcolor: 'background.paper',
-          boxShadow: 24,
-          p: 4,
+          p: 2,
         }}
       >
         {stage === 'UPLOAD' && (
@@ -206,10 +200,15 @@ export default function ImportCSV({ accountId, open, close }) {
               />
             </FormGroup>
 
-            <Button variant="contained" component="label">
-              Upload File
-              <input type="file" hidden onChange={uploadFile} />
-            </Button>
+            <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+              <Button size="small" component="label">
+                Select File
+                <input type="file" hidden accept=".csv" onChange={uploadFile} />
+              </Button>
+              <Button size="small" component="label" onClick={onClose}>
+                Close
+              </Button>
+            </Stack>
           </Box>
         )}
 
@@ -236,9 +235,16 @@ export default function ImportCSV({ accountId, open, close }) {
                 </Stack>
               </Box>
             ))}
-            <Button variant="contained" component="label" onClick={importTransactions}>
-              Import
-            </Button>
+
+            <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+              <Button size="small" component="label" onClick={importTransactions}>
+                Import
+              </Button>
+
+              <Button size="small" component="label" onClick={onClose}>
+                Close
+              </Button>
+            </Stack>
           </Box>
         )}
 
