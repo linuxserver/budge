@@ -155,11 +155,11 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     if (account.type === AccountTypes.CreditCard) {
       // Update CC category
       const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-      const ccCategoryMonth = await manager
+      const currentCCMonth = await manager
         .getCustomRepository(CategoryMonths)
         .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-      ccCategoryMonth.update({ activity: multiply(transaction.amount, -1) })
-      await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
+      currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
+      await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
     }
   }
 
@@ -268,6 +268,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     if (!TransactionCache.transfersEnabled(transaction.id)) {
       return
     }
+
     TransactionCache.disableTransfers(transaction.id)
 
     const originalTransaction = TransactionCache.get(transaction.id)
@@ -470,7 +471,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         const currentCCMonth = await manager
           .getCustomRepository(CategoryMonths)
           .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-        currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
+        currentCCMonth.update({ activity: multiply(activity, -1) })
         await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
       }
     }
@@ -502,6 +503,19 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       return
     }
 
+    // Even if there's no category ID, still need to update the CC category month because transfers
+    // affect the balance.
+    if (account.type === AccountTypes.CreditCard) {
+      // Update CC category
+      const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
+      const ccCategoryMonth = await manager.findOne(CategoryMonth, {
+        categoryId: ccCategory.id,
+        month: Transaction.getMonth(transaction.date),
+      })
+      ccCategoryMonth.update({ activity: transaction.amount })
+      await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
+    }
+
     if (!transaction.categoryId) {
       return
     }
@@ -522,18 +536,6 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       await manager
         .getRepository(CategoryMonth)
         .update(originalCategoryMonth.id, originalCategoryMonth.getUpdatePayload())
-    }
-
-    // Check if we need to update a CC category
-    if (account.type === AccountTypes.CreditCard) {
-      // Update CC category
-      const ccCategory = await manager.findOne(Category, { trackingAccountId: account.id })
-      const ccCategoryMonth = await manager.findOne(CategoryMonth, {
-        categoryId: ccCategory.id,
-        month: Transaction.getMonth(transaction.date),
-      })
-      ccCategoryMonth.update({ activity: transaction.amount })
-      await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
     }
   }
 }

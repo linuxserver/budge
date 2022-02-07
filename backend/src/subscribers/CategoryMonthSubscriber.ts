@@ -62,7 +62,12 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     const budgetMonth = await manager.findOne(BudgetMonth, categoryMonth.budgetMonthId)
 
     budgetMonth.budgeted = add(budgetMonth.budgeted, subtract(categoryMonth.budgeted, originalCategoryMonth.budgeted))
-    budgetMonth.activity = add(budgetMonth.activity, subtract(categoryMonth.activity, originalCategoryMonth.activity))
+
+    if (category.inflow === false && category.trackingAccountId === null) {
+      // Don't update budget month activity for CC transactions. These are 'inverse' transactions of other
+      // category transactions, so this would 'negate' them.
+      budgetMonth.activity = add(budgetMonth.activity, subtract(categoryMonth.activity, originalCategoryMonth.activity))
+    }
 
     const budgetedDifference = subtract(originalCategoryMonth.budgeted, categoryMonth.budgeted)
     const activityDifference = subtract(categoryMonth.activity, originalCategoryMonth.activity)
