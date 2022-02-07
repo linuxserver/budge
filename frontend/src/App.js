@@ -90,7 +90,7 @@ export default function App(props) {
         main: '#e74c3c',
       },
       warning: {
-        main: '#ffa84a',
+        main: '#ec912e',
       },
     },
     components: {
