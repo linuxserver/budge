@@ -15,9 +15,16 @@ import API from './api'
 
 export default function App(props) {
   const theme = useSelector(state => state.app.theme)
+  const loggedIn = useSelector(state => state.users.user.email)
 
-  useInterval(() => {
-    API.ping()
+  useInterval(async () => {
+    if (loggedIn) {
+      try {
+        await API.ping()
+      } catch (err) {
+        window.location.reload(false)
+      }
+    }
   }, 1800000)
 
   const darkTheme = createTheme({
