@@ -98,7 +98,7 @@ export default function Account(props) {
   const theme = useTheme()
   const dispatch = useDispatch()
 
-  const account = useSelector(state => accountsSelectors.selectById(state, props.accountId))
+  const account = props.account
   const accounts = useSelector(accountsSelectors.selectAll)
 
   const [bulkEnabled, setBulkEnabled] = useState(false)
@@ -119,7 +119,8 @@ export default function Account(props) {
 
   const selectTransactions = createSelector(
     [
-      (state, accountId) => state.accounts.entities[accountId].transactions.entities,
+      (state, accountId) =>
+        state.accounts.entities[accountId] ? state.accounts.entities[accountId].transactions.entities : [],
       (state, accountId, reconciled) => reconciled,
     ],
     (transactions, reconciled) => {
@@ -918,9 +919,9 @@ export default function Account(props) {
           addRowPosition: 'first',
           selection: true,
           actionsColumnIndex: 99,
-          editCellStyle: rowData => ({
+          editCellStyle: {
             padding: 0,
-          }),
+          },
           rowStyle: rowData => ({
             fontSize: theme.typography.subtitle2.fontSize,
           }),
