@@ -31,7 +31,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
 import { FromAPI, inputToDinero, intlFormat } from '../../utils/Currency'
-import { dinero, toUnit, isZero, multiply } from 'dinero.js'
+import { dinero, toUnit, isPositive, multiply } from 'dinero.js'
 import { toSnapshot } from '@dinero.js/core'
 import Tooltip from '@mui/material/Tooltip'
 import { useTheme } from '@mui/styles'
@@ -167,8 +167,6 @@ export default function Account(props) {
     amountFieldFocused = field
     amountFieldModified = false
   }
-  const focusOutflowField = () => focusAmountField('outflow')
-  const focusInflowField = () => focusAmountField('inflow')
 
   const filter = createFilterOptions()
   const columns = [
@@ -368,20 +366,25 @@ export default function Account(props) {
       ),
     },
     {
-      title: 'Outflow',
-      field: 'outflow',
-      type: 'currency',
+      title: 'Amount',
+      field: 'amount',
+      // type: 'currency',
+      align: 'right',
       initialEditValue: toSnapshot(inputToDinero(0)),
       render: rowData => {
-        if (isZero(rowData.outflow)) {
-          return ''
-        }
-        return intlFormat(rowData.outflow)
+        const color = isPositive(rowData.amount) ? 'success' : 'error'
+        return (
+          <Typography
+            sx={{ fontWeight: 'bold', fontSize: theme.typography.subtitle2.fontSize, color: theme.palette[color].main }}
+          >
+            {intlFormat(rowData.amount)}
+          </Typography>
+        )
       },
       editComponent: props => {
-        if (amountFieldModified === true && amountFieldFocused !== 'outflow') {
-          props.value.amount = 0
-        }
+        // if (amountFieldModified === true && amountFieldFocused !== 'outflow') {
+        //   props.value.amount = 0
+        // }
 
         const value = dinero(props.value)
         return (
@@ -391,62 +394,16 @@ export default function Account(props) {
               variant="standard"
               value={toUnit(value, { digits: 2 })}
               onChange={value => {
-                if (amountFieldFocused === 'outflow') {
-                  amountFieldModified = true
-                  props.onChange(toSnapshot(inputToDinero(value)))
-                }
+                amountFieldModified = true
+                props.onChange(toSnapshot(inputToDinero(value)))
               }}
-              onFocus={focusOutflowField}
+              // onFocus={focusOutflowField}
             />
           </Box>
         )
       },
       customExport: rowData => {
-        if (isZero(rowData.outflow)) {
-          return ''
-        }
-        return intlFormat(rowData.outflow)
-      },
-    },
-    {
-      title: 'Inflow',
-      field: 'inflow',
-      type: 'currency',
-      initialEditValue: toSnapshot(inputToDinero(0)),
-      render: rowData => {
-        if (isZero(rowData.inflow)) {
-          return ''
-        }
-        return intlFormat(rowData.inflow)
-      },
-      editComponent: props => {
-        if (amountFieldModified === true && amountFieldFocused !== 'inflow') {
-          props.value.amount = 0
-        }
-
-        const value = dinero(props.value)
-        return (
-          <Box sx={{ textAlign: 'right' }}>
-            <MTableEditField
-              {...props}
-              variant="standard"
-              value={toUnit(value, { digits: 2 })}
-              onChange={value => {
-                if (amountFieldFocused === 'inflow') {
-                  amountFieldModified = true
-                  props.onChange(toSnapshot(inputToDinero(value)))
-                }
-              }}
-              onFocus={focusInflowField}
-            />
-          </Box>
-        )
-      },
-      customExport: rowData => {
-        if (isZero(rowData.inflow)) {
-          return ''
-        }
-        return intlFormat(rowData.inflow)
+        return intlFormat(rowData.amount)
       },
     },
     {
@@ -515,14 +472,7 @@ export default function Account(props) {
       newRow.payeeId = (await createNewPayee(newRow.payeeId)).id
     }
 
-    const inflow = dinero(newRow.inflow)
-    const outflow = dinero(newRow.outflow)
-    let amount = null
-    if (isZero(inflow)) {
-      amount = multiply(outflow, -1)
-    } else {
-      amount = inflow
-    }
+    const amount = dinero(newRow.amount)
 
     await dispatch(
       createTransaction({
@@ -562,8 +512,6 @@ export default function Account(props) {
         ...rowData,
         status: rowData.status === 0 ? 1 : 0,
         amount: toSnapshot(rowData.amount),
-        inflow: toSnapshot(rowData.inflow),
-        outflow: toSnapshot(rowData.outflow),
       },
       { ...rowData },
     )
@@ -589,14 +537,7 @@ export default function Account(props) {
       newRow.categoryId = category
     }
 
-    const inflow = dinero(newRow.inflow)
-    const outflow = dinero(newRow.outflow)
-    let amount = null
-    if (isZero(inflow)) {
-      amount = multiply(outflow, -1)
-    } else {
-      amount = inflow
-    }
+    const amount = dinero(newRow.amount)
 
     await dispatch(
       updateTransaction({
@@ -684,8 +625,6 @@ export default function Account(props) {
         ...row,
         status: 1,
         amount: toSnapshot(row.amount),
-        inflow: toSnapshot(row.inflow),
-        outflow: toSnapshot(row.outflow),
       })),
     )
   }
@@ -696,22 +635,13 @@ export default function Account(props) {
         ...row,
         status: 0,
         amount: toSnapshot(row.amount),
-        inflow: toSnapshot(row.inflow),
-        outflow: toSnapshot(row.outflow),
       })),
     )
   }
 
   const bulkEditTransactions = async transactions => {
     transactions = transactions.map(transaction => {
-      const inflow = dinero(transaction.inflow)
-      const outflow = dinero(transaction.outflow)
-      let amount = null
-      if (isZero(inflow)) {
-        amount = multiply(outflow, -1)
-      } else {
-        amount = inflow
-      }
+      const amount = dinero(transaction.amount)
 
       return {
         id: transaction.id,
@@ -788,6 +718,7 @@ export default function Account(props) {
           display: 'grid',
           gridTemplateColums: '1fr',
           gridTemplateRows: 'auto 1fr auto',
+          maxWidth: '100%',
           height: '100vh',
           backgroundColor: theme.palette.background.tableBody,
         }}
@@ -961,15 +892,11 @@ export default function Account(props) {
                 backgroundColor: theme.palette.background.tableHeader,
               }}
             >
-              <AccountTableHeader accountId={account.id} name={account.name} />
-
-              <Divider />
-
               <StyledMTableToolbar
                 {...{ ...props, actions: [] }}
                 showTextRowsSelected={false}
                 localization={{
-                  searchPlaceholder: 'Filter transactions',
+                  searchPlaceholder: 'Search transactions',
                 }}
               />
 

@@ -82,7 +82,9 @@ export default function BudgetTableHeader({ accountId, name }) {
               </Box>
             </Popover>
           </div>
+        </Stack>
 
+        <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
           <div>
             <Stack
               direction="column"
@@ -184,21 +186,21 @@ export default function BudgetTableHeader({ accountId, name }) {
               </Typography>
             </Stack>
           </div>
-        </Stack>
 
-        <div>
-          <Button {...bindTrigger(reconcilePopupState)} color="secondary" variant="outlined">
-            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-              Reconcile
-            </Typography>
-          </Button>
-          <ReconcileForm
-            key={account.cleared}
-            popupState={reconcilePopupState}
-            accountId={account.id}
-            balance={account.cleared}
-          />
-        </div>
+          <div>
+            <Button {...bindTrigger(reconcilePopupState)} color="secondary" variant="outlined">
+              <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                Reconcile
+              </Typography>
+            </Button>
+            <ReconcileForm
+              key={account.cleared}
+              popupState={reconcilePopupState}
+              accountId={account.id}
+              balance={account.cleared}
+            />
+          </div>
+        </Stack>
       </Stack>
     </Box>
   )

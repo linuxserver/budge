@@ -35,6 +35,9 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { styled } from '@mui/material/styles'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import Divider from '@mui/material/Divider'
+import Button from '@mui/material/Button'
+import ButtonGroup from '@mui/material/ButtonGroup'
 
 const BudgetTableCell = styled(TableCell)(({ theme }) => ({
   paddingTop: '4px',
@@ -231,7 +234,9 @@ export default function BudgetTable(props) {
                     {...bindTrigger(popupState)}
                     sx={{ cursor: 'pointer' }}
                   >
-                    <Typography style={{ fontSize: theme.typography.caption.fontSize }}>ENVELOPE</Typography>
+                    <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                      ENVELOPE
+                    </Typography>
                     <AddCircleIcon
                       style={{
                         fontSize: theme.typography.subtitle2.fontSize,
@@ -538,15 +543,19 @@ export default function BudgetTable(props) {
       <TableContainer component={Box}>
         <Table stickyHeader {...getTableProps()} size="small">
           <TableHead>
-            <TableRow>
-              <TableCell colSpan={5} sx={{ padding: 0 }}>
+            <TableRow sx={{ borderBottom: 'none' }}>
+              <TableCell
+                colSpan={5}
+                sx={{
+                  padding: 0,
+                  borderBottom: 'none',
+                }}
+              >
                 <Box
                   sx={{
-                    backgroundColor: theme.palette.background.tableBody,
+                    backgroundColor: theme.palette.background.tableHeader,
                   }}
-                >
-                  <BudgetTableHeader onMonthNavigate={setIsLoading} openCategoryGroupDialog={openCategoryGroupDialog} />
-                </Box>
+                ></Box>
               </TableCell>
             </TableRow>
             {headerGroups.map(headerGroup => (
@@ -558,8 +567,9 @@ export default function BudgetTable(props) {
                       sx={{
                         ...(column.id === 'expander' && { width: '10px' }),
                         fontSize: theme.typography.caption.fontSize,
-                        top: 101,
-                        backgroundColor: theme.palette.background.tableBody,
+                        fontWeight: 'bold',
+                        backgroundColor: theme.palette.background.tableHeader,
+                        color: 'white',
                       }}
                     >
                       {column.render('Header')}
