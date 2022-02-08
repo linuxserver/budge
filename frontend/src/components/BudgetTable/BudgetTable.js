@@ -8,7 +8,6 @@ import { updateCategoryGroup, fetchCategories, categoryGroupsSelectors } from '.
 import { categoriesSelectors } from '../../redux/slices/Categories'
 import IconButton from '@mui/material/IconButton'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
-import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import { equal, isPositive, isNegative, isZero } from 'dinero.js'
 import { FromAPI, intlFormat, valueToDinero } from '../../utils/Currency'
@@ -21,9 +20,6 @@ import Tooltip from '@mui/material/Tooltip'
 import _ from 'lodash'
 import { formatMonthFromDateString, getDateFromString } from '../../utils/Date'
 import Box from '@mui/material/Box'
-import Divider from '@mui/material/Divider'
-import Button from '@mui/material/Button'
-import ButtonGroup from '@mui/material/ButtonGroup'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { createDeepEqualSelector } from '../../utils/Store'
@@ -38,6 +34,7 @@ import TableRow from '@mui/material/TableRow'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { styled } from '@mui/material/styles'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
 const BudgetTableCell = styled(TableCell)(({ theme }) => ({
   paddingTop: '4px',
@@ -260,7 +257,7 @@ export default function BudgetTable(props) {
                             cursor: 'pointer',
                           }),
                           ...(!props.row.original.groupId && {
-                            fontSize: theme.typography.subtitle1.fontSize,
+                            fontSize: theme.typography.subtitle2.fontSize,
                             fontWeight: 'bold',
                           }),
                         }}
@@ -387,8 +384,7 @@ export default function BudgetTable(props) {
           Header: props => <Box sx={{ textAlign: 'right' }}>AVAILABLE</Box>,
           Cell: props => {
             const balance = valueToDinero(props.cell.value)
-            const value = intlFormat(balance)
-            const fontColor = isZero(balance) ? theme.palette.grey[800] : 'black'
+            let value = intlFormat(balance)
 
             let color = 'default'
             if (props.row.original.trackingAccountId) {
@@ -436,7 +432,21 @@ export default function BudgetTable(props) {
 
             // Tooltip for CC warning
             if (props.row.original.trackingAccountId && color === 'warning') {
-              chip = <Tooltip title="Month is underfunded, this amount may not be accurate">{chip}</Tooltip>
+              if (props.row.original.groupId) {
+                chip = (
+                  <Tooltip title="Month is underfunded, this amount may not be accurate">
+                    <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0.5}>
+                      <WarningAmberIcon
+                        color="warning"
+                        sx={{
+                          fontSize: theme.typography.subtitle2.fontSize,
+                        }}
+                      />
+                      {chip}
+                    </Stack>
+                  </Tooltip>
+                )
+              }
             }
 
             return <Box sx={{ textAlign: 'right' }}>{chip}</Box>
