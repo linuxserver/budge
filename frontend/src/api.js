@@ -7,7 +7,7 @@ const axios = Axios.create({
 
 export default class API {
   static async ping() {
-    const response = await axios.get('/api/me')
+    const response = await axios.post('/api/ping')
 
     return response.data.data
   }

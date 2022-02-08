@@ -10,9 +10,15 @@ import Login from './components/Login'
 import { useDispatch, useSelector } from 'react-redux'
 import AddAccountDialog from './components/AddAccountDialog'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
+import useInterval from './utils/useInterval'
+import API from './api'
 
 export default function App(props) {
   const theme = useSelector(state => state.app.theme)
+
+  useInterval(() => {
+    API.ping()
+  }, 1800000)
 
   const darkTheme = createTheme({
     palette: {
