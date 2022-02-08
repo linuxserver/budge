@@ -70,7 +70,7 @@ export default function BudgetDetails(props) {
       justifyContent="space-between"
       alignItems="center"
       spacing={2}
-      sx={{ p: 2, height: '100%' }}
+      sx={{ pt: 2, height: '100%' }}
     >
       <Box sx={{ minHeight: '80px', width: '100%' }}>
         <BudgetMonthPicker

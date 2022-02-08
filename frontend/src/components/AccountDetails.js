@@ -17,6 +17,7 @@ import { formatMonthFromDateString, getDateFromString } from '../utils/Date'
 import BudgetMonthPicker from './BudgetMonthPicker'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
+import Divider from '@mui/material/Divider'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
@@ -125,7 +126,7 @@ export default function BudgetDetails({ accountId, name }) {
           </Box>
         </Stack>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ pb: 2 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           <Box sx={{ color: 'white' }}>Pending Transactions</Box>
           <Box>
             <Typography
@@ -139,6 +140,10 @@ export default function BudgetDetails({ accountId, name }) {
             </Typography>
           </Box>
         </Stack>
+
+        <Box sx={{ py: 2 }}>
+          <Divider />
+        </Box>
 
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           <Box sx={{ color: 'white' }}>Cleared</Box>
