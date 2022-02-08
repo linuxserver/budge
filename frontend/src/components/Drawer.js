@@ -49,7 +49,7 @@ export default function AppDrawer(props) {
   /**
    * State block
    */
-  const [accountsListOpen, setAccountsListOpen] = useState({ ACCOUNTS: true, TRACKING: true })
+  const [accountsListOpen, setAccountsListOpen] = useState({ ACCOUNTS: true, OFF_BUDGET: true })
   const [selectedItem, setSelectedItem] = useState('Budget')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -67,18 +67,10 @@ export default function AppDrawer(props) {
   const trackingAccounts = accounts.filter(account => account.type === 2)
 
   const listItemClicked = (name, url) => {
-    if (name === 'ACCOUNTS') {
+    if (accountsListOpen[name] !== undefined) {
       setAccountsListOpen({
         ...accountsListOpen,
-        ACCOUNTS: !accountsListOpen.ACCOUNTS,
-      })
-      return
-    }
-
-    if (name === 'TRACKING') {
-      setAccountsListOpen({
-        ...accountsListOpen,
-        TRACKING: !accountsListOpen.TRACKING,
+        [name]: !accountsListOpen[name],
       })
       return
     }
@@ -106,14 +98,16 @@ export default function AppDrawer(props) {
     }, inputToDinero(0))
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
 
+    const key = label.replace(' ', '_')
+
     return (
       <List dense={true}>
-        <ListItemButton onClick={() => listItemClicked(label)}>
+        <ListItemButton onClick={() => listItemClicked(key)}>
           <Grid container direction="row" justifyContent="space-between" alignItems="center">
             <div>
               <Grid container direction="row" justifyContent="space-between" alignItems="center">
                 <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
-                  {accountsListOpen[label] ? (
+                  {accountsListOpen[key] ? (
                     <ExpandMore sx={{ color: theme.palette.secondary.main }} fontSize="small" />
                   ) : (
                     <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} fontSize="small" />
@@ -142,7 +136,7 @@ export default function AppDrawer(props) {
           </Grid>
         </ListItemButton>
 
-        <Collapse in={accountsListOpen[label]} timeout="auto" unmountOnExit>
+        <Collapse in={accountsListOpen[key]} timeout="auto" unmountOnExit>
           <List dense={true} component="div" disablePadding>
             {accounts.map(account => AccountItem(account))}
           </List>
@@ -283,7 +277,7 @@ export default function AppDrawer(props) {
 
         {budgetAccounts.length > 0 && AccountList('ACCOUNTS', budgetAccounts)}
 
-        {trackingAccounts.length > 0 && AccountList('TRACKING', trackingAccounts)}
+        {trackingAccounts.length > 0 && AccountList('OFF BUDGET', trackingAccounts)}
 
         <List dense={true}>
           <ListItemButton>
