@@ -1,7 +1,7 @@
 # BudgE
 BudgE (pronounced "budgie", like the bird) is an open source "budgeting with envelopes" personal finance app, taking inspiration from other tools such as [Aspire Budgeting](https://www.aspirebudget.com/), [budgetzero](https://budgetzero.io/), and [Buckets](https://www.budgetwithbuckets.com/).
 
-:warning: BudgE still under active development and considered an 'alpha' version until more tests can be written to ensure functionality is maintained. :warning:
+:warning: BudgE is still under active development and considered an 'alpha' version until more tests can be written to ensure functionality is maintained. :warning:
 
 ![budget](images/budget.png)
 ![account](images/account.png)
@@ -17,7 +17,7 @@ BudgE (pronounced "budgie", like the bird) is an open source "budgeting with env
 - CSV transaction import
 
 # Planned Features
-- [ ] Multiple budges per user (already started)
+- [ ] Multiple budgets per user (already started)
 - [ ] Goals
 - [ ] Reports
 - [ ] Payee management
