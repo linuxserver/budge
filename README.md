@@ -25,4 +25,4 @@ BudgE (pronounced "budgie", like the bird) is an open source "budgeting with env
 - [ ] Mobile view for transaction input on the go!
 
 # Getting Started
-See [linuxserver/docker-Budge](https://github.com/linuxserver/docker-BudgE).
+See [linuxserver/docker-BudgE](https://github.com/linuxserver/docker-BudgE).
