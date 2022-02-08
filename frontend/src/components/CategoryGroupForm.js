@@ -66,7 +66,7 @@ export default function NewCategoryDialog(props) {
         />
         <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2} sx={{ pt: 2 }}>
           <Button size="small" onClick={submit}>
-            {props.mode === 'create' ? 'Add Group' : 'Edit Group'}
+            {props.mode === 'create' ? 'Create' : 'Save'}
           </Button>
         </Stack>
       </Box>
