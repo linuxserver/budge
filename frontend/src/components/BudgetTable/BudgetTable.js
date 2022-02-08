@@ -12,7 +12,6 @@ import Grid from '@mui/material/Grid'
 import { equal, isPositive, isNegative, isZero } from 'dinero.js'
 import { FromAPI, intlFormat, valueToDinero } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
-import BudgetTableHeader from './BudgetTableHeader'
 import PopupState, { bindTrigger } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
 import CategoryForm from '../CategoryForm'
@@ -35,9 +34,6 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { styled } from '@mui/material/styles'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import Divider from '@mui/material/Divider'
-import Button from '@mui/material/Button'
-import ButtonGroup from '@mui/material/ButtonGroup'
 
 const BudgetTableCell = styled(TableCell)(({ theme }) => ({
   paddingTop: '4px',

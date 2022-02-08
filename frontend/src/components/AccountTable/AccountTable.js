@@ -31,11 +31,10 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
 import { FromAPI, inputToDinero, intlFormat } from '../../utils/Currency'
-import { dinero, toUnit, isPositive, multiply } from 'dinero.js'
+import { dinero, toUnit, isPositive, greaterThan } from 'dinero.js'
 import { toSnapshot } from '@dinero.js/core'
 import Tooltip from '@mui/material/Tooltip'
 import { useTheme } from '@mui/styles'
-import AccountTableHeader from './AccountTableHeader'
 import { payeesSelectors } from '../../redux/slices/Payees'
 import { createSelector } from '@reduxjs/toolkit'
 import { categoriesSelectors } from '../../redux/slices/Categories'
@@ -370,6 +369,7 @@ export default function Account(props) {
       field: 'amount',
       // type: 'currency',
       align: 'right',
+      customSort: (a, b) => (greaterThan(a.amount, b.amount) ? -1 : 1),
       initialEditValue: toSnapshot(inputToDinero(0)),
       render: rowData => {
         const color = isPositive(rowData.amount) ? 'success' : 'error'
