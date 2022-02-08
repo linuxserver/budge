@@ -56,6 +56,7 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import { styled } from '@mui/material/styles'
 import UploadIcon from '@mui/icons-material/Upload'
 import ImportCSV from '../ImportCSV'
+import AccountTableHeader from './AccountTableHeader'
 
 const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
   backgroundColor: theme.palette.background.tableBody,
@@ -170,7 +171,7 @@ export default function Account(props) {
   const filter = createFilterOptions()
   const columns = [
     {
-      title: 'Date',
+      title: 'Posted',
       field: 'date',
       type: 'date',
       initialEditValue: new Date(),
@@ -892,6 +893,10 @@ export default function Account(props) {
                 backgroundColor: theme.palette.background.tableHeader,
               }}
             >
+              <AccountTableHeader accountId={account.id} name={account.name} />
+
+              <Divider />
+
               <StyledMTableToolbar
                 {...{ ...props, actions: [] }}
                 showTextRowsSelected={false}

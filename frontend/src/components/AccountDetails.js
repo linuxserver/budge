@@ -13,6 +13,7 @@ import Popover from '@mui/material/Popover'
 import { usePopupState, bindTrigger, bindPopover } from 'material-ui-popup-state/hooks'
 import ReconcileForm from './ReconcileForm'
 import { createSelector } from '@reduxjs/toolkit'
+import Paper from '@mui/material/Paper'
 
 export default function BudgetDetails({ accountId, name }) {
   const theme = useTheme()
@@ -110,77 +111,59 @@ export default function BudgetDetails({ accountId, name }) {
           </Box>
         </Stack>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box sx={{ color: 'white' }}>Pending Transactions</Box>
-          <Box>
-            <Typography
-              style={{
-                color: 'white',
-                fontWeight: 'bold',
-              }}
-              variant="h6"
-            >
-              {pendingTransactions}
-            </Typography>
-          </Box>
-        </Stack>
+        <Paper sx={{ p: 2 }}>
+          <Typography
+            sx={{
+              fontSize: theme.typography.h5.fontSize,
+            }}
+          >
+            Summary
+          </Typography>
 
-        <Box sx={{ py: 2 }}>
-          <Divider />
-        </Box>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+            <Stack direction="column" justifyContent="space-between" alignItems="flex-start" spacing={4}>
+              <Box>Cleared</Box>
+              <Box>Uncleared ({pendingTransactions})</Box>
+              <Box>Balance</Box>
+            </Stack>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box sx={{ color: 'white' }}>Cleared</Box>
-          <Box>
-            <Typography
-              style={{
-                color: getBalanceColor(account.cleared, theme),
-                fontWeight: 'bold',
-              }}
-              variant="h6"
-            >
-              {intlFormat(account.cleared)}
-            </Typography>
-          </Box>
-        </Stack>
+            <Stack direction="column" justifyContent="space-around" alignItems="center">
+              <Typography
+                style={{
+                  color: getBalanceColor(account.cleared, theme),
+                  fontWeight: 'bold',
+                }}
+                variant="h6"
+              >
+                {intlFormat(account.cleared)}
+              </Typography>
 
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
-          <Box sx={{ color: 'white' }}>+</Box>
-        </Stack>
+              <Box>+</Box>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box sx={{ color: 'white' }}>Uncleared</Box>
-          <Box>
-            <Typography
-              style={{
-                color: getBalanceColor(account.cleared, theme),
-                fontWeight: 'bold',
-              }}
-              variant="h6"
-            >
-              {intlFormat(account.uncleared)}
-            </Typography>
-          </Box>
-        </Stack>
+              <Typography
+                style={{
+                  color: getBalanceColor(account.cleared, theme),
+                  fontWeight: 'bold',
+                }}
+                variant="h6"
+              >
+                {intlFormat(account.uncleared)}
+              </Typography>
 
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
-          <Box sx={{ color: 'white' }}>=</Box>
-        </Stack>
+              <Box>=</Box>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box sx={{ color: 'white' }}>Balance</Box>
-          <Box>
-            <Typography
-              style={{
-                color: getBalanceColor(account.cleared, theme),
-                fontWeight: 'bold',
-              }}
-              variant="h6"
-            >
-              {intlFormat(account.balance)}
-            </Typography>
-          </Box>
-        </Stack>
+              <Typography
+                style={{
+                  color: getBalanceColor(account.cleared, theme),
+                  fontWeight: 'bold',
+                }}
+                variant="h6"
+              >
+                {intlFormat(account.balance)}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Paper>
       </Box>
     </Stack>
   )

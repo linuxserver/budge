@@ -140,7 +140,7 @@ export default function App(props) {
 
   return (
     <div className="App">
-      <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
+      <ThemeProvider theme={theme === 'dark' ? darkTheme : darkTheme}>
         {!initComplete && <Login />}
         {initComplete && (
           <Router>

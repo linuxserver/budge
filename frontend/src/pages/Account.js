@@ -22,24 +22,5 @@ export default function Account(props) {
     }
   }, [])
 
-  return (
-    <Grid container>
-      <Grid item xs={9}>
-        <div style={{ maxWidth: '100%' }}>
-          <Box>{account && <AccountTable accountId={params.accountId} account={account} />}</Box>
-        </div>
-      </Grid>
-
-      <Grid
-        item
-        xs={3}
-        sx={{
-          backgroundColor: theme.palette.background.details,
-          borderLeft: `1px solid ${theme.palette.action.disabledBackground}`,
-        }}
-      >
-        <AccountDetails accountId={params.accountId} name={account.name} />
-      </Grid>
-    </Grid>
-  )
+  return <Box>{account && <AccountTable accountId={params.accountId} account={account} />}</Box>
 }

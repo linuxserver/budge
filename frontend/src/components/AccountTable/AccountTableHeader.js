@@ -13,7 +13,7 @@ import { useTheme } from '@mui/styles'
 import ReconcileForm from '../../components/ReconcileForm'
 import { createSelector } from '@reduxjs/toolkit'
 
-export default function BudgetTableHeader({ accountId, name }) {
+export default function AccountTableHeader({ accountId, name }) {
   const theme = useTheme()
   const dispatch = useDispatch()
 

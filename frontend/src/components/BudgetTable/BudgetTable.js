@@ -34,6 +34,8 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { styled } from '@mui/material/styles'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import Divider from '@mui/material/Divider'
+import BudgetTableHeader from './BudgetTableHeader'
 
 const BudgetTableCell = styled(TableCell)(({ theme }) => ({
   paddingTop: '4px',
@@ -498,8 +500,6 @@ export default function BudgetTable(props) {
 
     dispatch(refreshBudgetCategory({ month, categoryId: newRow.categoryId }))
     dispatch(refreshBudget())
-    // dispatch(fetchCategoryMonths({ categoryId: newRow.categoryId, month }))
-    // dispatch(refreshBudgetMonth({ month, categoryId: newRow.categoryId }))
   }
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
@@ -518,13 +518,8 @@ export default function BudgetTable(props) {
         ),
       },
     },
-    // useGroupBy,
     useExpanded,
   )
-
-  const setIsLoading = active => {
-    isLoading = active
-  }
 
   return (
     <Box
@@ -536,6 +531,10 @@ export default function BudgetTable(props) {
         height: '100vh',
       }}
     >
+      {/* <BudgetTableHeader /> */}
+
+      {/* <Divider /> */}
+
       <TableContainer component={Box}>
         <Table stickyHeader {...getTableProps()} size="small">
           <TableHead>

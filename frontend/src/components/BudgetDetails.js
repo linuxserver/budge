@@ -11,7 +11,6 @@ import { useTheme } from '@mui/styles'
 import Stack from '@mui/material/Stack'
 import { isPositive, isZero } from 'dinero.js'
 import Alert from '@mui/material/Alert'
-
 import IconButton from '@mui/material/IconButton'
 import { formatMonthFromDateString, getDateFromString } from '../utils/Date'
 import BudgetMonthPicker from './BudgetMonthPicker'
@@ -21,6 +20,7 @@ import { usePopupState, bindTrigger } from 'material-ui-popup-state/hooks'
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import { selectActiveBudget, setCurrentMonth } from '../redux/slices/Budgets'
+import Paper from '@mui/material/Paper'
 
 export default function BudgetDetails(props) {
   const theme = useTheme()
@@ -69,190 +69,166 @@ export default function BudgetDetails(props) {
       justifyContent="space-between"
       alignItems="center"
       spacing={2}
-      sx={{ pt: 2, height: '100%' }}
+      sx={{ p: 2, height: '100%' }}
     >
-      <Box sx={{ minHeight: '80px', width: '100%' }}>
-        <BudgetMonthPicker
-          popupState={monthPickerPopupState}
-          currentMonth={month}
-          minDate={availableMonths[0]}
-          maxDate={availableMonths[availableMonths.length - 1]}
-        />
-        <Stack
-          className="budget-month-navigation"
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ width: '70%', margin: 'auto', pb: 1 }}
-        >
-          <IconButton
-            disabled={prevMonthDisabled}
-            onClick={() => navigateMonth(-1)}
-            sx={{
-              fontSize: theme.typography.h6.fontSize,
-              color: 'white',
-            }}
+      <Stack direction="column" justifyContent="flex-start" alignItems="center" spacing={2} sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%' }}>
+          <BudgetMonthPicker
+            popupState={monthPickerPopupState}
+            currentMonth={month}
+            minDate={availableMonths[0]}
+            maxDate={availableMonths[availableMonths.length - 1]}
+          />
+          <Stack
+            className="budget-month-navigation"
+            direction="row"
+            justifyContent="space-around"
+            alignItems="center"
+            sx={{ width: '100%', margin: 'auto' }}
           >
-            <ArrowBackIosIcon fontSize="large" variant="outlined" />
-          </IconButton>
-          <Button
-            {...bindTrigger(monthPickerPopupState)}
-            sx={{
-              fontSize: theme.typography.h6.fontSize,
-              fontWeight: 'bold',
-              color: theme.palette.secondary.main,
-              pl: 2,
-            }}
-          >
-            {new Date(Date.UTC(...month.split('-'))).toLocaleDateString(undefined, {
-              year: 'numeric',
-              month: 'long',
-            })}
-          </Button>
-          <IconButton
-            disabled={nextMonthDisabled}
-            onClick={() => navigateMonth(1)}
-            sx={{
-              fontSize: theme.typography.h6.fontSize,
-              // [`.Mui-disabled`]: { color: theme.palette.grey[500] },
-              color: 'white',
-            }}
-          >
-            <ArrowForwardIosIcon fontSize="large" />
-          </IconButton>
-        </Stack>
+            <IconButton
+              disabled={prevMonthDisabled}
+              onClick={() => navigateMonth(-1)}
+              sx={{
+                fontSize: theme.typography.h6.fontSize,
+                color: 'white',
+              }}
+            >
+              <ArrowBackIosIcon fontSize="large" variant="outlined" />
+            </IconButton>
 
-        {isToday === false && (
-          <Button
-            variant="outlined"
-            size="small"
-            color="secondary"
-            onClick={() => dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))}
-            sx={{ ml: 1 }}
+            <Stack direction="column" justifyContent="space-around" alignItems="center" sx={{ minHeight: '80px' }}>
+              <Button
+                {...bindTrigger(monthPickerPopupState)}
+                sx={{
+                  fontSize: theme.typography.h6.fontSize,
+                  fontWeight: 'bold',
+                  color: theme.palette.secondary.main,
+                }}
+              >
+                {new Date(Date.UTC(...month.split('-'))).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'long',
+                })}
+              </Button>
+
+              <Button
+                variant="outlined"
+                size="small"
+                color="secondary"
+                disabled={isToday}
+                onClick={() => dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))}
+              >
+                <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                  Jump to Today
+                </Typography>
+              </Button>
+            </Stack>
+
+            <IconButton
+              disabled={nextMonthDisabled}
+              onClick={() => navigateMonth(1)}
+              sx={{
+                fontSize: theme.typography.h6.fontSize,
+                // [`.Mui-disabled`]: { color: theme.palette.grey[500] },
+                color: 'white',
+              }}
+            >
+              <ArrowForwardIosIcon fontSize="large" />
+            </IconButton>
+          </Stack>
+        </Box>
+
+        <Paper sx={{ width: '90%' }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ p: 2, width: '100%' }}
           >
-            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-              Jump to Today
-            </Typography>
-          </Button>
+            <Box>
+              <Typography
+                style={{
+                  fontSize: theme.typography.h6.fontSize,
+                }}
+              >
+                Available to Budget
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                style={{
+                  fontSize: theme.typography.h5.fontSize,
+                  fontWeight: 'bold',
+                  color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
+                }}
+              >
+                {intlFormat(toBeBudgeted)}
+              </Typography>
+            </Box>
+          </Stack>
+        </Paper>
+
+        <Paper sx={{ width: '90%', p: 2 }}>
+          <Typography
+            sx={{
+              fontSize: theme.typography.h5.fontSize,
+            }}
+          >
+            Monthly Breakdown
+          </Typography>
+
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ width: '100%', pb: 2, borderBottom: `1px solid ${theme.palette.action.disabled}` }}
+          >
+            <Box>Income</Box>
+            <Box>{intlFormat(income)}</Box>
+          </Stack>
+
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ width: '100%', pb: 2, pt: 2, borderBottom: `1px solid ${theme.palette.action.disabled}` }}
+          >
+            <Box>Activity</Box>
+            <Box>{intlFormat(activity)}</Box>
+          </Stack>
+
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ width: '100%', pb: 2, pt: 2, borderBottom: `1px solid ${theme.palette.action.disabled}` }}
+          >
+            <Box>Budgeted</Box>
+            <Box>{intlFormat(budgeted)}</Box>
+          </Stack>
+
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pt: 2 }}>
+            <Box>Underfunded</Box>
+            <Box> {intlFormat(underfunded)}</Box>
+          </Stack>
+        </Paper>
+      </Stack>
+
+      <Box
+        sx={{
+          width: '100%',
+        }}
+      >
+        {isPositive(underfunded) && !isZero(underfunded) && (
+          <Alert variant="filled" severity="error">
+            You have overspent your budget this month! Your budget may not be accurate until you resolve any negative
+            balances.
+          </Alert>
         )}
       </Box>
-
-      <Stack direction="row" justifyContent="space-around" alignItems="center" sx={{ width: '100%' }}>
-        <Box sx={{ color: theme.palette.secondary.main }}>
-          <Typography
-            style={{
-              fontSize: theme.typography.h5.fontSize,
-              fontWeight: 'bold',
-              // color: 'black',
-            }}
-          >
-            Available
-          </Typography>
-        </Box>
-        <Box sx={{ color: theme.palette.secondary.main }}>
-          <Typography
-            style={{
-              fontSize: theme.typography.h5.fontSize,
-              fontWeight: 'bold',
-              // color: 'black',
-              color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
-            }}
-          >
-            {intlFormat(toBeBudgeted)}
-          </Typography>
-        </Box>
-      </Stack>
-
-      <Stack justifyContent="space-between" alignItems="center" sx={{ width: '100%', height: '100%', px: 2, py: 2 }}>
-        <Stack
-          spacing={2}
-          sx={{
-            width: '100%',
-            px: 2,
-            // borderRadius: 2,
-            backgroundColor: theme.palette.background.detailsContent,
-            color: 'white',
-          }}
-        >
-          <TableContainer>
-            <Table aria-label="simple table" sx={{ mt: 0 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell colSpan={2} sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ fontSize: theme.typography.h5.fontSize, color: 'white' }}>
-                      Month Summary
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
-                    Income
-                  </TableCell>
-                  <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
-                    {intlFormat(income)}
-                  </TableCell>
-                </TableRow>
-
-                <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
-                    Activity
-                  </TableCell>
-                  <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
-                    {intlFormat(activity)}
-                  </TableCell>
-                </TableRow>
-
-                <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ color: theme.palette.secondary.main }} align="left">
-                    Budgeted
-                  </TableCell>
-                  <TableCell sx={{ color: theme.palette.secondary.main }} align="right">
-                    {intlFormat(budgeted)}
-                  </TableCell>
-                </TableRow>
-
-                <TableRow
-                  sx={{
-                    '&:last-child td, &:last-child th': { border: 0 },
-                  }}
-                >
-                  <TableCell
-                    align="left"
-                    sx={{
-                      color: theme.palette.secondary.main,
-                    }}
-                  >
-                    Underfunded
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{
-                      color: theme.palette.secondary.main,
-                    }}
-                  >
-                    {intlFormat(underfunded)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Stack>
-        <Box
-          sx={{
-            width: '100%',
-          }}
-        >
-          {isPositive(underfunded) && !isZero(underfunded) && (
-            <Alert variant="filled" severity="error">
-              You have overspent your budget this month! Your budget may not be accurate until you resolve any negative
-              balances.
-            </Alert>
-          )}
-        </Box>
-      </Stack>
     </Stack>
   )
 }
