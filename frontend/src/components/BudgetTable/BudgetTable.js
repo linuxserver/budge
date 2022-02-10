@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { createSelector } from '@reduxjs/toolkit'
 import { refreshBudget } from '../../redux/slices/Budgets'
 import { updateCategoryMonth, refreshBudgetCategory } from '../../redux/slices/BudgetMonths'
-import { updateCategory } from '../../redux/slices/Categories'
+import { setSelectedCategory, updateCategory } from '../../redux/slices/Categories'
 import { updateCategoryGroup, fetchCategories, categoryGroupsSelectors } from '../../redux/slices/CategoryGroups'
 import { categoriesSelectors } from '../../redux/slices/Categories'
 import IconButton from '@mui/material/IconButton'
@@ -502,6 +502,11 @@ export default function BudgetTable(props) {
     dispatch(refreshBudget())
   }
 
+  const onCategoryRowClick = row => {
+    console.log(row)
+    dispatch(setSelectedCategory(row.original.categoryId))
+  }
+
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns,
@@ -526,8 +531,8 @@ export default function BudgetTable(props) {
       sx={{
         backgroundColor: theme.palette.background.tableBody,
         display: 'grid',
-        gridTemplateColums: '1fr',
-        gridTemplateRows: 'auto 1fr auto',
+        // gridTemplateColums: '1fr',
+        // gridTemplateRows: 'auto 1fr auto',
         height: '100vh',
       }}
     >
@@ -579,6 +584,9 @@ export default function BudgetTable(props) {
               prepareRow(row)
               return (
                 <TableRow
+                  hover
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => onCategoryRowClick(row)}
                   {...row.getRowProps({
                     ...(!row.original.groupId && { sx: { backgroundColor: theme.palette.action.hover } }),
                   })}

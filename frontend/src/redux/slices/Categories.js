@@ -23,11 +23,17 @@ const categoriesAdapter = createEntityAdapter()
 const categoriesSlice = createSlice({
   name: 'categories',
 
-  initialState: categoriesAdapter.getInitialState(),
+  initialState: categoriesAdapter.getInitialState({
+    selected: null,
+  }),
 
   reducers: {
     setCategories: (state, { payload }) => {
       categoriesAdapter.setAll(state, payload)
+    },
+
+    setSelectedCategory: (state, { payload }) => {
+      state.selected = payload
     },
   },
 
@@ -42,7 +48,7 @@ const categoriesSlice = createSlice({
   },
 })
 
-export const { setCategories } = categoriesSlice.actions
+export const { setCategories, setSelectedCategory } = categoriesSlice.actions
 
 export const categoriesSelectors = categoriesAdapter.getSelectors(state => state.categories)
 export const selectCategoryToGroupMap = createSelector(categoriesSelectors.selectAll, categories =>

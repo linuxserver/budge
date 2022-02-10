@@ -79,19 +79,19 @@ export default function App(props) {
     palette: {
       mode: 'light',
       background: {
-        drawer: '#333333',
+        drawer: '#3a3f51',
         header: '#536067',
         tableBody: '#ffffff',
-        tableHeader: '#333333',
-        details: '#333333',
-        detailsContent: '#333333',
+        tableHeader: '#3a3f51',
+        details: '#3a3f51',
+        detailsContent: '#3a3f51',
       },
       action: {
         // disabledBackground: 'set color of background here',
         // disabled: '#616161',
       },
       primary: {
-        main: '#333333',
+        main: '#3a3f51',
       },
       secondary: {
         main: '#ffffff',
@@ -110,7 +110,7 @@ export default function App(props) {
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: '#333333',
+            backgroundColor: '#3a3f51',
             color: 'white',
           },
         },
@@ -140,7 +140,7 @@ export default function App(props) {
 
   return (
     <div className="App">
-      <ThemeProvider theme={theme === 'dark' ? darkTheme : darkTheme}>
+      <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
         {!initComplete && <Login />}
         {initComplete && (
           <Router>
@@ -148,6 +148,7 @@ export default function App(props) {
               <CssBaseline />
               {/* <Header /> */}
               <Drawer onAddAccountClick={() => setNewAccountDialogOpen(true)} />
+
               <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
                 <AddAccountDialog isOpen={newAccountDialogOpen} close={closeNewAccountDialog} />
                 <Routes>

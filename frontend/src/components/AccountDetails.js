@@ -14,6 +14,8 @@ import { usePopupState, bindTrigger, bindPopover } from 'material-ui-popup-state
 import ReconcileForm from './ReconcileForm'
 import { createSelector } from '@reduxjs/toolkit'
 import Paper from '@mui/material/Paper'
+import BalanceCalculation from './AccountTable/BalanceCalculation'
+import EditIcon from '@mui/icons-material/Edit'
 
 export default function BudgetDetails({ accountId, name }) {
   const theme = useTheme()
@@ -56,18 +58,28 @@ export default function BudgetDetails({ accountId, name }) {
       justifyContent="space-between"
       alignItems="center"
       spacing={2}
-      sx={{ p: 3, height: '100%' }}
+      sx={{ px: 2, pb: 2, height: '100%' }}
     >
       <Box sx={{ width: '100%' }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pb: 4 }}>
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 'bold', color: 'white', cursor: 'pointer', display: 'inline-block' }}
+        <Paper sx={{ p: 2, m: 2 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pb: 2 }}>
+            <Stack
+              direction="row"
+              justifyContent="flex-start"
+              alignItems="center"
               {...bindTrigger(editAccountPopupState)}
+              sx={{ width: '100%', pr: 2 }}
             >
-              {account.name}
-            </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 'bold', color: 'white', cursor: 'pointer', display: 'inline-block', pr: 2 }}
+              >
+                {account.name}
+              </Typography>
+
+              {/* <EditIcon sx={{ cursor: 'pointer' }} /> */}
+            </Stack>
+
             <Popover
               {...bindPopover(editAccountPopupState)}
               anchorOrigin={{
@@ -94,74 +106,32 @@ export default function BudgetDetails({ accountId, name }) {
                 </Stack>
               </Box>
             </Popover>
-          </Box>
 
-          <Box>
-            <Button {...bindTrigger(reconcilePopupState)} color="secondary" variant="outlined">
-              <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                Reconcile
-              </Typography>
-            </Button>
-            <ReconcileForm
-              key={account.cleared}
-              popupState={reconcilePopupState}
-              accountId={account.id}
-              balance={account.cleared}
-            />
-          </Box>
-        </Stack>
+            <Box>
+              <Button {...bindTrigger(reconcilePopupState)} color="primary" variant="outlined">
+                <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                  Reconcile
+                </Typography>
+              </Button>
+              <ReconcileForm
+                key={account.cleared}
+                popupState={reconcilePopupState}
+                accountId={account.id}
+                balance={account.cleared}
+              />
+            </Box>
+          </Stack>
 
-        <Paper sx={{ p: 2 }}>
-          <Typography
-            sx={{
-              fontSize: theme.typography.h5.fontSize,
-            }}
+          <BalanceCalculation account={account} />
+
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ width: '100%', mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.action.disabled}` }}
           >
-            Summary
-          </Typography>
-
-          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-            <Stack direction="column" justifyContent="space-between" alignItems="flex-start" spacing={4}>
-              <Box>Cleared</Box>
-              <Box>Uncleared ({pendingTransactions})</Box>
-              <Box>Balance</Box>
-            </Stack>
-
-            <Stack direction="column" justifyContent="space-around" alignItems="center">
-              <Typography
-                style={{
-                  color: getBalanceColor(account.cleared, theme),
-                  fontWeight: 'bold',
-                }}
-                variant="h6"
-              >
-                {intlFormat(account.cleared)}
-              </Typography>
-
-              <Box>+</Box>
-
-              <Typography
-                style={{
-                  color: getBalanceColor(account.cleared, theme),
-                  fontWeight: 'bold',
-                }}
-                variant="h6"
-              >
-                {intlFormat(account.uncleared)}
-              </Typography>
-
-              <Box>=</Box>
-
-              <Typography
-                style={{
-                  color: getBalanceColor(account.cleared, theme),
-                  fontWeight: 'bold',
-                }}
-                variant="h6"
-              >
-                {intlFormat(account.balance)}
-              </Typography>
-            </Stack>
+            <Box>Pending Transactions</Box>
+            <Box> {pendingTransactions}</Box>
           </Stack>
         </Paper>
       </Box>

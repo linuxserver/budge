@@ -4,7 +4,7 @@ const appSlice = createSlice({
   name: 'app',
 
   initialState: {
-    theme: localStorage.getItem('theme') || 'light',
+    theme: localStorage.getItem('theme') || 'dark',
   },
 
   reducers: {

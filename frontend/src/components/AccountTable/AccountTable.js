@@ -161,13 +161,6 @@ export default function Account(props) {
 
   const payeesMap = useSelector(selectPayeesMap)
 
-  let amountFieldFocused = null
-  let amountFieldModified = false
-  const focusAmountField = field => {
-    amountFieldFocused = field
-    amountFieldModified = false
-  }
-
   const filter = createFilterOptions()
   const columns = [
     {
@@ -383,10 +376,6 @@ export default function Account(props) {
         )
       },
       editComponent: props => {
-        // if (amountFieldModified === true && amountFieldFocused !== 'outflow') {
-        //   props.value.amount = 0
-        // }
-
         const value = dinero(props.value)
         return (
           <Box sx={{ textAlign: 'right' }}>
@@ -395,7 +384,6 @@ export default function Account(props) {
               variant="standard"
               value={toUnit(value, { digits: 2 })}
               onChange={value => {
-                amountFieldModified = true
                 props.onChange(toSnapshot(inputToDinero(value)))
               }}
               // onFocus={focusOutflowField}
@@ -712,7 +700,7 @@ export default function Account(props) {
   }
 
   return (
-    <div style={{ maxWidth: '100%' }}>
+    <Box>
       <ImportCSV accountId={props.accountId} open={importerOpen} close={closeImporter}></ImportCSV>
       <MaterialTable
         style={{
@@ -848,6 +836,7 @@ export default function Account(props) {
           padding: 'dense',
           draggable: false,
           pageSize: 20,
+          pageSizeOptions: [5, 10, 25, 50, 100],
           addRowPosition: 'first',
           selection: true,
           actionsColumnIndex: 99,
@@ -893,10 +882,6 @@ export default function Account(props) {
                 backgroundColor: theme.palette.background.tableHeader,
               }}
             >
-              <AccountTableHeader accountId={account.id} name={account.name} />
-
-              <Divider />
-
               <StyledMTableToolbar
                 {...{ ...props, actions: [] }}
                 showTextRowsSelected={false}
@@ -934,6 +919,6 @@ export default function Account(props) {
           },
         }}
       />
-    </div>
+    </Box>
   )
 }

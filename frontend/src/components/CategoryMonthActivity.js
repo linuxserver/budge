@@ -1,0 +1,112 @@
+import React from 'react'
+import { accountsSelectors } from '../redux/slices/Accounts'
+import { useSelector } from 'react-redux'
+import Box from '@mui/material/Box'
+import Table from '@mui/material/Table'
+import TableHead from '@mui/material/TableHead'
+import TableBody from '@mui/material/TableBody'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { intlFormat, FromAPI } from '../utils/Currency'
+import { formatMonthFromDateString } from '../utils/Date'
+import { useTheme } from '@mui/styles'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+
+export default function CategoryMonthActivity(props) {
+  const theme = useTheme()
+
+  const month = useSelector(state => new Date(state.budgets.currentMonth))
+  const accounts = useSelector(accountsSelectors.selectAll)
+  const selectedCategory = useSelector(state => {
+    if (!state.categories.selected) {
+      return null
+    }
+
+    return state.categories.entities[state.categories.selected]
+  })
+  const payees = useSelector(state => state.payees.entities)
+
+  if (!selectedCategory) {
+    return <>No category selected</>
+  }
+
+  const transactions = accounts.reduce((total, account) => {
+    const filtered = Object.values(account.transactions.entities).filter(trx => {
+      const trxDate = new Date(trx.date)
+      if (trx.categoryId !== selectedCategory.id) {
+        return false
+      }
+
+      if (trxDate.getMonth() === month.getMonth() && trxDate.getFullYear() === month.getFullYear()) {
+        return true
+      }
+
+      return false
+    })
+
+    return total.concat(filtered)
+  }, [])
+
+  if (transactions.length === 0) {
+    return <Box>No transactions for this month</Box>
+  }
+
+  return (
+    <Box>
+      <TableContainer sx={{ maxHeight: 300 }}>
+        <Table stickyHeader size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell
+                sx={{ backgroundColor: theme.palette.background.tableHeader, pl: 1, pr: 0, width: 10, color: 'white' }}
+              ></TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.background.tableHeader, color: 'white' }}>
+                Payee
+              </TableCell>
+              <TableCell
+                sx={{ backgroundColor: theme.palette.background.tableHeader, textAlign: 'right', color: 'white' }}
+              >
+                Amount
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {transactions.map(transaction => {
+              transaction = FromAPI.transformTransaction(transaction)
+              return (
+                <TableRow>
+                  <Tooltip
+                    arrow
+                    title={
+                      <React.Fragment>
+                        <Typography sx={{ fontSize: theme.typography.caption.fontSize }}>
+                          Date: {formatMonthFromDateString(transaction.date)}
+                        </Typography>
+                        <Typography sx={{ fontSize: theme.typography.caption.fontSize }}>
+                          Account: {accounts.find(acct => acct.id === transaction.accountId).name}
+                        </Typography>
+                        <Typography sx={{ fontSize: theme.typography.caption.fontSize }}>
+                          Memo: {transaction.memo}{' '}
+                        </Typography>
+                      </React.Fragment>
+                    }
+                  >
+                    <TableCell sx={{ pl: 1, pr: 0, width: 10 }}>
+                      <InfoOutlinedIcon fontSize="small" sx={{ verticalAlign: 'middle' }} />
+                    </TableCell>
+                  </Tooltip>
+                  <TableCell>{payees[transaction.payeeId].name}</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(transaction.amount)}</TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  )
+}

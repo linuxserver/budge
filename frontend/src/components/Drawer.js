@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import Drawer from '@mui/material/Drawer'
+import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import Divider from '@mui/material/Divider'
 import ListItem from '@mui/material/ListItem'
@@ -11,18 +11,13 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import Collapse from '@mui/material/Collapse'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
 import LogoutIcon from '@mui/icons-material/Logout'
 import api from '../api'
-import Grid from '@mui/material/Grid'
 import { add, isNegative } from 'dinero.js'
-import { useTheme } from '@mui/styles'
+import { styled, useTheme } from '@mui/styles'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-import { usePopupState, bindTrigger, bindMenu } from 'material-ui-popup-state/hooks'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { usePopupState } from 'material-ui-popup-state/hooks'
 import { accountsSelectors, editAccount, fetchAccounts } from '../redux/slices/Accounts'
 import { setTheme } from '../redux/slices/App'
 import { selectActiveBudget } from '../redux/slices/Budgets'
@@ -30,9 +25,51 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
 import Settings from './Settings/Settings'
 import SettingsIcon from '@mui/icons-material/Settings'
-import MailOutlineIcon from '@mui/icons-material/MailOutline'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import Avatar from '@mui/material/Avatar'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 
-const drawerWidth = 350
+const drawerWidth = 300
+
+const openedMixin = theme => ({
+  width: drawerWidth,
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: 'hidden',
+})
+
+const closedMixin = theme => ({
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  overflowX: 'hidden',
+  width: `calc(${theme.spacing(9)} + 1px)`,
+  [theme.breakpoints.up('sm')]: {
+    width: `calc(${theme.spacing(9)} + 1px)`,
+  },
+})
+
+const Drawer = styled(MuiDrawer, { shouldForwardProp: prop => prop !== 'open' })(({ theme, open }) => ({
+  width: drawerWidth,
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+  boxSizing: 'border-box',
+  ...(open && {
+    ...openedMixin(theme),
+    '& .MuiDrawer-paper': openedMixin(theme),
+  }),
+  ...(!open && {
+    ...closedMixin(theme),
+    '& .MuiDrawer-paper': closedMixin(theme),
+  }),
+}))
 
 export default function AppDrawer(props) {
   const dispatch = useDispatch()
@@ -49,6 +86,7 @@ export default function AppDrawer(props) {
   /**
    * State block
    */
+  const [drawerOpen, setDrawerOpen] = useState(true)
   const [accountsListOpen, setAccountsListOpen] = useState({ ACCOUNTS: true, OFF_BUDGET: true })
   const [selectedItem, setSelectedItem] = useState('Budget')
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -102,39 +140,46 @@ export default function AppDrawer(props) {
 
     return (
       <List dense={true}>
-        <ListItemButton onClick={() => listItemClicked(key)}>
-          <Grid container direction="row" justifyContent="space-between" alignItems="center">
-            <div>
-              <Grid container direction="row" justifyContent="space-between" alignItems="center">
-                <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
-                  {accountsListOpen[key] ? (
-                    <ExpandMore sx={{ color: theme.palette.secondary.main }} fontSize="small" />
-                  ) : (
-                    <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} fontSize="small" />
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={label}
-                  primaryTypographyProps={{
-                    // variant: 'caption',
-                    style: { fontWeight: 'bold' },
-                  }}
-                />
-              </Grid>
-            </div>
-
-            <div>
+        <ListItem button onClick={() => listItemClicked(key)}>
+          {drawerOpen && (
+            <>
+              <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
+                {accountsListOpen[key] ? (
+                  <ExpandMore sx={{ color: theme.palette.secondary.main }} fontSize="small" />
+                ) : (
+                  <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} fontSize="small" />
+                )}
+              </ListItemIcon>
               <ListItemText
-                edge="end"
-                secondary={intlFormat(balance)}
-                secondaryTypographyProps={{
-                  fontWeight: 'bold',
-                  sx: { color: balanceColor },
-                }}
+                primary={
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography>{label}</Typography>
+
+                    <Typography
+                      sx={{
+                        color: balanceColor,
+                      }}
+                    >
+                      {intlFormat(balance)}
+                    </Typography>
+                  </Stack>
+                }
               />
-            </div>
-          </Grid>
-        </ListItemButton>
+            </>
+          )}
+          {!drawerOpen && (
+            <>
+              <ListItemText primary={<AccountBalanceIcon />} />
+              <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
+                {accountsListOpen[key] ? (
+                  <ExpandMore sx={{ color: theme.palette.secondary.main }} fontSize="small" />
+                ) : (
+                  <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} fontSize="small" />
+                )}
+              </ListItemIcon>
+            </>
+          )}
+        </ListItem>
 
         <Collapse in={accountsListOpen[key]} timeout="auto" unmountOnExit>
           <List dense={true} component="div" disablePadding>
@@ -169,11 +214,16 @@ export default function AppDrawer(props) {
     props.onAddAccountClick()
   }
 
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen)
+  }
+
   const AccountItem = account => {
     const balance = valueToDinero(account.balance)
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
     return (
-      <ListItemButton
+      <ListItem
+        button
         key={`account-${account.id}`}
         selected={selectedItem === `account-${account.id}`}
         onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
@@ -195,33 +245,43 @@ export default function AppDrawer(props) {
           DragState.dropAccount = -1
         }}
       >
-        <Grid container direction="row" justifyContent="space-between" alignItems="center">
-          <div>
-            <ListItemText
-              sx={{ maxWidth: 150 }}
-              primary={account.name}
-              primaryTypographyProps={{
-                style: {
-                  fontWeight: 'bold',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                },
-              }}
-            />
-          </div>
+        {drawerOpen === false && (
+          <ListItemIcon>
+            <Avatar sx={{ width: 30, height: 30 }}>{account.name[0]}</Avatar>
+          </ListItemIcon>
+        )}
+        {drawerOpen === true && (
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+            <div>
+              <ListItemText
+                sx={{ maxWidth: 150 }}
+                primary={account.name}
+                primaryTypographyProps={{
+                  style: {
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                }}
+              />
+            </div>
 
-          <div>
-            <ListItemText
-              secondary={intlFormat(balance)}
-              secondaryTypographyProps={{
-                fontWeight: 'bold',
-                color: balanceColor,
-              }}
-            />
-          </div>
-        </Grid>
-      </ListItemButton>
+            <div>
+              {/* {selectedItem === `account-${account.id}` && (
+                <BalanceCalculation account={FromAPI.transformAccount(account)} />
+              )} */}
+              <ListItemText
+                secondary={intlFormat(balance)}
+                secondaryTypographyProps={{
+                  fontWeight: 'bold',
+                  color: balanceColor,
+                }}
+              />
+            </div>
+          </Stack>
+        )}
+      </ListItem>
     )
   }
 
@@ -235,6 +295,7 @@ export default function AppDrawer(props) {
 
       <Drawer
         variant="permanent"
+        open={drawerOpen}
         sx={{
           width: drawerWidth,
           flexShrink: 0,
@@ -242,38 +303,43 @@ export default function AppDrawer(props) {
         }}
       >
         <List>
-          <ListItem>
-            <ListItemText primary={budget.name} />
-            <SettingsIcon
-              // {...bindTrigger(menuPopupState)}
-              onClick={openSettings}
-              sx={{ color: theme.palette.secondary.main }}
-              sx={{ cursor: 'pointer' }}
-            />
+          <ListItem button onClick={toggleDrawer}>
+            {drawerOpen && <ListItemText primary={budget.name} />}
+            <ListItemIcon
+              sx={{
+                mr: '-30px', // wish there was a better way to position this further right?
+              }}
+            >
+              {drawerOpen === false ? (
+                <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} />
+              ) : (
+                <ChevronLeftIcon sx={{ color: theme.palette.secondary.main }} />
+              )}
+            </ListItemIcon>
           </ListItem>
-
-          {/* <Menu MenuListProps={{ dense: true }} {...bindMenu(menuPopupState)}>
-            <MenuItem onClick={openSettings}>Settings</MenuItem>
-            <MenuItem onClick={onAddAccountClick}>Add Account</MenuItem>
-          </Menu> */}
         </List>
+
+        <Box sx={{ pt: 2 }}>
+          <Divider />
+        </Box>
 
         <List>
           {menuItems.map((menuItemConfig, index) => (
-            <ListItemButton
+            <ListItem
+              button
               key={menuItemConfig.name}
               onClick={() => listItemClicked(menuItemConfig.name, menuItemConfig.path)}
               selected={selectedItem === menuItemConfig.name}
             >
-              <ListItemIcon style={{ minWidth: '40px' }}>
+              <ListItemIcon>
                 {index % 2 === 0 ? <MailIcon sx={{ color: theme.palette.secondary.main }} /> : <MailIcon />}
               </ListItemIcon>
               <ListItemText primary={menuItemConfig.name} />
-            </ListItemButton>
+            </ListItem>
           ))}
         </List>
 
-        <Divider />
+        {/* <Divider /> */}
 
         {budgetAccounts.length > 0 && AccountList('ACCOUNTS', budgetAccounts)}
 
@@ -281,21 +347,46 @@ export default function AppDrawer(props) {
 
         <List dense={true}>
           <ListItemButton>
-            <ListItemIcon size="small" style={{ minWidth: '20px' }}>
-              <AddCircleIcon
-                style={{
-                  color: theme.palette.secondary.main,
-                  fontSize: theme.typography.subtitle2.fontSize,
-                }}
-              />
-            </ListItemIcon>
-            <ListItemText primary="Add Account" onClick={() => props.onAddAccountClick()} />
+            {drawerOpen && (
+              <>
+                <ListItemIcon size="small" style={{ minWidth: '20px' }}>
+                  <AddCircleIcon
+                    style={{
+                      color: theme.palette.secondary.main,
+                      fontSize: theme.typography.subtitle2.fontSize,
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText primary="Add Account" onClick={props.onAddAccountClick} />
+              </>
+            )}
+            {drawerOpen === false && (
+              <>
+                <ListItemIcon>
+                  <AddCircleIcon
+                    onClick={props.onAddAccountClick}
+                    style={{
+                      color: theme.palette.secondary.main,
+                    }}
+                  />
+                </ListItemIcon>
+              </>
+            )}
           </ListItemButton>
         </List>
 
         <List dense={true} style={{ marginTop: 'auto' }}>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton onClick={openSettings}>
+              <ListItemIcon>
+                <SettingsIcon sx={{ color: theme.palette.secondary.main }} />
+              </ListItemIcon>
+              <ListItemText primary="Settings" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton onClick={toggleTheme}>
               <ListItemIcon>
                 {currentTheme === 'dark' ? (
                   <Brightness7Icon sx={{ color: theme.palette.secondary.main }} />
@@ -303,15 +394,16 @@ export default function AppDrawer(props) {
                   <Brightness4Icon sx={{ color: theme.palette.secondary.main }} />
                 )}
               </ListItemIcon>
-              <ListItemText primary="Toggle Theme" onClick={toggleTheme} />
+              <ListItemText primary="Toggle Theme" />
             </ListItemButton>
           </ListItem>
+
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton onClick={logout}>
               <ListItemIcon>
                 <LogoutIcon sx={{ color: theme.palette.secondary.main }} />
               </ListItemIcon>
-              <ListItemText primary="Log Out" onClick={logout} />
+              <ListItemText primary="Log Out" />
             </ListItemButton>
           </ListItem>
         </List>
