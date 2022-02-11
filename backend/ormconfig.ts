@@ -18,18 +18,9 @@ const config: ConnectionOptions = {
   // database: process.env.BUDGE_DATABASE || 'budge',
   synchronize: true,
   logging: false,
-  entities: [
-    join(__dirname, 'src/entities/**', '*.ts'),
-    join(__dirname, 'build/src/entities/**', '*.js')
-  ],
-  migrations: [
-    join(__dirname, 'src/migrations/**', '*.ts'),
-    join(__dirname, 'build/src/migrations/**', '*.js')
-  ],
-  subscribers: [
-    join(__dirname, 'src/subscribers/**', '*.ts'),
-    join(__dirname, 'build/src/subscribers/**', '*.js')
-  ],
+  entities: [join(__dirname, 'src/entities/**', '*.{ts,js}')],
+  migrations: [join(__dirname, 'src/migrations/**', '*.{ts,js}')],
+  subscribers: [join(__dirname, 'src/subscribers/**', '*.{ts,js}')],
   cli: {
     entitiesDir: 'src/entities',
     migrationsDir: 'src/migrations',
