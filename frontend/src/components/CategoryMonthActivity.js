@@ -18,7 +18,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 export default function CategoryMonthActivity(props) {
   const theme = useTheme()
 
-  const month = useSelector(state => new Date(state.budgets.currentMonth))
+  const month = useSelector(state => state.budgets.currentMonth.split('-'))
   const accounts = useSelector(accountsSelectors.selectAll)
   const selectedCategory = useSelector(state => {
     if (!state.categories.selected) {
@@ -35,12 +35,12 @@ export default function CategoryMonthActivity(props) {
 
   const transactions = accounts.reduce((total, account) => {
     const filtered = Object.values(account.transactions.entities).filter(trx => {
-      const trxDate = new Date(trx.date)
+      const trxDate = trx.date.split('-')
       if (trx.categoryId !== selectedCategory.id) {
         return false
       }
 
-      if (trxDate.getMonth() === month.getMonth() && trxDate.getFullYear() === month.getFullYear()) {
+      if (trxDate[0] === month[0] && trxDate[1] === month[1]) {
         return true
       }
 
