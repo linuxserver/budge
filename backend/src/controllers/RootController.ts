@@ -53,7 +53,7 @@ export class RootController extends Controller {
    * Retrieve currently logged in user
    */
   @Security('jwtRequired')
-  @Get('ping')
+  @Post('ping')
   @Example<UserResponse>({
     message: 'success',
     data: {
@@ -65,13 +65,12 @@ export class RootController extends Controller {
   })
   public async ping(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await getRepository(User).findOne({ email: request.user.email })
-      const token = user.generateJWT()
+      const token = request.user.generateJWT()
 
       this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
 
       return {
-        data: await user.toResponseModel(),
+        data: await request.user.toResponseModel(),
         message: 'success',
       }
     } catch (err) {
