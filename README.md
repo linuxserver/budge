@@ -3,8 +3,8 @@ BudgE (pronounced "budgie", like the bird) is an open source "budgeting with env
 
 :warning: BudgE is still under active development and considered an 'alpha' version until more tests can be written to ensure functionality is maintained. :warning:
 
-[!budget](images/budget.png)
-[!account](images/account.png)
+![Budget](images/budget.png)
+![Account](images/account.png)
 
 # Current Features
 - Multi user support
