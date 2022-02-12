@@ -55,8 +55,8 @@ export default function ReconcileForm(props) {
       <Box sx={{ p: 2 }}>
         {balanceCorrectAnswer === null && (
           <Stack direction="column" spacing={0.5} justifyContent="center" alignItems="center">
-            <Typography>Is your current account balance</Typography>
-            <Typography variant="h6">{intlFormat(props.balance)}?</Typography>
+            <Typography>Is this your current balance?</Typography>
+            <Typography variant="h6">{intlFormat(props.balance)}</Typography>
             <ButtonGroup variant="contained" aria-label="outlined primary button group">
               <Button size="small" onClick={submit}>
                 Yes

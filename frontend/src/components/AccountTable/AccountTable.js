@@ -5,6 +5,7 @@ import MaterialTable, {
   MTableEditField,
   MTableToolbar,
   MTableEditRow,
+  MTableActions,
 } from '@material-table/core'
 import { useDispatch, useSelector } from 'react-redux'
 import {
@@ -57,6 +58,8 @@ import { styled } from '@mui/material/styles'
 import UploadIcon from '@mui/icons-material/Upload'
 import ImportCSV from '../ImportCSV'
 import AccountTableHeader from './AccountTableHeader'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import DeleteOutline from '@mui/icons-material/DeleteOutline'
 
 const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
   backgroundColor: theme.palette.background.tableBody,
@@ -857,7 +860,7 @@ export default function Account(props) {
         onSelectionChange={onSelectionChange}
         localization={{
           header: {
-            // actions: '',
+            actions: '',
           },
           body: {
             emptyDataSourceMessage: 'No transactions to display',
@@ -903,6 +906,14 @@ export default function Account(props) {
             />
           ),
           EditRow: props => <MTableEditRow {...props} />,
+          Actions: props => {
+            console.log(props)
+            if (typeof props.actions[1] !== 'function') {
+              return <MTableActions {...props} />
+            }
+
+            return <></>
+          },
         }}
         icons={TableIcons}
         columns={columns}

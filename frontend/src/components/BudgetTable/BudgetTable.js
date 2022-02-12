@@ -225,18 +225,14 @@ export default function BudgetTable(props) {
             <PopupState variant="popover" popupId="popover-category-group">
               {popupState => (
                 <>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.5}
-                    {...bindTrigger(popupState)}
-                    sx={{ cursor: 'pointer' }}
-                  >
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
                     <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
                       ENVELOPE
                     </Typography>
                     <AddCircleIcon
+                      {...bindTrigger(popupState)}
                       style={{
+                        cursor: 'pointer',
                         fontSize: theme.typography.subtitle2.fontSize,
                       }}
                     />
@@ -531,14 +527,14 @@ export default function BudgetTable(props) {
       sx={{
         backgroundColor: theme.palette.background.tableBody,
         display: 'grid',
-        // gridTemplateColums: '1fr',
-        // gridTemplateRows: 'auto 1fr auto',
+        gridTemplateColums: '1fr',
+        gridTemplateRows: 'auto 1fr auto',
         height: '100vh',
       }}
     >
-      {/* <BudgetTableHeader /> */}
+      {/* <BudgetTableHeader />
 
-      {/* <Divider /> */}
+      <Divider /> */}
 
       <TableContainer component={Box}>
         <Table stickyHeader {...getTableProps()} size="small">

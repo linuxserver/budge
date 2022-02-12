@@ -106,7 +106,7 @@ export default function BalanceCalculation({ account }) {
               fontWeight: 'bold',
             }}
           >
-            Working Balance
+            Balance
           </Typography>
         </Stack>
       </div>

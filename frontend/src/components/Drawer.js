@@ -32,6 +32,7 @@ import Avatar from '@mui/material/Avatar'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
+import BudgetMonthNavigator from './BudgetMonthNavigator'
 
 const drawerWidth = 300
 
@@ -131,11 +132,6 @@ export default function AppDrawer(props) {
   }
 
   const AccountList = (label, accounts) => {
-    const balance = accounts.reduce((total, account) => {
-      return add(valueToDinero(account.balance), total)
-    }, inputToDinero(0))
-    const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
-
     const key = label.replace(' ', '_')
 
     return (
@@ -150,21 +146,7 @@ export default function AppDrawer(props) {
                   <ChevronRightIcon sx={{ color: theme.palette.secondary.main }} fontSize="small" />
                 )}
               </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography>{label}</Typography>
-
-                    <Typography
-                      sx={{
-                        color: balanceColor,
-                      }}
-                    >
-                      {intlFormat(balance)}
-                    </Typography>
-                  </Stack>
-                }
-              />
+              <ListItemText primary={label} />
             </>
           )}
           {!drawerOpen && (
@@ -228,6 +210,7 @@ export default function AppDrawer(props) {
         selected={selectedItem === `account-${account.id}`}
         onClick={() => listItemClicked(`account-${account.id}`, `/accounts/${account.id}`)}
         draggable="true"
+        sx={{ ...(drawerOpen && { pl: 5 }) }}
         onDragStart={e => {
           DragState.account = account
         }}
@@ -251,39 +234,21 @@ export default function AppDrawer(props) {
           </ListItemIcon>
         )}
         {drawerOpen === true && (
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
-            <div>
-              <ListItemText
-                sx={{ maxWidth: 150 }}
-                primary={account.name}
-                primaryTypographyProps={{
-                  style: {
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                }}
-              />
-            </div>
-
-            <div>
-              {/* {selectedItem === `account-${account.id}` && (
-                <BalanceCalculation account={FromAPI.transformAccount(account)} />
-              )} */}
-              <ListItemText
-                secondary={intlFormat(balance)}
-                secondaryTypographyProps={{
-                  fontWeight: 'bold',
-                  color: balanceColor,
-                }}
-              />
-            </div>
-          </Stack>
+          <ListItemText
+            primary={account.name}
+            secondary={<Box sx={{ color: balanceColor }}>{intlFormat(balance)}</Box>}
+            primaryTypographyProps={{
+              style: {
+                fontWeight: 'bold',
+              },
+            }}
+          />
         )}
       </ListItem>
     )
   }
+
+  console.log(theme)
 
   if (!budget) {
     return <></>
@@ -319,9 +284,11 @@ export default function AppDrawer(props) {
           </ListItem>
         </List>
 
-        <Box sx={{ pt: 2 }}>
-          <Divider />
+        <Box sx={{ ...(drawerOpen && { pb: 2 }) }}>
+          <BudgetMonthNavigator mini={!drawerOpen} />
         </Box>
+
+        <Divider />
 
         <List>
           {menuItems.map((menuItemConfig, index) => (
@@ -339,11 +306,15 @@ export default function AppDrawer(props) {
           ))}
         </List>
 
-        {/* <Divider /> */}
+        <Divider />
 
         {budgetAccounts.length > 0 && AccountList('ACCOUNTS', budgetAccounts)}
 
+        <Divider />
+
         {trackingAccounts.length > 0 && AccountList('OFF BUDGET', trackingAccounts)}
+
+        <Divider />
 
         <List dense={true}>
           <ListItemButton>
@@ -385,7 +356,7 @@ export default function AppDrawer(props) {
             </ListItemButton>
           </ListItem>
 
-          <ListItem disablePadding>
+          {/* <ListItem disablePadding>
             <ListItemButton onClick={toggleTheme}>
               <ListItemIcon>
                 {currentTheme === 'dark' ? (
@@ -396,7 +367,7 @@ export default function AppDrawer(props) {
               </ListItemIcon>
               <ListItemText primary="Toggle Theme" />
             </ListItemButton>
-          </ListItem>
+          </ListItem> */}
 
           <ListItem disablePadding>
             <ListItemButton onClick={logout}>

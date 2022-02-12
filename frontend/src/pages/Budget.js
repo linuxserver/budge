@@ -19,24 +19,24 @@ export default function Budget(props) {
       <Box
         sx={{
           backgroundColor: theme.palette.background.details,
-          width: 600,
-          maxWidth: 600,
-          display: 'grid',
-          height: '100vh',
-          overflow: 'auto',
+          width: '100%',
         }}
       >
-        <BudgetDetails />
+        <BudgetTable index={0} />
       </Box>
 
       <Box
         sx={{
           backgroundColor: theme.palette.background.details,
+          width: 600,
+          maxWidth: 600,
+          display: 'grid',
+          height: '100vh',
+          overflow: 'auto',
           borderLeft: `1px solid ${theme.palette.action.disabledBackground}`,
-          width: '100%',
         }}
       >
-        <BudgetTable index={0} />
+        <BudgetDetails />
       </Box>
     </Stack>
   )

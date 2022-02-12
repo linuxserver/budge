@@ -58,22 +58,6 @@ export default function CategoryMonthActivity(props) {
     <Box>
       <TableContainer sx={{ maxHeight: 300 }}>
         <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell
-                sx={{ backgroundColor: theme.palette.background.tableHeader, pl: 1, pr: 0, width: 10, color: 'white' }}
-              ></TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.background.tableHeader, color: 'white' }}>
-                Payee
-              </TableCell>
-              <TableCell
-                sx={{ backgroundColor: theme.palette.background.tableHeader, textAlign: 'right', color: 'white' }}
-              >
-                Amount
-              </TableCell>
-            </TableRow>
-          </TableHead>
-
           <TableBody>
             {transactions.map(transaction => {
               transaction = FromAPI.transformTransaction(transaction)

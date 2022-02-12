@@ -69,71 +69,63 @@ export default function BudgetMonthNavigator({ mini }) {
   }
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Stack
-        className="budget-month-navigation"
-        direction="row"
-        justifyContent="space-evenly"
-        alignItems="center"
-        sx={{ width: '100%', margin: 'auto' }}
+    <Stack className="budget-month-navigation" direction="row" justifyContent="space-evenly" alignItems="center">
+      <BudgetMonthPicker
+        popupState={monthPickerPopupState}
+        currentMonth={month}
+        minDate={availableMonths[0]}
+        maxDate={availableMonths[availableMonths.length - 1]}
+      />
+      <IconButton
+        disabled={prevMonthDisabled}
+        onClick={() => navigateMonth(-1)}
+        sx={{
+          fontSize: theme.typography.h6.fontSize,
+          color: 'white',
+        }}
       >
-        <BudgetMonthPicker
-          popupState={monthPickerPopupState}
-          currentMonth={month}
-          minDate={availableMonths[0]}
-          maxDate={availableMonths[availableMonths.length - 1]}
-        />
-        <IconButton
-          disabled={prevMonthDisabled}
-          onClick={() => navigateMonth(-1)}
+        <ArrowBackIosIcon fontSize="large" variant="outlined" />
+      </IconButton>
+
+      <Stack direction="column" justifyContent="space-around" alignItems="center" sx={{ minHeight: '80px' }}>
+        <Button
+          {...bindTrigger(monthPickerPopupState)}
           sx={{
             fontSize: theme.typography.h6.fontSize,
-            color: 'white',
+            fontWeight: 'bold',
+            color: theme.palette.secondary.main,
           }}
         >
-          <ArrowBackIosIcon fontSize="large" variant="outlined" />
-        </IconButton>
+          {new Date(Date.UTC(...month.split('-'))).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+          })}
+        </Button>
 
-        <Stack direction="column" justifyContent="space-around" alignItems="center" sx={{ minHeight: '80px' }}>
-          <Button
-            {...bindTrigger(monthPickerPopupState)}
-            sx={{
-              fontSize: theme.typography.h6.fontSize,
-              fontWeight: 'bold',
-              color: theme.palette.secondary.main,
-            }}
-          >
-            {new Date(Date.UTC(...month.split('-'))).toLocaleDateString(undefined, {
-              year: 'numeric',
-              month: 'long',
-            })}
-          </Button>
-
-          <Button
-            variant="outlined"
-            size="small"
-            color="secondary"
-            disabled={isToday}
-            onClick={() => dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))}
-          >
-            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-              Jump to Today
-            </Typography>
-          </Button>
-        </Stack>
-
-        <IconButton
-          disabled={nextMonthDisabled}
-          onClick={() => navigateMonth(1)}
-          sx={{
-            fontSize: theme.typography.h6.fontSize,
-            // [`.Mui-disabled`]: { color: theme.palette.grey[500] },
-            color: 'white',
-          }}
+        <Button
+          variant="outlined"
+          size="small"
+          color="secondary"
+          disabled={isToday}
+          onClick={() => dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))}
         >
-          <ArrowForwardIosIcon fontSize="large" />
-        </IconButton>
+          <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+            Jump to Today
+          </Typography>
+        </Button>
       </Stack>
-    </Box>
+
+      <IconButton
+        disabled={nextMonthDisabled}
+        onClick={() => navigateMonth(1)}
+        sx={{
+          fontSize: theme.typography.h6.fontSize,
+          // [`.Mui-disabled`]: { color: theme.palette.grey[500] },
+          color: 'white',
+        }}
+      >
+        <ArrowForwardIosIcon fontSize="large" />
+      </IconButton>
+    </Stack>
   )
 }

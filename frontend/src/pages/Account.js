@@ -31,6 +31,17 @@ export default function Account(props) {
     >
       <Box
         sx={{
+          backgroundColor: theme.palette.background.tableBody,
+          width: '100%',
+        }}
+      >
+        <div style={{ maxWidth: '100%' }}>
+          <Box>{account && <AccountTable accountId={params.accountId} account={account} />}</Box>
+        </div>
+      </Box>
+
+      <Box
+        sx={{
           backgroundColor: theme.palette.background.details,
           borderLeft: `1px solid ${theme.palette.action.disabledBackground}`,
           width: 600,
@@ -38,18 +49,6 @@ export default function Account(props) {
         }}
       >
         <AccountDetails accountId={params.accountId} name={account.name} />
-      </Box>
-
-      <Box
-        sx={{
-          backgroundColor: theme.palette.background.tableBody,
-          borderLeft: `1px solid ${theme.palette.action.disabledBackground}`,
-          width: '100%',
-        }}
-      >
-        <div style={{ maxWidth: '100%' }}>
-          <Box>{account && <AccountTable accountId={params.accountId} account={account} />}</Box>
-        </div>
       </Box>
     </Stack>
   )

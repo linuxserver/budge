@@ -20,7 +20,7 @@ export default function BudgetMonthCalculation({ account }) {
   const activity = budgetMonth ? valueToDinero(budgetMonth.activity) : inputToDinero(0)
 
   return (
-    <Stack direction="row" justifyContent="space-evenly" alignItems="center" spacing={0}>
+    <Stack direction="row" justifyContent="space-evenly" alignItems="center" spacing={2}>
       <div>
         <Stack
           direction="column"

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import { useSelector, useDispatch } from 'react-redux'
-import { getBalanceColor, FromAPI, intlFormat } from '../utils/Currency'
+import { FromAPI, intlFormat, inputToDinero } from '../utils/Currency'
 import { useTheme } from '@mui/styles'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
-import { accountsSelectors, editAccount } from '../redux/slices/Accounts'
+import { accountsSelectors, editAccount, transactionsSelectors } from '../redux/slices/Accounts'
 import TextField from '@mui/material/TextField'
 import Popover from '@mui/material/Popover'
 import { usePopupState, bindTrigger, bindPopover } from 'material-ui-popup-state/hooks'
@@ -16,11 +16,24 @@ import { createSelector } from '@reduxjs/toolkit'
 import Paper from '@mui/material/Paper'
 import BalanceCalculation from './AccountTable/BalanceCalculation'
 import EditIcon from '@mui/icons-material/Edit'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import CardMedia from '@mui/material/CardMedia'
+import CardContent from '@mui/material/CardContent'
+import CardActions from '@mui/material/CardActions'
+import Table from '@mui/material/Table'
+import TableContainer from '@mui/material/TableContainer'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import { add } from 'dinero.js'
+import { formatMonthFromDateString } from '../utils/Date'
 
 export default function BudgetDetails({ accountId, name }) {
   const theme = useTheme()
   const dispatch = useDispatch()
 
+  const month = useSelector(state => state.budgets.currentMonth)
+  const categories = useSelector(state => state.categories.entities)
   const selectAccount = createSelector(
     [(state, accountId) => accountsSelectors.selectById(state, accountId)],
     account => FromAPI.transformAccount(account),
@@ -47,68 +60,97 @@ export default function BudgetDetails({ accountId, name }) {
     dispatch(editAccount({ id: account.id, name: accountName }))
   }
 
-  const pendingTransactions = useSelector(
-    state =>
-      Object.values(state.accounts.entities[accountId].transactions.entities).filter(trx => trx.status === 0).length,
+  const transactions = useSelector(state => {
+    const monthCheck = month.split('-')
+    return Object.values(account.transactions.entities).filter(trx => {
+      const trxDate = trx.date.split('-')
+      if (trxDate[0] === monthCheck[0] && trxDate[1] === monthCheck[1]) {
+        return true
+      }
+
+      return false
+    })
+  })
+
+  const [income, activity, pending] = transactions.reduce(
+    (vals, trx) => {
+      if (formatMonthFromDateString(trx.date) !== month) {
+        return vals
+      }
+
+      if (!trx.categoryId) {
+        // No category === transfer
+        return vals
+      }
+
+      if (trx.status === 0) {
+        vals[2]++
+      }
+
+      trx = FromAPI.transformTransaction(trx)
+      if (categories[trx.categoryId].inflow === true) {
+        vals[0] = add(vals[0], trx.amount)
+      } else {
+        vals[1] = add(vals[1], trx.amount)
+      }
+
+      return vals
+    },
+    [inputToDinero(0), inputToDinero(0), 0],
   )
 
   return (
-    <Stack
-      direction="column"
-      justifyContent="space-between"
-      alignItems="center"
-      spacing={2}
-      sx={{ px: 2, pb: 2, height: '100%' }}
-    >
+    <Stack direction="column" justifyContent="flex-start" alignItems="center" spacing={2} sx={{ p: 2, height: '100%' }}>
       <Box sx={{ width: '100%' }}>
-        <Paper sx={{ p: 2, m: 2 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pb: 2 }}>
-            <Stack
-              direction="row"
-              justifyContent="flex-start"
-              alignItems="center"
-              {...bindTrigger(editAccountPopupState)}
-              sx={{ width: '100%', pr: 2 }}
-            >
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 'bold', color: 'white', cursor: 'pointer', display: 'inline-block', pr: 2 }}
-              >
-                {account.name}
-              </Typography>
-
-              {/* <EditIcon sx={{ cursor: 'pointer' }} /> */}
-            </Stack>
-
-            <Popover
-              {...bindPopover(editAccountPopupState)}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-            >
-              <Box sx={{ p: 2 }}>
-                <TextField
-                  autoFocus
-                  margin="dense"
-                  id="account-name"
-                  label="Account Name"
-                  type="text"
-                  fullWidth
-                  variant="standard"
-                  value={accountName}
-                  onChange={e => setAccountName(e.target.value)}
-                />
-                <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
-                  <Button size="small" sx={{ p: 1 }} onClick={editAccountName}>
-                    Save
-                  </Button>
-                </Stack>
+        <Card sx={{ mx: 2 }}>
+          <CardHeader
+            title={
+              <Box>
+                <Box
+                  {...bindTrigger(editAccountPopupState)}
+                  sx={{ fontWeight: 'bold', fontSize: theme.typography.h6.fontSize, cursor: 'pointer' }}
+                >
+                  {account.name}
+                </Box>
+                <Popover
+                  {...bindPopover(editAccountPopupState)}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                >
+                  <Box sx={{ p: 2 }}>
+                    <TextField
+                      autoFocus
+                      margin="dense"
+                      id="account-name"
+                      label="Account Name"
+                      type="text"
+                      fullWidth
+                      variant="standard"
+                      value={accountName}
+                      onChange={e => setAccountName(e.target.value)}
+                    />
+                    <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+                      <Button size="small" sx={{ p: 1 }} onClick={editAccountName}>
+                        Save
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Popover>
               </Box>
-            </Popover>
+            }
+            sx={{
+              backgroundColor: theme.palette.success.main,
+              p: 1,
+            }}
+          />
 
-            <Box>
-              <Button {...bindTrigger(reconcilePopupState)} color="primary" variant="outlined">
+          <CardContent sx={{ p: '10px !important' }}>
+            <BalanceCalculation account={account} />
+
+            <Box sx={{ pt: 2 }}>
+              <Button {...bindTrigger(reconcilePopupState)} color="secondary" variant="outlined">
                 <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
                   Reconcile
                 </Typography>
@@ -120,21 +162,62 @@ export default function BudgetDetails({ accountId, name }) {
                 balance={account.cleared}
               />
             </Box>
-          </Stack>
+          </CardContent>
+        </Card>
+      </Box>
 
-          <BalanceCalculation account={account} />
+      <Box sx={{ width: '100%' }}>
+        <Card sx={{ mx: 2 }}>
+          <CardHeader
+            title={
+              <Box sx={{ fontWeight: 'bold', fontSize: theme.typography.h6.fontSize }}>{`${new Date(
+                Date.UTC(...month.split('-')),
+              ).toLocaleDateString(undefined, {
+                month: 'long',
+              })} Activity`}</Box>
+            }
+            sx={{
+              backgroundColor: '#5bc0de',
+              p: 1,
+            }}
+          />
 
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ width: '100%', mt: 1, pt: 1, borderTop: `1px solid ${theme.palette.action.disabled}` }}
-          >
+          <CardContent sx={{ p: '10px !important' }}>
+            <TableContainer>
+              <Table size="small">
+                <TableRow>
+                  <TableCell>Transactions</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{transactions.length}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Pending</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{pending}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Income</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(income)}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Activity</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(activity)}</TableCell>
+                </TableRow>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Box>
+
+      {/* <Box sx={{ width: '100%' }}>
+        <Paper sx={{ p: 2, mx: 2 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
             <Box>Pending Transactions</Box>
             <Box> {pendingTransactions}</Box>
           </Stack>
         </Paper>
-      </Box>
+      </Box> */}
     </Stack>
   )
 }

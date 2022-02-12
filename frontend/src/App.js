@@ -31,30 +31,30 @@ export default function App(props) {
     palette: {
       mode: 'dark',
       background: {
-        paper: 'rgb(28, 33, 40)',
-        drawer: 'rgb(28, 33, 40)',
-        tableHeader: 'rgb(28, 33, 40)',
-        tableBody: 'rgb(34, 39, 46)',
-        details: 'rgb(28, 33, 40)',
+        paper: '#272b30',
+        drawer: '#272b30',
+        tableHeader: '#272b30',
+        tableBody: '#2B3035',
+        details: '#272b30',
       },
       secondary: {
         main: '#ffffff',
       },
-      // success: {
-      //   main: '#16a085',
-      // },
-      error: {
-        main: '#e74c3c',
+      success: {
+        main: '#62c462',
       },
-      // warning: {
-      //   main: '#ffa84a',
-      // },
+      error: {
+        main: '#ee5f5b',
+      },
+      warning: {
+        main: '#f89406',
+      },
     },
     components: {
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: 'rgb(28, 33, 40)',
+            backgroundColor: '#272b30',
             color: 'white',
           },
         },
@@ -79,12 +79,12 @@ export default function App(props) {
     palette: {
       mode: 'light',
       background: {
-        drawer: '#3a3f51',
-        header: '#536067',
+        drawer: '#333333',
+        header: '#333333',
         tableBody: '#ffffff',
-        tableHeader: '#3a3f51',
-        details: '#3a3f51',
-        detailsContent: '#3a3f51',
+        tableHeader: '#333333',
+        details: '#333333',
+        detailsContent: '#333333',
       },
       action: {
         // disabledBackground: 'set color of background here',
@@ -110,7 +110,7 @@ export default function App(props) {
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: '#3a3f51',
+            backgroundColor: '#333333',
             color: 'white',
           },
         },

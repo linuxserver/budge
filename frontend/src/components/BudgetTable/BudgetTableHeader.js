@@ -12,9 +12,18 @@ import Typography from '@mui/material/Typography'
 import { usePopupState, bindTrigger } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
+import Card from '@mui/material/Card'
+import CardHeader from '@mui/material/CardHeader'
+import CardMedia from '@mui/material/CardMedia'
+import CardContent from '@mui/material/CardContent'
+import CardActions from '@mui/material/CardActions'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
+import BudgetMonthNavigator from '../BudgetMonthNavigator'
+import BudgetMonthCalculation from './BudgetMonthCalculation'
+import Divider from '@mui/material/Divider'
 
 export default function BudgetTableHeader(props) {
   const theme = useTheme()
@@ -26,27 +35,6 @@ export default function BudgetTableHeader(props) {
 
   const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
 
-  const nextMonth = getDateFromString(month)
-  nextMonth.setMonth(nextMonth.getMonth() + 1)
-  const nextMonthDisabled = !availableMonths.includes(formatMonthFromDateString(nextMonth))
-
-  const prevMonth = getDateFromString(month)
-  prevMonth.setMonth(prevMonth.getMonth() - 1)
-  const prevMonthDisabled = !availableMonths.includes(formatMonthFromDateString(prevMonth))
-
-  const monthPickerPopupState = usePopupState({
-    variant: 'popover',
-    popupId: 'monthPicker',
-  })
-
-  const navigateMonth = direction => {
-    props.onMonthNavigate(true)
-    const monthDate = new Date(Date.UTC(...month.split('-')))
-    monthDate.setDate(1)
-    monthDate.setMonth(monthDate.getMonth() + direction)
-    dispatch(setCurrentMonth({ month: formatMonthFromDateString(monthDate) }))
-  }
-
   const isToday = month === formatMonthFromDateString(new Date())
 
   return (
@@ -56,96 +44,56 @@ export default function BudgetTableHeader(props) {
         backgroundColor: theme.palette.background.tableHeader,
       }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ p: 2 }}>
-        <div>
-          <BudgetMonthPicker
-            popupState={monthPickerPopupState}
-            currentMonth={month}
-            minDate={availableMonths[0]}
-            maxDate={availableMonths[availableMonths.length - 1]}
-          />
-          <div className="budget-month-navigation">
-            <IconButton
-              disabled={prevMonthDisabled}
-              onClick={() => navigateMonth(-1)}
-              sx={{
-                fontSize: theme.typography.h6.fontSize,
-                color: 'white',
-              }}
-            >
-              <ArrowBackIosIcon fontSize="large" variant="outlined" />
-            </IconButton>
-            <Button
-              {...bindTrigger(monthPickerPopupState)}
-              sx={{
-                fontSize: theme.typography.h6.fontSize,
-                fontWeight: 'bold',
-                color: theme.palette.secondary.main,
-                pl: 2,
-              }}
-            >
-              {new Date(Date.UTC(...month.split('-'))).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-              })}
-            </Button>
-            <IconButton
-              disabled={nextMonthDisabled}
-              onClick={() => navigateMonth(1)}
-              sx={{
-                fontSize: theme.typography.h6.fontSize,
-                // [`.Mui-disabled`]: { color: theme.palette.grey[500] },
-                color: 'white',
-              }}
-            >
-              <ArrowForwardIosIcon fontSize="large" />
-            </IconButton>
-            {isToday === false && (
-              <Button
-                variant="outlined"
-                size="small"
-                color="secondary"
-                onClick={() => dispatch(setCurrentMonth({ month: formatMonthFromDateString(new Date()) }))}
-                sx={{ ml: 1 }}
-              >
-                <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                  Today
-                </Typography>
-              </Button>
-            )}
-          </div>
-        </div>
+      <Stack direction="row" justifyContent="space-around" alignItems="center" spacing={2} sx={{ p: 2 }}>
+        <BudgetMonthNavigator />
 
-        <Box
+        {/* <Card sx={{ minWidth: 200 }}>
+          <CardHeader
+            title={<Box sx={{ fontSize: theme.typography.subtitle1.fontSize }}>Available</Box>}
+            sx={{
+              backgroundColor: 'green',
+              p: 1,
+            }}
+          />
+          <CardContent sx={{ p: '10px !important' }}>{intlFormat(toBeBudgeted)}</CardContent>
+        </Card> */}
+
+        <Paper sx={{ p: 2, mx: 2 }}>
+          <Stack direction="row" spacing={4} justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography
+                style={{
+                  fontSize: theme.typography.h6.fontSize,
+                }}
+              >
+                Available
+              </Typography>
+            </Box>
+
+            <Divider />
+
+            <Box>
+              <Typography
+                style={{
+                  fontSize: theme.typography.h5.fontSize,
+                  fontWeight: 'bold',
+                  color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
+                }}
+              >
+                {intlFormat(toBeBudgeted)}
+              </Typography>
+            </Box>
+          </Stack>
+        </Paper>
+
+        <Paper
           sx={{
-            py: 0.5,
+            py: 1,
             px: 2,
-            borderRadius: 1.5,
-            // backgroundColor: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
           }}
         >
-          <Stack direction="column" justifyContent="center" alignItems="center" spacing={0}>
-            <Typography
-              style={{
-                fontSize: theme.typography.h5.fontSize,
-                fontWeight: 'bold',
-                // color: 'black',
-                color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
-              }}
-            >
-              {intlFormat(toBeBudgeted)}
-            </Typography>
-            <Typography
-              style={{
-                fontSize: theme.typography.subtitle1.fontSize,
-                // color: 'black',
-                color: 'white',
-              }}
-            >
-              Available To Budget
-            </Typography>
-          </Stack>
-        </Box>
+          <BudgetMonthCalculation />
+        </Paper>
       </Stack>
     </Box>
   )
