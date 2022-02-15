@@ -35,9 +35,7 @@ export default function Account(props) {
           width: '100%',
         }}
       >
-        <div style={{ maxWidth: '100%' }}>
-          <Box>{account && <AccountTable accountId={params.accountId} account={account} />}</Box>
-        </div>
+        {account && <AccountTable accountId={params.accountId} account={account} />}
       </Box>
 
       <Box

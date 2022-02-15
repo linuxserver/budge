@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import MaterialTable, {
   MTableBody,
   MTableBodyRow,
@@ -31,7 +31,7 @@ import IconButton from '@mui/material/IconButton'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
-import { FromAPI, inputToDinero, intlFormat } from '../../utils/Currency'
+import { FromAPI, inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
 import { dinero, toUnit, isPositive, greaterThan } from 'dinero.js'
 import { toSnapshot } from '@dinero.js/core'
 import Tooltip from '@mui/material/Tooltip'
@@ -60,6 +60,74 @@ import ImportCSV from '../ImportCSV'
 import AccountTableHeader from './AccountTableHeader'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import DeleteOutline from '@mui/icons-material/DeleteOutline'
+import { useGlobalFilter, usePagination, useRowSelect, useSortBy, useTable } from 'react-table'
+import Checkbox from '@mui/material/Checkbox'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import TableFooter from '@mui/material/TableFooter'
+import TablePagination from '@mui/material/TablePagination'
+import TableSortLabel from '@mui/material/TableSortLabel'
+// import TableToolbar from '@mui/material/TableToolbar'
+import TablePaginationActions from './TablePaginationActions'
+import AccountTableBody from './AccountTableBody'
+import AccountAmountCell from './AccountAmountCell'
+import AppBar from '@mui/material/AppBar'
+import CssBaseline from '@mui/material/CssBaseline'
+import Toolbar from '@mui/material/Toolbar'
+import Container from '@mui/material/Container'
+import { FixedSizeList as List, Grid as GridList } from 'react-window'
+import AutoSizer from 'react-virtualized-auto-sizer'
+
+// Create an editable cell renderer
+const EditableCell = ({
+  value: initialValue,
+  row: { index },
+  column: { id },
+  updateMyData, // This is a custom function that we supplied to our table instance
+}) => {
+  // We need to keep and update the state of the cell normally
+  const [value, setValue] = React.useState(initialValue)
+
+  const onChange = e => {
+    setValue(e.target.value)
+  }
+
+  // We'll only update the external data when the input is blurred
+  const onBlur = () => {
+    // updateMyData(index, id, value)
+  }
+
+  // If the initialValue is changed externall, sync it up with our state
+  React.useEffect(() => {
+    setValue(initialValue)
+  }, [initialValue])
+
+  return <input /*style={inputStyle}*/ value={value} onChange={onChange} onBlur={onBlur} />
+}
+
+const IndeterminateCheckbox = React.forwardRef(({ indeterminate, ...rest }, ref) => {
+  const defaultRef = React.useRef()
+  const resolvedRef = ref || defaultRef
+
+  React.useEffect(() => {
+    resolvedRef.current.indeterminate = indeterminate
+  }, [resolvedRef, indeterminate])
+
+  return (
+    <>
+      <Checkbox ref={resolvedRef} {...rest} size="small" />
+    </>
+  )
+})
+
+const BudgetTableCell = styled(TableCell)(({ theme }) => ({
+  paddingTop: '4px',
+  paddingBottom: '4px',
+}))
 
 const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
   backgroundColor: theme.palette.background.tableBody,
@@ -103,6 +171,7 @@ export default function Account(props) {
 
   const account = props.account
   const accounts = useSelector(accountsSelectors.selectAll)
+  const currentTheme = useSelector(state => state.app.theme)
 
   const [bulkEnabled, setBulkEnabled] = useState(false)
   const [showReconciled, setShowReconciled] = useState(false)
@@ -132,7 +201,7 @@ export default function Account(props) {
           .filter(transaction => transaction.status !== 2)
           .map(trx => {
             return {
-              ...FromAPI.transformTransaction(trx),
+              ...trx,
               ...(trx.categoryId === null && { categoryId: '0' }),
             }
           })
@@ -140,13 +209,15 @@ export default function Account(props) {
 
       return Object.values(transactions).map(trx => {
         return {
-          ...FromAPI.transformTransaction(trx),
+          ...trx,
           ...(trx.categoryId === null && { categoryId: '0' }),
         }
       })
     },
   )
   const transactions = useSelector(state => selectTransactions(state, props.accountId, showReconciled))
+  const data = useMemo(() => transactions, [transactions])
+  console.log(data)
 
   const payeeIds = useSelector(payeesSelectors.selectIds)
   const categoryIds = useSelector(categoriesSelectors.selectIds)
@@ -165,286 +236,262 @@ export default function Account(props) {
   const payeesMap = useSelector(selectPayeesMap)
 
   const filter = createFilterOptions()
-  const columns = [
-    {
-      title: 'Posted',
-      field: 'date',
-      type: 'date',
-      initialEditValue: new Date(),
-      defaultSort: 'desc',
-      width: 1,
-      editComponent: props => (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            label=""
-            value={props.value || null}
-            onChange={props.onChange}
-            InputAdornmentProps={{
-              style: {
-                fontSize: theme.typography.subtitle2.fontSize,
-              },
-            }}
-            renderInput={params => {
-              return (
-                <TextField
-                  sx={{ minWidth: 125 }}
-                  focus={true}
-                  margin="dense"
-                  variant="standard"
-                  {...params}
-                  InputProps={{
-                    style: {
-                      fontSize: theme.typography.subtitle2.fontSize,
-                    },
-                    ...params.InputProps,
-                  }} // font size of input text
-                />
-              )
-            }}
-          />
-        </LocalizationProvider>
-      ),
-    },
-    {
-      title: 'Payee',
-      field: 'payeeId',
-      lookup: payeesMap,
-      editComponent: props => (
-        <Autocomplete
-          sx={{ width: 300 }}
-          options={payeeIds}
-          getOptionLabel={option => {
-            if (payeesMap[option]) {
-              return payeesMap[option]
-            }
-
-            return option
-          }}
-          // renderOption={(props, option) => <li {...props}>{option.name}</li>}
-          freeSolo
-          renderInput={params => (
-            <TextField
-              {...params}
-              label=""
-              variant="standard"
-              InputProps={{
-                style: {
-                  fontSize: theme.typography.subtitle2.fontSize,
-                },
-                ...params.InputProps,
-              }}
-            />
-          )}
-          value={props.value}
-          onInputChange={(e, value) => {
-            props.onChange(value)
-          }}
-          onChange={(e, value) => {
-            const transferAccount = accounts.filter(account => account.transferPayeeId === value)
-            const updateProps = {}
-            if (transferAccount.length === 1 && transferAccount[0].type !== 2) {
-              updateProps.categoryId = '0'
-            } else if (props.rowData.categoryId === 'Category Not Needed') {
-              updateProps.categoryId = Object.keys(categoriesMap)[1]
-            }
-
-            const newRow = {
-              ...props.rowData,
-              payeeId: value,
-              ...updateProps,
-            }
-            return props.onRowDataChange(newRow)
-          }}
-          filterOptions={(options, params) => {
-            const filtered = filter(options, params)
-
-            const { inputValue } = params
-            if (inputValue.match(/New: /)) {
-              return filtered
-            }
-
-            // Suggest the creation of a new value
-            const isExisting = options.some(option => payeesMap[option] === inputValue)
-            if (inputValue !== '' && !isExisting) {
-              filtered.push(`New: ${inputValue}`)
-            }
-
-            return filtered
-          }}
-        />
-      ),
-      render: rowData => (
-        <Tooltip title={payeesMap[rowData.payeeId]}>
-          <span
-            style={{
-              display: 'block',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {payeesMap[rowData.payeeId]}
-          </span>
-        </Tooltip>
-      ),
-    },
-    ...(account.type !== 2
-      ? [
-          {
-            title: 'Category',
-            field: 'categoryId',
-            lookup: categoriesMap,
-            editComponent: function (props) {
-              const disabled = props.rowData.categoryId === '0' || props.rowData.categoryId === 'Category Not Needed'
-              props.columnDef.lookup = { ...categoriesMap }
-              if (disabled === false) {
-                delete props.columnDef.lookup['0']
-              }
-
-              return (
-                <Autocomplete
-                  {...props}
-                  disablePortal
-                  disabled={disabled}
-                  options={categoryIds}
-                  getOptionLabel={option => {
-                    if (categoriesMap[option]) {
-                      return categoriesMap[option]
-                    }
-
-                    return option
-                  }}
-                  // sx={{ width: 300 }}
-                  renderInput={params => (
+  const columns = useMemo(
+    () =>
+      [
+        {
+          accessor: 'date',
+          Header: 'Date',
+          Cell: props => {
+            return <Box>{new Date(props.cell.value).toLocaleDateString()}</Box>
+          },
+          Editing: props => (
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label=""
+                value={props.value || null}
+                onChange={props.onChange}
+                InputAdornmentProps={{
+                  style: {
+                    fontSize: theme.typography.subtitle2.fontSize,
+                  },
+                }}
+                renderInput={params => {
+                  return (
                     <TextField
-                      {...params}
+                      onKeyDown={props.onKeyDown}
+                      sx={{ minWidth: 125 }}
+                      focus={true}
+                      margin="dense"
                       variant="standard"
+                      {...params}
                       InputProps={{
                         style: {
                           fontSize: theme.typography.subtitle2.fontSize,
                         },
                         ...params.InputProps,
-                      }}
+                      }} // font size of input text
                     />
-                  )}
-                  value={props.value}
-                  onInputChange={(e, value) => {
-                    props.onChange(value)
-                  }}
-                  onChange={(e, value) => {
-                    return props.onRowDataChange({
-                      ...props.rowData,
-                      categoryId: value,
-                    })
+                  )
+                }}
+              />
+            </LocalizationProvider>
+          ),
+        },
+        {
+          accessor: 'payeeId',
+          Header: 'Payee',
+          Cell: props => <Box>{payeesMap[props.cell.value]}</Box>,
+          Editing: props => (
+            <Autocomplete
+              {...props}
+              sx={{ width: 300 }}
+              options={payeeIds}
+              getOptionLabel={option => {
+                if (payeesMap[option]) {
+                  return payeesMap[option]
+                }
+
+                return option
+              }}
+              // renderOption={(props, option) => <li {...props}>{option.name}</li>}
+              freeSolo
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label=""
+                  variant="standard"
+                  InputProps={{
+                    style: {
+                      fontSize: theme.typography.subtitle2.fontSize,
+                    },
+                    ...params.InputProps,
                   }}
                 />
-              )
-            },
-          },
-        ]
-      : []),
-    {
-      title: 'Memo',
-      field: 'memo',
-      render: rowData => (
-        <Tooltip title={rowData.memo}>
-          <span
-            style={{
-              display: 'block',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {rowData.memo}
-          </span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Amount',
-      field: 'amount',
-      // type: 'currency',
-      align: 'right',
-      customSort: (a, b) => (greaterThan(a.amount, b.amount) ? -1 : 1),
-      initialEditValue: toSnapshot(inputToDinero(0)),
-      render: rowData => {
-        const color = isPositive(rowData.amount) ? 'success' : 'error'
-        return (
-          <Typography
-            sx={{ fontWeight: 'bold', fontSize: theme.typography.subtitle2.fontSize, color: theme.palette[color].main }}
-          >
-            {intlFormat(rowData.amount)}
-          </Typography>
-        )
-      },
-      editComponent: props => {
-        const value = dinero(props.value)
-        return (
-          <Box sx={{ textAlign: 'right' }}>
-            <MTableEditField
-              {...props}
-              variant="standard"
-              value={toUnit(value, { digits: 2 })}
-              onChange={value => {
-                props.onChange(toSnapshot(inputToDinero(value)))
+              )}
+              value={props.value}
+              onInputChange={(e, value) => {
+                props.onChange(value)
               }}
-              // onFocus={focusOutflowField}
-            />
-          </Box>
-        )
-      },
-      customExport: rowData => {
-        return intlFormat(rowData.amount)
-      },
-    },
-    {
-      title: '',
-      field: 'status',
-      width: '1px',
-      editComponent: props => <></>, // Doing this so that the button isn't available to click when in edit mode
-      render: rowData => {
-        let statusIcon = <></>
-        let tooltipText = ''
-        switch (rowData.status) {
-          case 0: // pending
-            tooltipText = 'Pending'
-            statusIcon = <AccessTimeIcon color="disabled" fontSize="small" />
-            break
-          case 1: // cleared
-            tooltipText = 'Cleared'
-            statusIcon = <CheckCircleOutlineIcon color="success" fontSize="small" />
-            break
-          case 2: // reconciled
-            tooltipText = 'Reconciled'
-            statusIcon = <LockIcon color="success" fontSize="small" />
-            break
-        }
+              onChange={(e, value) => {
+                const transferAccount = accounts.filter(account => account.transferPayeeId === value)
+                const updateProps = {}
+                if (transferAccount.length === 1 && transferAccount[0].type !== 2) {
+                  updateProps.categoryId = '0'
+                } else if (props.rowData.categoryId === 'Category Not Needed') {
+                  updateProps.categoryId = Object.keys(categoriesMap)[1]
+                }
 
-        return (
-          <Tooltip title={tooltipText}>
-            <StatusIconButton rowData={rowData} setTransactionStatus={setTransactionStatus} statusIcon={statusIcon} />
-          </Tooltip>
-        )
-      },
-      customExport: rowData => {
-        switch (rowData.status) {
-          case 0:
-            return 'Pending'
-          case 1:
-            return 'Cleared'
-          case 2:
-            return 'Reconciled'
+                const newRow = {
+                  ...props.rowData,
+                  payeeId: value,
+                  ...updateProps,
+                }
+                return props.onRowDataChange(newRow)
+              }}
+              filterOptions={(options, params) => {
+                const filtered = filter(options, params)
+
+                const { inputValue } = params
+                if (inputValue.match(/New: /)) {
+                  return filtered
+                }
+
+                // Suggest the creation of a new value
+                const isExisting = options.some(option => payeesMap[option] === inputValue)
+                if (inputValue !== '' && !isExisting) {
+                  filtered.push(`New: ${inputValue}`)
+                }
+
+                return filtered
+              }}
+            />
+          ),
+        },
+        ...(account.type !== 2
+          ? [
+              {
+                accessor: 'categoryId',
+                Header: 'Category',
+                Cell: props => <Box>{categoriesMap[props.cell.value]}</Box>,
+                Editing: props => {
+                  const disabled =
+                    props.rowData.categoryId === '0' || props.rowData.categoryId === 'Category Not Needed'
+                  const options = { ...categoriesMap }
+                  if (disabled === false) {
+                    delete options['0']
+                  }
+
+                  return (
+                    <Autocomplete
+                      {...props}
+                      disablePortal
+                      disabled={disabled}
+                      options={categoryIds}
+                      getOptionLabel={option => {
+                        if (categoriesMap[option]) {
+                          return categoriesMap[option]
+                        }
+
+                        return option
+                      }}
+                      // sx={{ width: 300 }}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          variant="standard"
+                          InputProps={{
+                            style: {
+                              fontSize: theme.typography.subtitle2.fontSize,
+                            },
+                            ...params.InputProps,
+                          }}
+                        />
+                      )}
+                      value={props.value}
+                      onInputChange={(e, value) => {
+                        props.onChange(value)
+                      }}
+                      onChange={(e, value) => {
+                        return props.onRowDataChange({
+                          ...props.rowData,
+                          categoryId: value,
+                        })
+                      }}
+                    />
+                  )
+                },
+              },
+            ]
+          : []),
+        {
+          accessor: 'Memo',
+          Cell: props => (
+            <Tooltip title={props.cell.value}>
+              <span
+                style={{
+                  display: 'block',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {props.cell.value}
+              </span>
+            </Tooltip>
+          ),
+          Editing: props => <></>,
+        },
+        {
+          accessor: 'amount',
+          Header: data => <Box sx={{ textAlign: 'right' }}>Amount</Box>,
+          Cell: props => {
+            const trx = FromAPI.transformTransaction(props.row.original)
+            const color = isPositive(trx.amount) ? 'success' : 'error'
+            return (
+              <Typography
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: theme.typography.subtitle2.fontSize,
+                  color: theme.palette[color].main,
+                  textAlign: 'right',
+                }}
+              >
+                {intlFormat(trx.amount)}
+              </Typography>
+            )
+          },
+          Editing: props => {
+            console.log(props)
+            return <AccountAmountCell {...props} />
+          },
+        },
+        {
+          accessor: 'status',
+          field: 'status',
+          style: {
+            width: '1px',
+          },
+          Header: props => <></>,
+          Cell: props => {
+            let statusIcon = <></>
+            let tooltipText = ''
+            switch (props.cell.value) {
+              case 0: // pending
+                tooltipText = 'Pending'
+                statusIcon = <AccessTimeIcon color="disabled" fontSize="small" />
+                break
+              case 1: // cleared
+                tooltipText = 'Cleared'
+                statusIcon = <CheckCircleOutlineIcon color="success" fontSize="small" />
+                break
+              case 2: // reconciled
+                tooltipText = 'Reconciled'
+                statusIcon = <LockIcon color="success" fontSize="small" />
+                break
+            }
+
+            return (
+              <Tooltip title={tooltipText}>
+                <StatusIconButton
+                  rowData={props.row.original}
+                  setTransactionStatus={setTransactionStatus}
+                  statusIcon={statusIcon}
+                />
+              </Tooltip>
+            )
+          },
+          Editing: props => <></>,
+        },
+      ].map(col => {
+        col.cellStyle = {
+          paddingTop: 0,
+          paddingBottom: 0,
         }
-      },
-    },
-  ].map(col => {
-    col.cellStyle = {
-      paddingTop: 0,
-      paddingBottom: 0,
-    }
-    return col
-  })
+        return col
+      }),
+    [currentTheme],
+  )
 
   const createNewPayee = async name => {
     name = name.replace(/^New: /, '')
@@ -529,8 +576,6 @@ export default function Account(props) {
       newRow.categoryId = category
     }
 
-    const amount = dinero(newRow.amount)
-
     await dispatch(
       updateTransaction({
         transaction: {
@@ -540,7 +585,7 @@ export default function Account(props) {
           memo: newRow.memo,
           payeeId: newRow.payeeId,
           categoryId: newRow.categoryId === '0' ? null : newRow.categoryId,
-          amount,
+          amount: newRow.amount,
           status: newRow.status,
         },
       }),
@@ -702,234 +747,269 @@ export default function Account(props) {
     tableProps.actions[0].onClick()
   }
 
+  // Set our editable cell renderer as the default Cell renderer
+  const defaultColumn = {
+    Cell: EditableCell,
+  }
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    rows,
+    // gotoPage,
+    // setPageSize,
+    preGlobalFilteredRows,
+    setGlobalFilter,
+    state: { pageIndex, pageSize, selectedRowIds, globalFilter },
+  } = useTable(
+    {
+      columns,
+      data,
+      defaultColumn,
+      autoResetSortBy: false,
+      // autoResetPage: false,
+      autoResetGlobalFilter: false,
+      autoResetSelectedRows: false,
+
+      // updateMyData isn't part of the API, but
+      // anything we put into these options will
+      // automatically be available on the instance.
+      // That way we can call this function from our
+      // cell renderer!
+      // updateMyData,
+    },
+    useGlobalFilter,
+    useSortBy,
+    // usePagination,
+    useRowSelect,
+    hooks => {
+      hooks.allColumns.push(columns => [
+        // Let's make a column for selection
+        {
+          id: 'selection',
+          // The header can use the table's getToggleAllRowsSelectedProps method
+          // to render a checkbox.  Pagination is a problem since this will select all
+          // rows even though not all rows are on the current page.  The solution should
+          // be server side pagination.  For one, the clients should not download all
+          // rows in most cases.  The client should only download data for the current page.
+          // In that case, getToggleAllRowsSelectedProps works fine.
+          Header: ({ getToggleAllRowsSelectedProps }) => (
+            <div>
+              <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
+            </div>
+          ),
+          // The cell can use the individual row's getToggleRowSelectedProps method
+          // to the render a checkbox
+          Cell: ({ row }) => (
+            <div>
+              <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
+            </div>
+          ),
+          Editing: ({ row }) => (
+            <div>
+              <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
+            </div>
+          ),
+        },
+        ...columns,
+      ])
+    },
+  )
+
+  const handleChangePage = (event, newPage) => {
+    // gotoPage(newPage)
+  }
+
+  const handleChangeRowsPerPage = event => {
+    // setPageSize(Number(event.target.value))
+  }
+
+  // Grid data as an array of arrays
+  const list = [
+    ['Brian Vaughn', 'Software Engineer', 'San Jose', 'CA', 95125 /* ... */],
+    // And so on...
+  ]
+
+  function cellRenderer({ columnIndex, key, rowIndex, style }) {
+    return (
+      <div key={key} style={style}>
+        {list[rowIndex][columnIndex]}
+      </div>
+    )
+  }
+
   return (
-    <Box>
+    <TableContainer
+      sx={{
+        backgroundColor: theme.palette.background.tableBody,
+        display: 'grid',
+        gridTemplateColums: '1fr',
+        gridTemplateRows: 'auto 1fr auto',
+        height: '100vh',
+      }}
+    >
       <ImportCSV accountId={props.accountId} open={importerOpen} close={closeImporter}></ImportCSV>
-      <MaterialTable
-        style={{
-          display: 'grid',
-          gridTemplateColums: '1fr',
-          gridTemplateRows: 'auto 1fr auto',
-          maxWidth: '100%',
-          height: '100vh',
-          backgroundColor: theme.palette.background.tableBody,
-        }}
-        title={
-          <Stack
-            direction="row"
-            alignItems="center"
-            sx={
-              {
-                // backgroundColor: theme.palette.background.header,
-              }
-            }
-          >
-            <ButtonGroup variant="text" aria-label="outlined button group">
-              <Button color="primary" size="small" onClick={addTransactionClick}>
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <AddCircleIcon
-                    style={{
-                      fontSize: theme.typography.subtitle2.fontSize,
-                    }}
-                  />
-                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                    Add Transaction
-                  </Typography>
-                </Stack>
-              </Button>
 
-              <Button size="small" onClick={openImporter}>
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <UploadIcon
-                    style={{
-                      fontSize: theme.typography.subtitle2.fontSize,
-                    }}
-                  />
-                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                    Import
-                  </Typography>
-                </Stack>
-              </Button>
+      {/* <TableToolbar
+          numSelected={Object.keys(selectedRowIds).length}
+          // deleteUserHandler={deleteUserHandler}
+          // addUserHandler={addUserHandler}
+          preGlobalFilteredRows={preGlobalFilteredRows}
+          setGlobalFilter={setGlobalFilter}
+          globalFilter={globalFilter}
+        /> */}
+      <Table {...getTableProps()}>
+        <TableHead>
+          <TableRow>
+            <TableCell colSpan={7}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                sx={
+                  {
+                    // backgroundColor: theme.palette.background.header,
+                  }
+                }
+              >
+                <ButtonGroup variant="text" aria-label="outlined button group">
+                  <Button color="primary" size="small" onClick={addTransactionClick}>
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      <AddCircleIcon
+                        style={{
+                          fontSize: theme.typography.subtitle2.fontSize,
+                        }}
+                      />
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Add Transaction
+                      </Typography>
+                    </Stack>
+                  </Button>
 
-              <Button size="small" onClick={exportData}>
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <SaveAltIcon
-                    style={{
-                      fontSize: theme.typography.subtitle2.fontSize,
-                    }}
-                  />
-                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                    Export
-                  </Typography>
-                </Stack>
-              </Button>
+                  <Button size="small" onClick={openImporter}>
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      <UploadIcon
+                        style={{
+                          fontSize: theme.typography.subtitle2.fontSize,
+                        }}
+                      />
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Import
+                      </Typography>
+                    </Stack>
+                  </Button>
 
-              <PopupState variant="popover" popupId="demo-popup-menu">
-                {popupState => (
-                  <>
-                    <Button
-                      size="small"
-                      onClick={toggleReconciled}
-                      {...bindTrigger(popupState)}
-                      // disabled={!bulkEnabled}
-                    >
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <EditIcon
+                  <Button size="small" onClick={exportData}>
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      <SaveAltIcon
+                        style={{
+                          fontSize: theme.typography.subtitle2.fontSize,
+                        }}
+                      />
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Export
+                      </Typography>
+                    </Stack>
+                  </Button>
+
+                  <PopupState variant="popover" popupId="demo-popup-menu">
+                    {popupState => (
+                      <>
+                        <Button
+                          size="small"
+                          onClick={toggleReconciled}
+                          {...bindTrigger(popupState)}
+                          // disabled={!bulkEnabled}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <EditIcon
+                              style={{
+                                fontSize: theme.typography.subtitle2.fontSize,
+                              }}
+                            />
+                            <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                              Edit
+                            </Typography>
+                          </Stack>
+                        </Button>
+                        <Menu {...bindMenu(popupState)}>
+                          <MenuItem
+                            // disabled={selectedRows.length === 0}
+                            onClick={markSelectedTransactionsCleared}
+                          >
+                            Mark Cleared
+                          </MenuItem>
+
+                          <MenuItem
+                            // disabled={selectedRows.length === 0}
+                            onClick={markSelectedTransactionsUncleared}
+                          >
+                            Mark Uncleared
+                          </MenuItem>
+
+                          <MenuItem
+                            // disabled={selectedRows.length === 0}
+                            onClick={deleteSelected}
+                          >
+                            Delete Transactions
+                          </MenuItem>
+                        </Menu>
+                      </>
+                    )}
+                  </PopupState>
+
+                  <Button size="small" onClick={toggleReconciled}>
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      {showReconciled && (
+                        <CheckBoxIcon
                           style={{
                             fontSize: theme.typography.subtitle2.fontSize,
                           }}
                         />
-                        <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                          Edit
-                        </Typography>
-                      </Stack>
-                    </Button>
-                    <Menu {...bindMenu(popupState)}>
-                      <MenuItem
-                        // disabled={selectedRows.length === 0}
-                        onClick={markSelectedTransactionsCleared}
-                      >
-                        Mark Cleared
-                      </MenuItem>
+                      )}
+                      {!showReconciled && (
+                        <CheckBoxOutlineBlankIcon
+                          style={{
+                            fontSize: theme.typography.subtitle2.fontSize,
+                          }}
+                        />
+                      )}
 
-                      <MenuItem
-                        // disabled={selectedRows.length === 0}
-                        onClick={markSelectedTransactionsUncleared}
-                      >
-                        Mark Uncleared
-                      </MenuItem>
-
-                      <MenuItem
-                        // disabled={selectedRows.length === 0}
-                        onClick={deleteSelected}
-                      >
-                        Delete Transactions
-                      </MenuItem>
-                    </Menu>
-                  </>
-                )}
-              </PopupState>
-
-              <Button size="small" onClick={toggleReconciled}>
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  {showReconciled && (
-                    <CheckBoxIcon
-                      style={{
-                        fontSize: theme.typography.subtitle2.fontSize,
-                      }}
+                      <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                        Reconciled
+                      </Typography>
+                    </Stack>
+                  </Button>
+                </ButtonGroup>
+              </Stack>
+            </TableCell>
+          </TableRow>
+          {headerGroups.map(headerGroup => (
+            <TableRow {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map(column => (
+                <TableCell
+                  {...(column.id === 'selection'
+                    ? column.getHeaderProps()
+                    : column.getHeaderProps(column.getSortByToggleProps()))}
+                  sx={{ py: 0, top: '39px' }}
+                >
+                  {column.render('Header')}
+                  {column.id !== 'selection' ? (
+                    <TableSortLabel
+                      active={column.isSorted}
+                      // react-table has a unsorted state which is not treated here
+                      direction={column.isSortedDesc ? 'desc' : 'asc'}
                     />
-                  )}
-                  {!showReconciled && (
-                    <CheckBoxOutlineBlankIcon
-                      style={{
-                        fontSize: theme.typography.subtitle2.fontSize,
-                      }}
-                    />
-                  )}
+                  ) : null}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableHead>
 
-                  <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                    Reconciled
-                  </Typography>
-                </Stack>
-              </Button>
-            </ButtonGroup>
-          </Stack>
-        }
-        options={{
-          padding: 'dense',
-          draggable: false,
-          pageSize: 20,
-          pageSizeOptions: [5, 10, 25, 50, 100],
-          addRowPosition: 'first',
-          selection: true,
-          actionsColumnIndex: 99,
-          editCellStyle: {
-            padding: 0,
-          },
-          rowStyle: rowData => ({
-            fontSize: theme.typography.subtitle2.fontSize,
-          }),
-          headerStyle: {
-            textTransform: 'uppercase',
-            fontSize: theme.typography.caption.fontSize,
-          },
-          headerSelectionProps: {
-            size: 'small',
-          },
-        }}
-        onSelectionChange={onSelectionChange}
-        localization={{
-          header: {
-            actions: '',
-          },
-          body: {
-            emptyDataSourceMessage: 'No transactions to display',
-            editRow: {
-              deleteText: (
-                <Typography style={{ fontSize: theme.typography.subtitle2.fontSize, fontWeight: 'bold' }}>
-                  Really delete this transaction?
-                </Typography>
-              ),
-            },
-          },
-        }}
-        components={{
-          Container: Box,
-          Body: props => {
-            tableProps = props
-            return <MTableBody {...props} />
-          },
-          Toolbar: props => (
-            <Box
-              sx={{
-                backgroundColor: theme.palette.background.tableHeader,
-              }}
-            >
-              <StyledMTableToolbar
-                {...{ ...props, actions: [] }}
-                showTextRowsSelected={false}
-                localization={{
-                  searchPlaceholder: 'Search transactions',
-                }}
-              />
-
-              <Divider />
-            </Box>
-          ),
-          Row: props => (
-            <MTableBodyRow
-              {...props}
-              onRowClick={e => {
-                // console.log(props.actions)
-                props.actions[1]().onClick(e, props.data) // <---- trigger edit event
-              }}
-            />
-          ),
-          EditRow: props => <MTableEditRow {...props} />,
-          Actions: props => {
-            console.log(props)
-            if (typeof props.actions[1] !== 'function') {
-              return <MTableActions {...props} />
-            }
-
-            return <></>
-          },
-        }}
-        icons={TableIcons}
-        columns={columns}
-        data={transactions}
-        editable={{
-          onRowAdd: async row => {
-            await onTransactionAdd(row)
-          },
-          onRowUpdate: async (newRow, oldData) => {
-            await onTransactionEdit(newRow, oldData)
-          },
-          onRowDelete: async row => {
-            await onTransactionDelete(row)
-          },
-        }}
-      />
-    </Box>
+        <AccountTableBody {...getTableBodyProps()} rows={rows} prepareRow={prepareRow} onRowSave={onTransactionEdit} />
+      </Table>
+    </TableContainer>
   )
 }
