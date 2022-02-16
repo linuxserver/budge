@@ -46,7 +46,7 @@ export default function Account(props) {
           height: '100%',
         }}
       >
-        <AccountDetails accountId={params.accountId} name={account.name} />
+        {account && <AccountDetails accountId={params.accountId} name={account.name} />}
       </Box>
     </Stack>
   )

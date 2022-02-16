@@ -76,7 +76,7 @@ export default function App(props) {
       },
     },
     typography: {
-      // fontFamily: 'Nunito',
+      fontFamily: 'Nunito',
       // fontFamily: 'Varela Round',
       // fontFamily: 'IBM Plex Sans Condensed',
       // fontFamily: 'Roboto',

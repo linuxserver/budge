@@ -15,6 +15,7 @@
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
     "axios": "^0.24.0",
+    "clsx": "^1.1.1",
     "csv-parse": "^5.0.4",
     "dinero.js": "^2.0.0-alpha.8",
     "filefy": "^0.1.11",
@@ -27,6 +28,8 @@
     "react-router-dom": "^6.0.2",
     "react-scripts": "4.0.3",
     "react-table": "^7.7.0",
+    "react-virtualized-auto-sizer": "^1.0.6",
+    "react-window": "^1.8.6",
     "rsuite-table": "^5.3.2",
     "web-vitals": "^1.1.2"
   },

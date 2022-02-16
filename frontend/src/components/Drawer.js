@@ -127,7 +127,6 @@ export default function AppDrawer(props) {
 
   const logout = async () => {
     await api.logout()
-    navigate('/')
     window.location.reload(false)
   }
 

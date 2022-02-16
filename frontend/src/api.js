@@ -125,6 +125,8 @@ export default class API {
   }
 
   static async updateTransaction(transaction, budgetId) {
+    console.log(transaction)
+    console.log(budgetId)
     const response = await axios.put(
       `/api/budgets/${budgetId}/transactions/${transaction.id}`,
       ToAPI.transformTransaction(transaction),
