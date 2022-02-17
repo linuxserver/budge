@@ -13,12 +13,22 @@ export default function AccountTableBody({
   classes,
   toggleRowSelected,
   selectedRowIds,
+  cancelAddTransaction,
+  onTransactionAdd,
   ...props
 }) {
-  const [editingRow, setEditingRow] = useState(null)
+  const [editingRow, setEditingRow] = useState(0)
 
   const onSave = (newData, oldData) => {
-    setEditingRow(null)
+    setEditingRow(0)
+
+    if (newData.id === 0) {
+      return onTransactionAdd({
+        ...newData,
+        amount: inputToDinero(newData.amount),
+      })
+    }
+
     onRowSave(
       {
         ...newData,
@@ -31,26 +41,30 @@ export default function AccountTableBody({
     )
   }
 
-  const onCancel = () => {
-    setEditingRow(null)
+  const onCancel = id => {
+    if (id !== 0) {
+      return setEditingRow(0)
+    }
+
+    cancelAddTransaction()
   }
 
   const onRowClick = id => {
-    if (editingRow === id) {
-      return
-    }
+    // if (editingRow === id) {
+    //   return
+    // }
 
-    if (selectedRowIds[id] === true) {
-      return setEditingRow(id)
-    }
+    // if (selectedRowIds[id] === true) {
+    return setEditingRow(id)
+    // }
 
-    toggleRowSelected({
-      id: true,
-      ...Object.keys(selectedRowIds).reduce((allIds, rowId) => {
-        allIds[rowId] = false
-        return allIds
-      }, {}),
-    })
+    // toggleRowSelected({
+    //   id: true,
+    //   ...Object.keys(selectedRowIds).reduce((allIds, rowId) => {
+    //     allIds[rowId] = false
+    //     return allIds
+    //   }, {}),
+    // })
   }
 
   const Row = ({ index, style }) => {

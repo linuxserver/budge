@@ -53,7 +53,7 @@ export default function AccountTableRow({
       ...row.original,
       amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
     })
-    onCancel()
+    onCancel(row.original.id)
   }
 
   const onFocus = e => {
@@ -78,7 +78,6 @@ export default function AccountTableRow({
     <>
       <TableRow {...row.getRowProps()} onClick={onClick} {...props} sx={{ width: '100%', display: 'table-row' }}>
         {row.cells.map(cell => {
-          console.log(cell)
           return (
             <TableCell
               {...cell.getCellProps()}

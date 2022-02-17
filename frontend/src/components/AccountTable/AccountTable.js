@@ -150,6 +150,18 @@ export const useStyles = makeStyles(theme => ({
   column: {},
 }))
 
+function customFilter(rows, id, filterValue) {
+  return rows.filter(row => {
+    console.log(row)
+    const rowValue = row.values[id]
+    if (id === 'id' && rowValue === 0) {
+      return true
+    }
+
+    return rowValue !== undefined ? String(rowValue).toLowerCase().contains(String(filterValue).toLowerCase()) : true
+  })
+}
+
 // Create an editable cell renderer
 const EditableCell = ({
   value: initialValue,
@@ -232,7 +244,7 @@ function StatusIconButton(props) {
 
 function AccountFilter({ globalFilter, setGlobalFilter }) {
   const theme = useTheme()
-  const [value, setValue] = React.useState(globalFilter)
+  const [value, setValue] = useState(globalFilter)
   const onChange = useAsyncDebounce(value => {
     setGlobalFilter(value || undefined)
   }, 500)
@@ -336,7 +348,12 @@ export default function Account(props) {
     },
   )
   const transactions = useSelector(state => selectTransactions(state, props.accountId, showReconciled))
-  const data = useMemo(() => transactions, [transactions])
+  const [transactionData, setTransactionData] = useState(transactions)
+  const data = useMemo(() => transactionData, [transactionData, account])
+
+  const cancelAddTransaction = () => {
+    setTransactionData(transactionData.filter(trx => trx.id !== 0))
+  }
 
   const filter = createFilterOptions()
   const columns = useMemo(
@@ -638,6 +655,16 @@ export default function Account(props) {
     [currentTheme],
   )
 
+  const filterTypes = React.useMemo(
+    () => ({
+      globalFilter: customFilter,
+      // Or, override the default text filter to use
+      // "startWith"
+      text: customFilter,
+    }),
+    [],
+  )
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -673,6 +700,8 @@ export default function Account(props) {
       // That way we can call this function from our
       // cell renderer!
       // updateMyData,
+
+      filterTypes,
     },
     useGlobalFilter,
     useSortBy,
@@ -720,13 +749,11 @@ export default function Account(props) {
       newRow.payeeId = (await createNewPayee(newRow.payeeId)).id
     }
 
-    const amount = dinero(newRow.amount)
-
     await dispatch(
       createTransaction({
         transaction: {
           accountId: props.accountId,
-          amount,
+          amount: newRow.amount,
           date: newRow.date,
           memo: newRow.memo,
           payeeId: newRow.payeeId,
@@ -954,15 +981,23 @@ export default function Account(props) {
   }
 
   const addTransactionClick = () => {
-    transactions.unshift({
-      id: 0,
-      date: new Date(),
-      payeeId: '',
-      categoryId: '',
-      memo: '',
-      amount: 0,
-      status: 0,
-    })
+    const now = new Date().toISOString()
+    setTransactionData([
+      {
+        id: 0,
+        accountId: props.accountId,
+        amount: 0,
+        categoryId: '',
+        created: now,
+        date: now,
+        filterField: '',
+        memo: '',
+        payeeId: '',
+        status: 0,
+        updated: now,
+      },
+      ...transactionData,
+    ])
   }
 
   return (
@@ -1169,6 +1204,8 @@ export default function Account(props) {
           onRowSave={onTransactionEdit}
           toggleRowSelected={toggleRowSelected}
           selectedRowIds={selectedRowIds}
+          cancelAddTransaction={cancelAddTransaction}
+          onTransactionAdd={onTransactionAdd}
         />
       </Table>
     </Box>
