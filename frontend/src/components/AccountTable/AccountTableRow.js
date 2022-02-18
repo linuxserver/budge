@@ -48,7 +48,11 @@ export default function AccountTableRow({
     onSave(rowData)
   }
 
-  const cancel = () => {
+  const cancel = e => {
+    if (e) {
+      e.stopPropagation()
+    }
+
     setRowData({
       ...row.original,
       amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),

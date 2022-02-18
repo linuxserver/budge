@@ -85,6 +85,7 @@ import { makeStyles } from '@mui/styles'
 import clsx from 'clsx'
 import { ROW_HEIGHT } from './constants'
 import SaveIcon from '@mui/icons-material/Save'
+import CancelIcon from '@mui/icons-material/Cancel'
 import EventIcon from '@mui/icons-material/Event'
 import TransactionDatePicker from './TransactionDatePicker'
 
@@ -150,15 +151,18 @@ export const useStyles = makeStyles(theme => ({
   column: {},
 }))
 
-function customFilter(rows, id, filterValue) {
+function customFilter(rows, columnIds, filterValue) {
+  const matchRegex = new RegExp(filterValue, 'i')
   return rows.filter(row => {
-    console.log(row)
-    const rowValue = row.values[id]
-    if (id === 'id' && rowValue === 0) {
+    if (row.id === 0) {
       return true
     }
 
-    return rowValue !== undefined ? String(rowValue).toLowerCase().contains(String(filterValue).toLowerCase()) : true
+    const rowValue = row.values.filterField
+    console.log(row)
+    console.log(filterValue)
+
+    return rowValue !== undefined ? String(rowValue).match(matchRegex) !== null : true
   })
 }
 
@@ -366,6 +370,7 @@ export default function Account(props) {
           accessor: 'date',
           Header: 'DATE',
           width: 135,
+          sortType: 'defaultSort',
           Cell: props => {
             return <Box>{new Date(props.cell.value).toLocaleDateString()}</Box>
           },
@@ -631,7 +636,7 @@ export default function Account(props) {
             )
           },
           Editing: props => (
-            <Box sx={{ mr: 1 }}>
+            <Box sx={{ mr: 0 }}>
               <IconButton
                 size="small"
                 style={{ padding: 0 }}
@@ -640,7 +645,14 @@ export default function Account(props) {
                   props.save()
                 }}
               >
-                <SaveIcon />
+                <SaveIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                style={{ padding: 0 }}
+                onClick={props.row.id === 0 ? cancelAddTransaction : props.cancel}
+              >
+                <CancelIcon fontSize="small" />
               </IconButton>
             </Box>
           ),
@@ -655,12 +667,27 @@ export default function Account(props) {
     [currentTheme],
   )
 
-  const filterTypes = React.useMemo(
+  const filterTypes = useMemo(
     () => ({
-      globalFilter: customFilter,
+      customFilter: customFilter,
       // Or, override the default text filter to use
       // "startWith"
       text: customFilter,
+    }),
+    [],
+  )
+
+  const sortTypes = useMemo(
+    () => ({
+      defaultSort: (rowA, rowB, columnId, desc) => {
+        if (rowA.id === 0) {
+          return desc ? 1 : -1
+        } else if (rowB.id === 0) {
+          return desc ? -1 : 1
+        }
+
+        return rowA[columnId] < rowB[columnId] ? -1 : 1
+      },
     }),
     [],
   )
@@ -702,6 +729,8 @@ export default function Account(props) {
       // updateMyData,
 
       filterTypes,
+      sortTypes,
+      globalFilter: 'customFilter',
     },
     useGlobalFilter,
     useSortBy,
