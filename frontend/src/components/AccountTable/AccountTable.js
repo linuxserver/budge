@@ -1,12 +1,4 @@
 import React, { useState, useMemo } from 'react'
-import MaterialTable, {
-  MTableBody,
-  MTableBodyRow,
-  MTableEditField,
-  MTableToolbar,
-  MTableEditRow,
-  MTableActions,
-} from '@material-table/core'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   accountsSelectors,
@@ -18,7 +10,6 @@ import {
   updateTransactions,
 } from '../../redux/slices/Accounts'
 import { createPayee, fetchPayees, selectPayeesMap } from '../../redux/slices/Payees'
-import { TableIcons } from '../../utils/Table'
 import { formatMonthFromDateString } from '../../utils/Date'
 import { ExportCsv } from '../../utils/Export'
 import { refreshBudget, fetchAvailableMonths } from '../../redux/slices/Budgets'
@@ -69,10 +60,8 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TableFooter from '@mui/material/TableFooter'
-import TablePagination from '@mui/material/TablePagination'
 import TableSortLabel from '@mui/material/TableSortLabel'
 // import TableToolbar from '@mui/material/TableToolbar'
-import TablePaginationActions from './TablePaginationActions'
 import AccountTableBody from './AccountTableBody'
 import AccountAmountCell from './AccountAmountCell'
 import AppBar from '@mui/material/AppBar'
@@ -211,20 +200,6 @@ const IndeterminateCheckbox = React.forwardRef(({ indeterminate, ...rest }, ref)
 const BudgetTableCell = styled(TableCell)(({ theme }) => ({
   paddingTop: '4px',
   paddingBottom: '4px',
-}))
-
-const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
-  backgroundColor: theme.palette.background.tableBody,
-  minHeight: '0 !important',
-  padding: '0 !important',
-  margin: '0',
-  '& .MuiInputBase-input': {
-    padding: '0 !important',
-    width: '140px',
-  },
-  '& .MuiInputAdornment-root .MuiIconButton-root': {
-    padding: 0,
-  },
 }))
 
 function StatusIconButton(props) {
@@ -488,72 +463,77 @@ export default function Account(props) {
           ),
           exportTransformer: value => payeesMap[value],
         },
-        {
-          title: 'Evenlope',
-          accessor: 'categoryId',
-          Header: 'ENVELOPE',
-          style: {
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          },
-          Cell: props => <Box>{categoriesMap[props.cell.value]}</Box>,
-          Editing: props => {
-            const disabled = props.rowData.categoryId === '0' || props.rowData.categoryId === 'Category Not Needed'
-            const options = { ...categoriesMap }
-            if (disabled === false) {
-              delete options['0']
-            }
-
-            return (
-              <Autocomplete
-                {...props}
-                disablePortal
-                disabled={disabled}
-                options={categoryIds}
-                getOptionLabel={option => {
-                  if (categoriesMap[option]) {
-                    return categoriesMap[option]
+        ...(account.type !== 2
+          ? [
+              {
+                title: 'Evenlope',
+                accessor: 'categoryId',
+                Header: 'ENVELOPE',
+                style: {
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                },
+                Cell: props => <Box>{categoriesMap[props.cell.value]}</Box>,
+                Editing: props => {
+                  const disabled =
+                    props.rowData.categoryId === '0' || props.rowData.categoryId === 'Category Not Needed'
+                  const options = { ...categoriesMap }
+                  if (disabled === false) {
+                    delete options['0']
                   }
 
-                  return option
-                }}
-                sx={{
-                  [`& .MuiOutlinedInput-root`]: { p: 0, pt: '1px' },
-                  [`& #envelope-text-field.MuiOutlinedInput-input`]: { px: 1, py: 0 },
-                }}
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    InputProps={{
-                      style: {
-                        fontSize: theme.typography.subtitle2.fontSize,
-                        py: 0,
-                        px: 1,
-                      },
-                      ...params.InputProps,
-                    }}
-                    inputProps={{
-                      ...params.inputProps,
-                      id: 'envelope-text-field',
-                    }}
-                  />
-                )}
-                value={props.value}
-                onInputChange={(e, value) => {
-                  props.onChange(value)
-                }}
-                onChange={(e, value) => {
-                  return props.onRowDataChange({
-                    ...props.rowData,
-                    categoryId: value,
-                  })
-                }}
-              />
-            )
-          },
-          exportTransformer: value => categoriesMap[value],
-        },
+                  return (
+                    <Autocomplete
+                      {...props}
+                      disablePortal
+                      disabled={disabled}
+                      options={categoryIds}
+                      getOptionLabel={option => {
+                        if (categoriesMap[option]) {
+                          return categoriesMap[option]
+                        }
+
+                        return option
+                      }}
+                      sx={{
+                        [`& .MuiOutlinedInput-root`]: { p: 0, pt: '1px' },
+                        [`& #envelope-text-field.MuiOutlinedInput-input`]: { px: 1, py: 0 },
+                      }}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          InputProps={{
+                            style: {
+                              fontSize: theme.typography.subtitle2.fontSize,
+                              py: 0,
+                              px: 1,
+                            },
+                            ...params.InputProps,
+                          }}
+                          inputProps={{
+                            ...params.inputProps,
+                            id: 'envelope-text-field',
+                          }}
+                        />
+                      )}
+                      value={props.value}
+                      onInputChange={(e, value) => {
+                        props.onChange(value)
+                      }}
+                      onChange={(e, value) => {
+                        return props.onRowDataChange({
+                          ...props.rowData,
+                          categoryId: value,
+                        })
+                      }}
+                    />
+                  )
+                },
+                exportTransformer: value => categoriesMap[value],
+              },
+            ]
+          : []),
         {
           title: 'Memo',
           accessor: 'memo',
@@ -708,7 +688,7 @@ export default function Account(props) {
         }
         return col
       }),
-    [currentTheme],
+    [currentTheme, account.type],
   )
 
   const filterTypes = useMemo(
