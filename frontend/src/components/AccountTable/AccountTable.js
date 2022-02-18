@@ -20,6 +20,7 @@ import {
 import { createPayee, fetchPayees, selectPayeesMap } from '../../redux/slices/Payees'
 import { TableIcons } from '../../utils/Table'
 import { formatMonthFromDateString } from '../../utils/Date'
+import { ExportCsv } from '../../utils/Export'
 import { refreshBudget, fetchAvailableMonths } from '../../redux/slices/Budgets'
 import { fetchBudgetMonth, fetchCategoryMonths } from '../../redux/slices/BudgetMonths'
 import TextField from '@mui/material/TextField'
@@ -39,7 +40,6 @@ import { useTheme } from '@mui/styles'
 import { payeesSelectors } from '../../redux/slices/Payees'
 import { createSelector } from '@reduxjs/toolkit'
 import { categoriesSelectors } from '../../redux/slices/Categories'
-import { ExportCsv } from '@material-table/exporters'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
@@ -323,40 +323,64 @@ export default function Account(props) {
 
   const payeesMap = useSelector(selectPayeesMap)
 
+  const [addingTransaction, setAddingTransaction] = useState(false)
+
   const selectTransactions = createSelector(
     [
       (state, accountId) =>
         state.accounts.entities[accountId] ? state.accounts.entities[accountId].transactions.entities : [],
       (state, accountId, reconciled) => reconciled,
+      (state, addingTransaction) => addingTransaction,
     ],
     (transactions, reconciled) => {
-      if (!showReconciled) {
-        return Object.values(transactions)
-          .filter(transaction => transaction.status !== 2)
-          .map(trx => {
-            return {
-              ...trx,
-              ...(trx.categoryId === null && { categoryId: '0' }),
-              filterField: `${categoriesMap[trx.categoryId]} ${payeesMap[trx.payeeId]}`,
-            }
-          })
+      const retval = []
+      if (addingTransaction) {
+        const now = new Date().toISOString()
+        retval.push({
+          id: 0,
+          accountId: props.accountId,
+          amount: 0,
+          categoryId: '',
+          created: now,
+          date: now,
+          filterField: '',
+          memo: '',
+          payeeId: '',
+          status: 0,
+          updated: now,
+        })
       }
 
-      return Object.values(transactions).map(trx => {
-        return {
-          ...trx,
-          ...(trx.categoryId === null && { categoryId: '0' }),
-          filterField: `${categoriesMap[trx.categoryId]} ${payeesMap[trx.payeeId]}`,
-        }
-      })
+      if (!showReconciled) {
+        return retval.concat(
+          Object.values(transactions)
+            .filter(transaction => transaction.status !== 2)
+            .map(trx => {
+              return {
+                ...trx,
+                ...(trx.categoryId === null && { categoryId: '0' }),
+                filterField: `${categoriesMap[trx.categoryId]} ${payeesMap[trx.payeeId]}`,
+              }
+            }),
+        )
+      }
+
+      return retval.concat(
+        Object.values(transactions).map(trx => {
+          return {
+            ...trx,
+            ...(trx.categoryId === null && { categoryId: '0' }),
+            filterField: `${categoriesMap[trx.categoryId]} ${payeesMap[trx.payeeId]}`,
+          }
+        }),
+      )
     },
   )
   const transactions = useSelector(state => selectTransactions(state, props.accountId, showReconciled))
-  const [transactionData, setTransactionData] = useState(transactions)
-  const data = useMemo(() => transactionData, [transactionData, account])
+  const data = useMemo(() => transactions, [transactions, account])
 
   const cancelAddTransaction = () => {
-    setTransactionData(transactionData.filter(trx => trx.id !== 0))
+    setAddingTransaction(false)
   }
 
   const filter = createFilterOptions()
@@ -367,6 +391,7 @@ export default function Account(props) {
           accessor: 'filterField',
         },
         {
+          title: 'Date',
           accessor: 'date',
           Header: 'DATE',
           width: 135,
@@ -375,8 +400,10 @@ export default function Account(props) {
             return <Box>{new Date(props.cell.value).toLocaleDateString()}</Box>
           },
           Editing: props => <TransactionDatePicker {...props} />,
+          exportTransformer: value => new Date(value).toLocaleDateString(),
         },
         {
+          title: 'Payee',
           accessor: 'payeeId',
           Header: 'PAYEE',
           width: 200,
@@ -459,8 +486,10 @@ export default function Account(props) {
               }}
             />
           ),
+          exportTransformer: value => payeesMap[value],
         },
         {
+          title: 'Evenlope',
           accessor: 'categoryId',
           Header: 'ENVELOPE',
           style: {
@@ -523,8 +552,10 @@ export default function Account(props) {
               />
             )
           },
+          exportTransformer: value => categoriesMap[value],
         },
         {
+          title: 'Memo',
           accessor: 'memo',
           Header: 'MEMO',
           style: {
@@ -574,6 +605,7 @@ export default function Account(props) {
           },
         },
         {
+          title: 'Amount',
           accessor: 'amount',
           Header: 'AMOUNT',
           numeric: true,
@@ -598,8 +630,10 @@ export default function Account(props) {
             console.log(props)
             return <AccountAmountCell {...props} />
           },
+          exportTransformer: value => intlFormat(valueToDinero(value)),
         },
         {
+          title: 'Status',
           accessor: 'status',
           field: 'status',
           width: 50,
@@ -656,6 +690,16 @@ export default function Account(props) {
               </IconButton>
             </Box>
           ),
+          exportTransformer: value => {
+            switch (value) {
+              case 0:
+                return 'Pending'
+              case 1:
+                return 'Cleared'
+              case 2:
+                return 'Reconciled'
+            }
+          },
         },
       ].map(col => {
         col.cellStyle = {
@@ -1001,8 +1045,7 @@ export default function Account(props) {
   }
 
   const exportData = () => {
-    const [cols, data] = getTableData()
-    ExportCsv(cols, data, `${account.name} Transactions`)
+    ExportCsv(columns, rows, `${account.name} Transactions`)
   }
 
   const onSelectionChange = data => {
@@ -1010,23 +1053,7 @@ export default function Account(props) {
   }
 
   const addTransactionClick = () => {
-    const now = new Date().toISOString()
-    setTransactionData([
-      {
-        id: 0,
-        accountId: props.accountId,
-        amount: 0,
-        categoryId: '',
-        created: now,
-        date: now,
-        filterField: '',
-        memo: '',
-        payeeId: '',
-        status: 0,
-        updated: now,
-      },
-      ...transactionData,
-    ])
+    return setAddingTransaction(true)
   }
 
   return (
