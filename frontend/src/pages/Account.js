@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { useParams } from 'react-router'
 import AccountTable from '../components/AccountTable/AccountTable'
@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import { useTheme } from '@mui/styles'
 
-export default function Account(props) {
+export default function Account() {
   const navigate = useNavigate()
   const theme = useTheme()
 

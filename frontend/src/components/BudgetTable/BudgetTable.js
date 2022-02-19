@@ -499,7 +499,6 @@ export default function BudgetTable(props) {
   }
 
   const onCategoryRowClick = row => {
-    console.log(row)
     dispatch(setSelectedCategory(row.original.categoryId))
   }
 
@@ -607,6 +606,7 @@ export default function BudgetTable(props) {
                   {row.cells.map(cell => {
                     return (
                       <BudgetTableCell
+                        key={`${cell.column.id}-${cell.row.id}`}
                         {...cell.getCellProps()}
                         sx={{
                           ...(cell.column.style && { ...cell.column.style }),

@@ -140,9 +140,9 @@ export default function AppDrawer(props) {
     return (
       <List dense={true}>
         <ListItemButton onClick={() => listItemClicked(key)}>
-          <Stack container direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
             <div>
-              <Stack container direction="row" justifyContent="space-between" alignItems="center">
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <ListItemIcon size="small" edge="end" style={{ minWidth: '20px' }}>
                   {accountsListOpen[key] ? (
                     <ExpandMore sx={{ color: theme.palette.secondary.main }} fontSize="small" />
@@ -236,7 +236,7 @@ export default function AppDrawer(props) {
           DragState.dropAccount = -1
         }}
       >
-        <Stack container direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
           <div>
             <ListItemText
               sx={{ maxWidth: 150 }}
@@ -265,8 +265,6 @@ export default function AppDrawer(props) {
       </ListItemButton>
     )
   }
-
-  console.log(theme)
 
   if (!budget) {
     return <></>

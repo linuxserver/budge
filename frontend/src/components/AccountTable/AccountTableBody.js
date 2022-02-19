@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import TableBody from '@mui/material/TableBody'
 import AccountTableRow from './AccountTableRow'
 import { inputToDinero, valueToDinero } from '../../utils/Currency'
@@ -15,9 +15,11 @@ export default function AccountTableBody({
   selectedRowIds,
   cancelAddTransaction,
   onTransactionAdd,
+  editingRow,
+  setEditingRow,
   ...props
 }) {
-  const [editingRow, setEditingRow] = useState(0)
+  useEffect(() => {})
 
   const onSave = (newData, oldData) => {
     setEditingRow(0)
@@ -42,17 +44,18 @@ export default function AccountTableBody({
   }
 
   const onCancel = id => {
+    cancelAddTransaction()
     if (id !== 0) {
       return setEditingRow(0)
     }
-
-    cancelAddTransaction()
   }
 
   const onRowClick = id => {
-    // if (editingRow === id) {
-    //   return
-    // }
+    if (editingRow === id) {
+      return
+    }
+
+    cancelAddTransaction()
 
     // if (selectedRowIds[id] === true) {
     return setEditingRow(id)

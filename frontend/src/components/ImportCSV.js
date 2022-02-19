@@ -1,34 +1,22 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
-import Modal from '@mui/material/Modal'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
-import Backdrop from '@mui/material/Backdrop'
 import { useSelector, useDispatch } from 'react-redux'
 import Button from '@mui/material/Button'
 import { parse } from 'csv-parse/browser/esm/sync'
-import { dinero, multiply, toUnit } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
+import { multiply } from 'dinero.js'
 import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Checkbox from '@mui/material/Checkbox'
 import Stack from '@mui/material/Stack'
-import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
-import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
 import CircularProgress from '@mui/material/CircularProgress'
-import { FromAPI, inputToDinero, intlFormat } from '../utils/Currency'
-import {
-  fetchAccounts,
-  createTransaction,
-  createTransactions,
-  fetchAccountTransactions,
-} from '../redux/slices/Accounts'
-import { createPayee, fetchPayees, selectPayeesMap } from '../redux/slices/Payees'
+import { inputToDinero } from '../utils/Currency'
+import { fetchAccounts, createTransactions, fetchAccountTransactions } from '../redux/slices/Accounts'
+import { createPayee, fetchPayees } from '../redux/slices/Payees'
 import { refreshBudget, fetchAvailableMonths } from '../redux/slices/Budgets'
 import { fetchBudgetMonths } from '../redux/slices/BudgetMonths'
 
@@ -47,7 +35,6 @@ export default function ImportCSV({ accountId, open, close }) {
 
   const uploadFile = event => {
     let file = event.target.files[0]
-    console.log(file)
 
     if (file) {
       const reader = new FileReader()
@@ -55,13 +42,11 @@ export default function ImportCSV({ accountId, open, close }) {
         'load',
         () => {
           // this will then display a text file
-          console.log(reader.result)
           const csvData = parse(reader.result, {
             // columns: headersIncluded,
           })
-          console.log(csvData)
           setData(csvData)
-          setColumnsMap(csvData[0].map((val, index) => 'Ignore'))
+          setColumnsMap(csvData[0].map(() => 'Ignore'))
           setStage('MATCH')
         },
         false,
@@ -96,7 +81,6 @@ export default function ImportCSV({ accountId, open, close }) {
     let bulk = []
 
     for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
-      console.log(`importing row ${rowIndex}`)
       const row = data[rowIndex]
       if (rowIndex === 0 && headersIncluded) {
         continue
@@ -113,7 +97,6 @@ export default function ImportCSV({ accountId, open, close }) {
       }
 
       for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
-        console.log(`importing column ${columnIndex}`)
         const value = row[columnIndex]
 
         switch (columnsMap[columnIndex]) {
@@ -216,7 +199,7 @@ export default function ImportCSV({ accountId, open, close }) {
           <Box>
             <Typography variant="h6">Map CSV Columns</Typography>
             {data[0].map((value, index) => (
-              <Box sx={{ width: '100%' }}>
+              <Box key={index} sx={{ width: '100%' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0}>
                   <Box>{value}</Box>
                   <Box>
@@ -228,7 +211,9 @@ export default function ImportCSV({ accountId, open, close }) {
                       sx={{ minWidth: '150px' }}
                     >
                       {availableColumns.map(column => (
-                        <MenuItem value={column}>{column}</MenuItem>
+                        <MenuItem key={column} value={column}>
+                          {column}
+                        </MenuItem>
                       ))}
                     </Select>
                   </Box>

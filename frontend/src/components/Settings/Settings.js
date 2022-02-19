@@ -1,13 +1,11 @@
-import { useState } from 'react'
-import Dialog from '@mui/material/Dialog'
+import React, { useState } from 'react'
 import Modal from '@mui/material/Modal'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Account from './Account'
-import Backdrop from '@mui/material/Backdrop'
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props
@@ -74,12 +72,12 @@ export default function Settings({ open, close }) {
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
               {tabs.map((config, index) => (
-                <Tab label={config.name} {...a11yProps(index)} />
+                <Tab key={config.name} label={config.name} {...a11yProps(index)} />
               ))}
             </Tabs>
           </Box>
           {tabs.map((config, index) => {
-            return <config.Component {...config.props} value={value} index={index} close={close} />
+            return <config.Component key={index} {...config.props} value={value} index={index} close={close} />
           })}
         </Box>
       </Modal>

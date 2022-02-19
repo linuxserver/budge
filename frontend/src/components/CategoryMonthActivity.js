@@ -62,7 +62,7 @@ export default function CategoryMonthActivity(props) {
             {transactions.map(transaction => {
               transaction = FromAPI.transformTransaction(transaction)
               return (
-                <TableRow>
+                <TableRow key={transaction.id}>
                   <Tooltip
                     arrow
                     title={

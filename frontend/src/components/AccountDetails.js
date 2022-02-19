@@ -25,6 +25,7 @@ import Table from '@mui/material/Table'
 import TableContainer from '@mui/material/TableContainer'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
+import TableBody from '@mui/material/TableBody'
 import { add } from 'dinero.js'
 import { formatMonthFromDateString } from '../utils/Date'
 
@@ -185,25 +186,27 @@ export default function BudgetDetails({ accountId, name }) {
           <CardContent sx={{ p: '10px !important' }}>
             <TableContainer>
               <Table size="small">
-                <TableRow>
-                  <TableCell>Transactions</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{transactions.length}</TableCell>
-                </TableRow>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Transactions</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>{transactions.length}</TableCell>
+                  </TableRow>
 
-                <TableRow>
-                  <TableCell>Pending</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{pending}</TableCell>
-                </TableRow>
+                  <TableRow>
+                    <TableCell>Pending</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>{pending}</TableCell>
+                  </TableRow>
 
-                <TableRow>
-                  <TableCell>Income</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(income)}</TableCell>
-                </TableRow>
+                  <TableRow>
+                    <TableCell>Income</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>{intlFormat(income)}</TableCell>
+                  </TableRow>
 
-                <TableRow>
-                  <TableCell>Activity</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(activity)}</TableCell>
-                </TableRow>
+                  <TableRow>
+                    <TableCell>Activity</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>{intlFormat(activity)}</TableCell>
+                  </TableRow>
+                </TableBody>
               </Table>
             </TableContainer>
           </CardContent>

@@ -1,9 +1,6 @@
 import React, { useState } from 'react'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
-import Stack from '@mui/material/Stack'
-import Button from '@mui/material/Button'
-import Box from '@mui/material/Box'
 import { valueToDinero } from '../../utils/Currency'
 import { toUnit } from 'dinero.js'
 import clsx from 'clsx'
@@ -24,8 +21,6 @@ export default function AccountTableRow({
     ...row.original,
     amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
   })
-
-  const [focused, setFocused] = useState(new Set())
 
   const updateRowData = (field, val) => {
     setRowData({
@@ -60,24 +55,6 @@ export default function AccountTableRow({
     onCancel(row.original.id)
   }
 
-  const onFocus = e => {
-    console.log('focus')
-    const newSet = new Set(focused)
-    newSet.add(e.target.id)
-    setFocused(newSet)
-  }
-
-  const onBlur = e => {
-    console.log('blur')
-    const newSet = new Set(focused)
-    newSet.delete(e.target.id)
-    setFocused(newSet)
-
-    if (newSet.size === 0) {
-      // setEditingRow(null)
-    }
-  }
-
   return (
     <>
       <TableRow {...row.getRowProps()} onClick={onClick} {...props} sx={{ width: '100%', display: 'table-row' }}>
@@ -106,8 +83,6 @@ export default function AccountTableRow({
                 onKeyDown: onCellKeyPress,
                 save: save,
                 cancel: cancel,
-                onFocus: onFocus,
-                onBlur: onBlur,
               })}
             </TableCell>
           )

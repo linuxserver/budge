@@ -92,7 +92,7 @@ export const deleteTransaction = createAsyncThunk(
   'transactions/deleteTransaction',
   async ({ transaction }, { getState }) => {
     const state = getState()
-    const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
+    await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
 
     return {
       transactionId: transaction.id,

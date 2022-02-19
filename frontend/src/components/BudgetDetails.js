@@ -1,3 +1,4 @@
+import React from 'react'
 import Box from '@mui/material/Box'
 import { useSelector, useDispatch } from 'react-redux'
 import { inputToDinero, intlFormat, valueToDinero, getBalanceColor } from '../utils/Currency'

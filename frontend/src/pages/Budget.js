@@ -4,9 +4,8 @@ import BudgetDetails from '../components/BudgetDetails'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import { useTheme } from '@mui/styles'
-import { useSelector } from 'react-redux'
 
-export default function Budget(props) {
+export default function Budget() {
   const theme = useTheme()
 
   return (

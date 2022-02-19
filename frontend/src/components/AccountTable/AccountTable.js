@@ -16,23 +16,18 @@ import { refreshBudget, fetchAvailableMonths } from '../../redux/slices/Budgets'
 import { fetchBudgetMonth, fetchCategoryMonths } from '../../redux/slices/BudgetMonths'
 import TextField from '@mui/material/TextField'
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
-import LocalizationProvider from '@mui/lab/LocalizationProvider'
-import DatePicker from '@mui/lab/DatePicker'
-import AdapterDateFns from '@mui/lab/AdapterDateFns'
 import IconButton from '@mui/material/IconButton'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
-import { FromAPI, inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
-import { dinero, toUnit, isPositive, greaterThan } from 'dinero.js'
-import { toSnapshot } from '@dinero.js/core'
+import { FromAPI, intlFormat, valueToDinero } from '../../utils/Currency'
+import { dinero, isPositive } from 'dinero.js'
 import Tooltip from '@mui/material/Tooltip'
 import { useTheme } from '@mui/styles'
 import { payeesSelectors } from '../../redux/slices/Payees'
 import { createSelector } from '@reduxjs/toolkit'
 import { categoriesSelectors } from '../../redux/slices/Categories'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
-import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -40,7 +35,8 @@ import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import EditIcon from '@mui/icons-material/Edit'
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state'
+import { bindTrigger, bindMenu } from 'material-ui-popup-state'
+import { usePopupState } from 'material-ui-popup-state/hooks'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
@@ -48,34 +44,20 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import { styled } from '@mui/material/styles'
 import UploadIcon from '@mui/icons-material/Upload'
 import ImportCSV from '../ImportCSV'
-import AccountTableHeader from './AccountTableHeader'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
-import DeleteOutline from '@mui/icons-material/DeleteOutline'
-import { useGlobalFilter, usePagination, useRowSelect, useSortBy, useTable, useAsyncDebounce } from 'react-table'
+import { useGlobalFilter, useRowSelect, useSortBy, useTable, useAsyncDebounce } from 'react-table'
 import Checkbox from '@mui/material/Checkbox'
 import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import TableFooter from '@mui/material/TableFooter'
 import TableSortLabel from '@mui/material/TableSortLabel'
-// import TableToolbar from '@mui/material/TableToolbar'
 import AccountTableBody from './AccountTableBody'
 import AccountAmountCell from './AccountAmountCell'
-import AppBar from '@mui/material/AppBar'
-import CssBaseline from '@mui/material/CssBaseline'
-import Toolbar from '@mui/material/Toolbar'
-import Container from '@mui/material/Container'
-import { FixedSizeList as List, Grid as GridList } from 'react-window'
-import AutoSizer from 'react-virtualized-auto-sizer'
 import { makeStyles } from '@mui/styles'
 import clsx from 'clsx'
 import { ROW_HEIGHT } from './constants'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
-import EventIcon from '@mui/icons-material/Event'
 import TransactionDatePicker from './TransactionDatePicker'
 
 export const useStyles = makeStyles(theme => ({
@@ -123,17 +105,20 @@ export const useStyles = makeStyles(theme => ({
     width: '100%',
   },
   headerRow: {},
+  sortType: 'defaultSort',
   cell: {
     display: 'block',
     flexGrow: 0,
     flexShrink: 0,
     padding: 4,
   },
+  sortType: 'defaultSort',
   textCell: {
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   },
+  sortType: 'defaultSort',
   expandingCell: {
     flex: 1,
   },
@@ -148,8 +133,6 @@ function customFilter(rows, columnIds, filterValue) {
     }
 
     const rowValue = row.values.filterField
-    console.log(row)
-    console.log(filterValue)
 
     return rowValue !== undefined ? String(rowValue).match(matchRegex) !== null : true
   })
@@ -209,15 +192,17 @@ function StatusIconButton(props) {
   }
 
   return (
-    <IconButton
-      size="small"
-      style={{ padding: 0 }}
-      aria-label="transaction status"
-      onClick={handleClick}
-      color="inherit"
-    >
-      {props.statusIcon}
-    </IconButton>
+    <Tooltip title={props.tooltipText}>
+      <IconButton
+        size="small"
+        style={{ padding: 0 }}
+        aria-label="transaction status"
+        onClick={handleClick}
+        color="inherit"
+      >
+        {props.statusIcon}
+      </IconButton>
+    </Tooltip>
   )
 }
 
@@ -266,6 +251,8 @@ export default function Account(props) {
   const accounts = useSelector(accountsSelectors.selectAll)
   const currentTheme = useSelector(state => state.app.theme)
 
+  const [editingRow, setEditingRow] = useState(0)
+
   const [bulkEnabled, setBulkEnabled] = useState(false)
   const [showReconciled, setShowReconciled] = useState(false)
   const toggleReconciled = () => {
@@ -279,6 +266,11 @@ export default function Account(props) {
   const closeImporter = () => {
     setImporterOpen(false)
   }
+
+  const bulkMenuPopupState = usePopupState({
+    variant: 'popover',
+    popupId: 'bulkActions',
+  })
 
   const budgetId = useSelector(state => state.budgets.activeBudgetId)
 
@@ -305,7 +297,7 @@ export default function Account(props) {
       (state, accountId) =>
         state.accounts.entities[accountId] ? state.accounts.entities[accountId].transactions.entities : [],
       (state, accountId, reconciled) => reconciled,
-      (state, addingTransaction) => addingTransaction,
+      (state, accountId, reconciled, addingTransaction) => addingTransaction,
     ],
     (transactions, reconciled) => {
       const retval = []
@@ -355,7 +347,10 @@ export default function Account(props) {
   const data = useMemo(() => transactions, [transactions, account])
 
   const cancelAddTransaction = () => {
-    setAddingTransaction(false)
+    if (addingTransaction === true) {
+      setAddingTransaction(false)
+      setEditingRow(0)
+    }
   }
 
   const filter = createFilterOptions()
@@ -387,10 +382,12 @@ export default function Account(props) {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           },
+          sortType: 'defaultSort',
           Cell: props => <Box>{payeesMap[props.cell.value]}</Box>,
           Editing: props => (
             <Autocomplete
               {...props}
+              autoSelect={true}
               sx={{
                 [`& .MuiOutlinedInput-root`]: { p: 0, pt: '1px' },
                 [`& #payee-text-field.MuiOutlinedInput-input`]: { px: 1, py: 0 },
@@ -474,6 +471,7 @@ export default function Account(props) {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 },
+                sortType: 'defaultSort',
                 Cell: props => <Box>{categoriesMap[props.cell.value]}</Box>,
                 Editing: props => {
                   const disabled =
@@ -486,6 +484,7 @@ export default function Account(props) {
                   return (
                     <Autocomplete
                       {...props}
+                      autoSelect={true}
                       disablePortal
                       disabled={disabled}
                       options={categoryIds}
@@ -543,6 +542,7 @@ export default function Account(props) {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           },
+          sortType: 'defaultSort',
           Cell: props => (
             <Tooltip title={props.cell.value}>
               <span
@@ -590,6 +590,7 @@ export default function Account(props) {
           Header: 'AMOUNT',
           numeric: true,
           width: 120,
+          sortType: 'defaultSort',
           Cell: props => {
             const trx = FromAPI.transformTransaction(props.row.original)
             const color = isPositive(trx.amount) ? 'success' : 'error'
@@ -606,10 +607,7 @@ export default function Account(props) {
               </Typography>
             )
           },
-          Editing: props => {
-            console.log(props)
-            return <AccountAmountCell {...props} />
-          },
+          Editing: props => <AccountAmountCell {...props} />,
           exportTransformer: value => intlFormat(valueToDinero(value)),
         },
         {
@@ -618,7 +616,14 @@ export default function Account(props) {
           field: 'status',
           width: 50,
           numeric: true,
-          Header: props => <></>,
+          Header: props => (
+            <Box sx={{ mr: 1 }}>
+              <Tooltip title="Status">
+                <AccessTimeIcon color="disabled" fontSize="small" />
+              </Tooltip>
+            </Box>
+          ),
+          disableSortBy: true,
           Cell: props => {
             let statusIcon = <></>
             let tooltipText = ''
@@ -639,13 +644,12 @@ export default function Account(props) {
 
             return (
               <Box sx={{ mr: 1 }}>
-                <Tooltip title={tooltipText}>
-                  <StatusIconButton
-                    rowData={props.row.original}
-                    setTransactionStatus={setTransactionStatus}
-                    statusIcon={statusIcon}
-                  />
-                </Tooltip>
+                <StatusIconButton
+                  tooltipText={tooltipText}
+                  rowData={props.row.original}
+                  setTransactionStatus={setTransactionStatus}
+                  statusIcon={statusIcon}
+                />
               </Box>
             )
           },
@@ -688,7 +692,7 @@ export default function Account(props) {
         }
         return col
       }),
-    [currentTheme, account.type],
+    [currentTheme, payeesMap, account.type],
   )
 
   const filterTypes = useMemo(
@@ -776,6 +780,7 @@ export default function Account(props) {
           ),
           // The cell can use the individual row's getToggleRowSelectedProps method
           // to the render a checkbox
+          sortType: 'defaultSort',
           Cell: ({ row }) => <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />,
           Editing: ({ row }) => <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />,
         },
@@ -940,6 +945,7 @@ export default function Account(props) {
   }
 
   const deleteSelected = async () => {
+    bulkMenuPopupState.close()
     const transactions = getSelectedRows()
     await dispatch(deleteTransactions({ accountId: account.id, transactions }))
 
@@ -947,6 +953,7 @@ export default function Account(props) {
   }
 
   const markSelectedTransactionsCleared = async () => {
+    bulkMenuPopupState.close()
     await bulkEditTransactions(
       getSelectedRows().map(row => ({
         ...row,
@@ -957,6 +964,7 @@ export default function Account(props) {
   }
 
   const markSelectedTransactionsUncleared = async () => {
+    bulkMenuPopupState.close()
     await bulkEditTransactions(
       getSelectedRows().map(row => ({
         ...row,
@@ -968,8 +976,6 @@ export default function Account(props) {
 
   const bulkEditTransactions = async transactions => {
     transactions = transactions.map(transaction => {
-      const amount = dinero(transaction.amount)
-
       return {
         id: transaction.id,
         accountId: props.accountId,
@@ -977,7 +983,7 @@ export default function Account(props) {
         memo: transaction.memo,
         payeeId: transaction.payeeId,
         categoryId: transaction.categoryId === '0' ? null : transaction.categoryId,
-        amount,
+        amount: transaction.amount,
         status: transaction.status,
       }
     })
@@ -1033,7 +1039,8 @@ export default function Account(props) {
   }
 
   const addTransactionClick = () => {
-    return setAddingTransaction(true)
+    setAddingTransaction(true)
+    setEditingRow(0)
   }
 
   return (
@@ -1116,51 +1123,45 @@ export default function Account(props) {
                       </Stack>
                     </Button>
 
-                    <PopupState variant="popover" popupId="demo-popup-menu">
-                      {popupState => (
-                        <>
-                          <Button
-                            size="small"
-                            onClick={toggleReconciled}
-                            {...bindTrigger(popupState)}
-                            // disabled={!bulkEnabled}
-                          >
-                            <Stack direction="row" alignItems="center" spacing={0.5}>
-                              <EditIcon
-                                style={{
-                                  fontSize: theme.typography.subtitle2.fontSize,
-                                }}
-                              />
-                              <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
-                                Edit
-                              </Typography>
-                            </Stack>
-                          </Button>
-                          <Menu {...bindMenu(popupState)}>
-                            <MenuItem
-                              // disabled={selectedRows.length === 0}
-                              onClick={markSelectedTransactionsCleared}
-                            >
-                              Mark Cleared
-                            </MenuItem>
+                    <Button
+                      size="small"
+                      onClick={toggleReconciled}
+                      {...bindTrigger(bulkMenuPopupState)}
+                      // disabled={!bulkEnabled}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <EditIcon
+                          style={{
+                            fontSize: theme.typography.subtitle2.fontSize,
+                          }}
+                        />
+                        <Typography style={{ fontSize: theme.typography.caption.fontSize, fontWeight: 'bold' }}>
+                          Edit
+                        </Typography>
+                      </Stack>
+                    </Button>
+                    <Menu {...bindMenu(bulkMenuPopupState)}>
+                      <MenuItem
+                        // disabled={selectedRows.length === 0}
+                        onClick={markSelectedTransactionsCleared}
+                      >
+                        Mark Cleared
+                      </MenuItem>
 
-                            <MenuItem
-                              // disabled={selectedRows.length === 0}
-                              onClick={markSelectedTransactionsUncleared}
-                            >
-                              Mark Uncleared
-                            </MenuItem>
+                      <MenuItem
+                        // disabled={selectedRows.length === 0}
+                        onClick={markSelectedTransactionsUncleared}
+                      >
+                        Mark Uncleared
+                      </MenuItem>
 
-                            <MenuItem
-                              // disabled={selectedRows.length === 0}
-                              onClick={deleteSelected}
-                            >
-                              Delete Transactions
-                            </MenuItem>
-                          </Menu>
-                        </>
-                      )}
-                    </PopupState>
+                      <MenuItem
+                        // disabled={selectedRows.length === 0}
+                        onClick={deleteSelected}
+                      >
+                        Delete Transactions
+                      </MenuItem>
+                    </Menu>
 
                     <Button size="small" onClick={toggleReconciled}>
                       <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -1242,6 +1243,8 @@ export default function Account(props) {
           selectedRowIds={selectedRowIds}
           cancelAddTransaction={cancelAddTransaction}
           onTransactionAdd={onTransactionAdd}
+          editingRow={editingRow}
+          setEditingRow={setEditingRow}
         />
       </Table>
     </Box>

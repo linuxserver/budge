@@ -1,16 +1,15 @@
 import TextField from '@mui/material/TextField'
 import { useTheme } from '@mui/styles'
 
-export default function BudgetTableAssignedCell({ value, ...props }) {
+export default function BudgetTableAssignedCell({ value, onChange, ...props }) {
   const theme = useTheme()
 
   const onFocus = async e => {
     e.target.select()
-    props.onFocus(e)
   }
 
-  const onChange = e => {
-    props.onChange(e.target.value)
+  const change = e => {
+    onChange(e.target.value)
   }
 
   return (
@@ -34,7 +33,7 @@ export default function BudgetTableAssignedCell({ value, ...props }) {
       }}
       value={value}
       onFocus={onFocus}
-      onChange={onChange}
+      onChange={change}
     />
   )
 }
