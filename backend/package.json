@@ -1,6 +1,6 @@
 {
   "name": "BudgE",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -59,6 +59,8 @@
     "helmet": "^4.6.0",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.0",
+    "mysql": "^2.18.1",
+    "pg": "^8.7.1",
     "sqlite3": "^5.0.2",
     "swagger-ui-express": "^4.1.6",
     "tsoa": "^3.14.0",
