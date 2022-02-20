@@ -297,26 +297,26 @@ export default function Account(props) {
       (state, accountId) =>
         state.accounts.entities[accountId] ? state.accounts.entities[accountId].transactions.entities : [],
       (state, accountId, reconciled) => reconciled,
-      (state, accountId, reconciled, addingTransaction) => addingTransaction,
+      // (state, accountId, reconciled, addingTransaction) => addingTransaction,
     ],
     (transactions, reconciled) => {
       const retval = []
-      if (addingTransaction) {
-        const now = new Date().toISOString()
-        retval.push({
-          id: 0,
-          accountId: props.accountId,
-          amount: 0,
-          categoryId: '',
-          created: now,
-          date: now,
-          filterField: '',
-          memo: '',
-          payeeId: '',
-          status: 0,
-          updated: now,
-        })
-      }
+      // if (addingTransaction) {
+      //   const now = new Date().toISOString()
+      //   retval.push({
+      //     id: 0,
+      //     accountId: props.accountId,
+      //     amount: 0,
+      //     categoryId: '',
+      //     created: now,
+      //     date: now,
+      //     filterField: '',
+      //     memo: '',
+      //     payeeId: '',
+      //     status: 0,
+      //     updated: now,
+      //   })
+      // }
 
       if (!showReconciled) {
         return retval.concat(
@@ -343,7 +343,35 @@ export default function Account(props) {
       )
     },
   )
-  const transactions = useSelector(state => selectTransactions(state, props.accountId, showReconciled))
+  // const transactions = useSelector(state => selectTransactions(state, props.accountId, showReconciled))
+
+  const selectTransactionsData = createSelector(
+    [selectTransactions, (state, accountId, reconciled, addingTransaction) => addingTransaction],
+    (transactions, addingTransaction) => {
+      if (addingTransaction) {
+        const now = new Date().toISOString()
+        transactions.push({
+          id: 0,
+          accountId: props.accountId,
+          amount: 0,
+          categoryId: '',
+          created: now,
+          date: now,
+          filterField: '',
+          memo: '',
+          payeeId: '',
+          status: 0,
+          updated: now,
+        })
+      }
+
+      return transactions
+    },
+  )
+
+  const transactions = useSelector(state =>
+    selectTransactionsData(state, props.accountId, showReconciled, addingTransaction),
+  )
   const data = useMemo(() => transactions, [transactions, account])
 
   const cancelAddTransaction = () => {
@@ -400,8 +428,6 @@ export default function Account(props) {
 
                 return option
               }}
-              // renderOption={(props, option) => <li {...props}>{option.name}</li>}
-              freeSolo
               renderInput={params => (
                 <TextField
                   {...params}
@@ -440,22 +466,7 @@ export default function Account(props) {
                 }
                 return props.onRowDataChange(newRow)
               }}
-              filterOptions={(options, params) => {
-                const filtered = filter(options, params)
-
-                const { inputValue } = params
-                if (inputValue.match(/New: /)) {
-                  return filtered
-                }
-
-                // Suggest the creation of a new value
-                const isExisting = options.some(option => payeesMap[option] === inputValue)
-                if (inputValue !== '' && !isExisting) {
-                  filtered.push(`New: ${inputValue}`)
-                }
-
-                return filtered
-              }}
+              noOptionsText={`"${props.value} will be created`}
             />
           ),
           exportTransformer: value => payeesMap[value],
@@ -665,11 +676,7 @@ export default function Account(props) {
               >
                 <SaveIcon fontSize="small" />
               </IconButton>
-              <IconButton
-                size="small"
-                style={{ padding: 0 }}
-                onClick={props.row.id === 0 ? cancelAddTransaction : props.cancel}
-              >
+              <IconButton size="small" style={{ padding: 0 }} onClick={props.cancel}>
                 <CancelIcon fontSize="small" />
               </IconButton>
             </Box>
@@ -803,6 +810,7 @@ export default function Account(props) {
   const onTransactionAdd = async newRow => {
     let refreshPayees = false
 
+    console.log(newRow)
     if (!payeesMap[newRow.payeeId]) {
       newRow.payeeId = (await createNewPayee(newRow.payeeId)).id
     }
