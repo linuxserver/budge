@@ -56,15 +56,23 @@ import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import { styled } from '@mui/material/styles'
 import UploadIcon from '@mui/icons-material/Upload'
+import EventIcon from '@mui/icons-material/Event'
 import ImportCSV from '../ImportCSV'
 import AccountTableHeader from './AccountTableHeader'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import DeleteOutline from '@mui/icons-material/DeleteOutline'
+import _ from 'lodash'
+
+function DatePickerIcon(props) {
+  const theme = useTheme()
+  return <EventIcon fontSize="small" {...props} sx={{ fontSize: theme.typography.subtitle1.fontSize }} />
+}
 
 const StyledMTableToolbar = styled(MTableToolbar)(({ theme }) => ({
   backgroundColor: theme.palette.background.tableBody,
   minHeight: '0 !important',
   padding: '0 !important',
+  paddingRight: '2px !important',
   margin: '0',
   '& .MuiInputBase-input': {
     padding: '0 !important',
@@ -96,7 +104,7 @@ function StatusIconButton(props) {
 
 export default function Account(props) {
   // const whyDidYouRender = true
-  let tableProps = null
+  let tableProps = {}
 
   const theme = useTheme()
   const dispatch = useDispatch()
@@ -174,35 +182,55 @@ export default function Account(props) {
       defaultSort: 'desc',
       width: 1,
       editComponent: props => (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            label=""
-            value={props.value || null}
-            onChange={props.onChange}
-            InputAdornmentProps={{
-              style: {
-                fontSize: theme.typography.subtitle2.fontSize,
-              },
-            }}
-            renderInput={params => {
-              return (
-                <TextField
-                  sx={{ minWidth: 125 }}
-                  focus={true}
-                  margin="dense"
-                  variant="standard"
-                  {...params}
-                  InputProps={{
-                    style: {
-                      fontSize: theme.typography.subtitle2.fontSize,
-                    },
-                    ...params.InputProps,
-                  }} // font size of input text
-                />
-              )
-            }}
-          />
-        </LocalizationProvider>
+        <Box
+          sx={{
+            ['& .MuiFormControl-root']: { m: 0 },
+          }}
+        >
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label=""
+              value={props.value || null}
+              onChange={props.onChange}
+              InputAdornmentProps={{
+                sx: {
+                  fontSize: theme.typography.caption.fontSize,
+                  [`& .MuiButtonBase-root`]: { p: 0 },
+                  [`& .MuiButtonBase-root`]: { p: 0 },
+                },
+              }}
+              components={{
+                OpenPickerIcon: DatePickerIcon,
+              }}
+              renderInput={params => {
+                return (
+                  <TextField
+                    sx={{ minWidth: 125 }}
+                    focus={true}
+                    margin="dense"
+                    {...params}
+                    InputProps={{
+                      style: {
+                        fontSize: theme.typography.subtitle2.fontSize,
+                      },
+                      ...params.InputProps,
+                    }}
+                    inputProps={{
+                      ...params.inputProps,
+                      form: {
+                        autoComplete: 'off',
+                      },
+                      sx: {
+                        py: '1px',
+                        px: 1,
+                      },
+                    }}
+                  />
+                )
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
       ),
     },
     {
@@ -211,7 +239,10 @@ export default function Account(props) {
       lookup: payeesMap,
       editComponent: props => (
         <Autocomplete
-          sx={{ width: 300 }}
+          sx={{
+            [`& .MuiOutlinedInput-root`]: { p: 0, pt: '1px' },
+            [`& #payee-text-field.MuiOutlinedInput-input`]: { px: 1, py: 0 },
+          }}
           options={payeeIds}
           getOptionLabel={option => {
             if (payeesMap[option]) {
@@ -221,17 +252,21 @@ export default function Account(props) {
             return option
           }}
           // renderOption={(props, option) => <li {...props}>{option.name}</li>}
-          freeSolo
           renderInput={params => (
             <TextField
               {...params}
               label=""
-              variant="standard"
               InputProps={{
                 style: {
                   fontSize: theme.typography.subtitle2.fontSize,
+                  py: 0,
+                  px: 1,
                 },
                 ...params.InputProps,
+              }}
+              inputProps={{
+                ...params.inputProps,
+                id: 'payee-text-field',
               }}
             />
           )}
@@ -255,22 +290,7 @@ export default function Account(props) {
             }
             return props.onRowDataChange(newRow)
           }}
-          filterOptions={(options, params) => {
-            const filtered = filter(options, params)
-
-            const { inputValue } = params
-            if (inputValue.match(/New: /)) {
-              return filtered
-            }
-
-            // Suggest the creation of a new value
-            const isExisting = options.some(option => payeesMap[option] === inputValue)
-            if (inputValue !== '' && !isExisting) {
-              filtered.push(`New: ${inputValue}`)
-            }
-
-            return filtered
-          }}
+          noOptionsText={`"${props.value} will be created`}
         />
       ),
       render: rowData => (
@@ -314,16 +334,24 @@ export default function Account(props) {
 
                     return option
                   }}
-                  // sx={{ width: 300 }}
+                  sx={{
+                    [`& .MuiOutlinedInput-root`]: { p: 0, pt: '1px' },
+                    [`& #envelope-text-field.MuiOutlinedInput-input`]: { px: 1, py: 0 },
+                  }}
                   renderInput={params => (
                     <TextField
                       {...params}
-                      variant="standard"
                       InputProps={{
                         style: {
                           fontSize: theme.typography.subtitle2.fontSize,
+                          py: 0,
+                          px: 1,
                         },
                         ...params.InputProps,
+                      }}
+                      inputProps={{
+                        ...params.inputProps,
+                        id: 'envelope-text-field',
                       }}
                     />
                   )}
@@ -360,12 +388,33 @@ export default function Account(props) {
           </span>
         </Tooltip>
       ),
+      editComponent: props => (
+        <TextField
+          {...props}
+          fullWidth
+          inputProps={{
+            sx: {
+              py: 0,
+              px: 1,
+              fontSize: theme.typography.subtitle2.fontSize,
+            },
+          }}
+          InputProps={{
+            sx: {
+              paddingBottom: '1px',
+            },
+          }}
+          onChange={e => {
+            props.onChange(e.target.value)
+          }}
+        />
+      ),
     },
     {
       title: 'Amount',
       field: 'amount',
-      // type: 'currency',
       align: 'right',
+      width: '150px',
       customSort: (a, b) => (greaterThan(a.amount, b.amount) ? -1 : 1),
       initialEditValue: toSnapshot(inputToDinero(0)),
       render: rowData => {
@@ -382,12 +431,26 @@ export default function Account(props) {
         const value = dinero(props.value)
         return (
           <Box sx={{ textAlign: 'right' }}>
-            <MTableEditField
+            <TextField
               {...props}
-              variant="standard"
+              fullWidth
+              inputProps={{
+                sx: {
+                  textAlign: 'right',
+                  py: 0,
+                  px: 1,
+                  fontSize: theme.typography.subtitle2.fontSize,
+                  // height: 1,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  paddingBottom: '1px',
+                },
+              }}
               value={toUnit(value, { digits: 2 })}
-              onChange={value => {
-                props.onChange(toSnapshot(inputToDinero(value)))
+              onChange={e => {
+                props.onChange(toSnapshot(inputToDinero(e.target.value)))
               }}
               // onFocus={focusOutflowField}
             />
@@ -402,7 +465,8 @@ export default function Account(props) {
       title: '',
       field: 'status',
       width: '1px',
-      editComponent: props => <></>, // Doing this so that the button isn't available to click when in edit mode
+      sorting: false,
+      editComponent: props => <Box sx={{ width: 0 }}></Box>, // Doing this so that the button isn't available to click when in edit mode
       render: rowData => {
         let statusIcon = <></>
         let tooltipText = ''
@@ -422,9 +486,11 @@ export default function Account(props) {
         }
 
         return (
-          <Tooltip title={tooltipText}>
-            <StatusIconButton rowData={rowData} setTransactionStatus={setTransactionStatus} statusIcon={statusIcon} />
-          </Tooltip>
+          <Box sx={{ textAlign: 'center' }}>
+            <Tooltip title={tooltipText}>
+              <StatusIconButton rowData={rowData} setTransactionStatus={setTransactionStatus} statusIcon={statusIcon} />
+            </Tooltip>
+          </Box>
         )
       },
       customExport: rowData => {
@@ -442,6 +508,8 @@ export default function Account(props) {
     col.cellStyle = {
       paddingTop: 0,
       paddingBottom: 0,
+      paddingLeft: 2,
+      paddingRight: 2,
     }
     return col
   })
@@ -888,8 +956,9 @@ export default function Account(props) {
               <StyledMTableToolbar
                 {...{ ...props, actions: [] }}
                 showTextRowsSelected={false}
+                searchFieldVariant="outlined"
                 localization={{
-                  searchPlaceholder: 'Search transactions',
+                  searchPlaceholder: 'Filter',
                 }}
               />
 
@@ -908,11 +977,43 @@ export default function Account(props) {
           EditRow: props => <MTableEditRow {...props} />,
           Actions: props => {
             console.log(props)
-            if (typeof props.actions[1] !== 'function') {
-              return <MTableActions {...props} />
+            if (props.disabled || !_.get(props, 'data.id', false)) {
+              return <></>
             }
 
-            return <></>
+            if (!_.get(props, 'data.tableData.editing', false)) {
+              return (
+                <PopupState variant="popover" popupId="demo-popup-menu">
+                  {popupState => (
+                    <Box onClick={e => e.stopPropagation()} sx={{ width: 20 }}>
+                      <IconButton size="small" {...bindTrigger(popupState)} sx={{ p: 0 }}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+
+                      <Menu {...bindMenu(popupState)}>
+                        <MenuItem
+                          onClick={e => {
+                            props.actions[0]().onClick(e, props.data) // <---- trigger edit event
+                          }}
+                        >
+                          Edit
+                        </MenuItem>
+
+                        <MenuItem
+                          onClick={e => {
+                            props.actions[1]().onClick(e, props.data) // <---- trigger edit event
+                          }}
+                        >
+                          Delete
+                        </MenuItem>
+                      </Menu>
+                    </Box>
+                  )}
+                </PopupState>
+              )
+            }
+
+            return <MTableActions {...props} />
           },
         }}
         icons={TableIcons}

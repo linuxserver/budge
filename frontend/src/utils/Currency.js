@@ -1,4 +1,4 @@
-import { dinero, toFormat, isPositive, isNegative, multiply } from 'dinero.js'
+import { dinero, toFormat, isPositive, isNegative, multiply, toUnit } from 'dinero.js'
 import { USD } from '@dinero.js/currencies'
 
 export function inputToDinero(amount) {
@@ -22,6 +22,10 @@ export function intlFormat(dineroObject, locale, options = {}) {
 
 export function valueToDinero(value) {
   return dinero({ amount: value, currency: USD })
+}
+
+export function valueToUnit(value) {
+  return toUnit(valueToDinero(value), { digits: 2 })
 }
 
 export function dineroToValue(dineroObj) {
