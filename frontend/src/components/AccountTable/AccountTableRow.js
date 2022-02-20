@@ -1,22 +1,18 @@
 import React, { useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
 import { valueToDinero } from '../../utils/Currency'
 import { toUnit } from 'dinero.js'
 import clsx from 'clsx'
 import { ROW_HEIGHT } from './constants'
+import { setEditingRow } from '../../redux/slices/Accounts'
 
-export default function AccountTableRow({
-  id,
-  row,
-  editing,
-  onCancel,
-  onSave,
-  onClick,
-  classes,
-  setEditingRow,
-  ...props
-}) {
+export default function AccountTableRow({ id, row, onCancel, onSave, classes, cancelAddTransaction, ...props }) {
+  const dispatch = useDispatch()
+
+  const editing = useSelector(state => state.accounts.editingRow === row.original.id)
+
   const [rowData, setRowData] = useState({
     ...row.original,
     amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
@@ -41,6 +37,7 @@ export default function AccountTableRow({
 
   const save = () => {
     onSave(rowData)
+    dispatch(setEditingRow(0))
   }
 
   const cancel = e => {
@@ -52,12 +49,24 @@ export default function AccountTableRow({
       ...row.original,
       amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
     })
+    dispatch(setEditingRow(0))
     onCancel(row.original.id)
   }
 
+  const onRowClick = () => {
+    if (editing) {
+      return
+    }
+
+    cancelAddTransaction()
+
+    return dispatch(setEditingRow(row.original.id))
+  }
+
+  console.log('rendering')
   return (
     <>
-      <TableRow {...row.getRowProps()} onClick={onClick} {...props} sx={{ width: '100%', display: 'table-row' }}>
+      <TableRow {...row.getRowProps()} onClick={onRowClick} {...props} sx={{ width: '100%', display: 'table-row' }}>
         {row.cells.map(cell => {
           return (
             <TableCell

@@ -5,6 +5,7 @@ import { inputToDinero, valueToDinero } from '../../utils/Currency'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList as List } from 'react-window'
 import { ROW_HEIGHT } from './constants'
+import { setEditingRow } from '../../redux/slices/Accounts'
 
 export default function AccountTableBody({
   rows,
@@ -15,15 +16,11 @@ export default function AccountTableBody({
   selectedRowIds,
   cancelAddTransaction,
   onTransactionAdd,
-  editingRow,
-  setEditingRow,
   ...props
 }) {
   useEffect(() => {})
 
   const onSave = (newData, oldData) => {
-    setEditingRow(0)
-
     if (newData.id === 0) {
       return onTransactionAdd({
         ...newData,
@@ -45,29 +42,6 @@ export default function AccountTableBody({
 
   const onCancel = id => {
     cancelAddTransaction()
-    if (id !== 0) {
-      return setEditingRow(0)
-    }
-  }
-
-  const onRowClick = id => {
-    if (editingRow === id) {
-      return
-    }
-
-    cancelAddTransaction()
-
-    // if (selectedRowIds[id] === true) {
-    return setEditingRow(id)
-    // }
-
-    // toggleRowSelected({
-    //   id: true,
-    //   ...Object.keys(selectedRowIds).reduce((allIds, rowId) => {
-    //     allIds[rowId] = false
-    //     return allIds
-    //   }, {}),
-    // })
   }
 
   const Row = ({ index, style }) => {
@@ -79,13 +53,11 @@ export default function AccountTableBody({
         component="div"
         style={style}
         className={classes.row}
-        editing={editingRow === row.id}
         onSave={rowData => onSave(rowData, row.original)}
         onCancel={onCancel}
-        onClick={() => onRowClick(row.id)}
-        setEditingRow={setEditingRow}
         row={row}
         classes={classes}
+        cancelAddTransaction={cancelAddTransaction}
       />
     )
   }

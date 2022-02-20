@@ -59,6 +59,7 @@ import { ROW_HEIGHT } from './constants'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
 import TransactionDatePicker from './TransactionDatePicker'
+import { setEditingRow } from '../../redux/slices/Accounts'
 
 export const useStyles = makeStyles(theme => ({
   hideIconPadding: {
@@ -251,7 +252,7 @@ export default function Account(props) {
   const accounts = useSelector(accountsSelectors.selectAll)
   const currentTheme = useSelector(state => state.app.theme)
 
-  const [editingRow, setEditingRow] = useState(0)
+  // const [editingRow, setEditingRow] = useState(0)
 
   const [bulkEnabled, setBulkEnabled] = useState(false)
   const [showReconciled, setShowReconciled] = useState(false)
@@ -377,7 +378,7 @@ export default function Account(props) {
   const cancelAddTransaction = () => {
     if (addingTransaction === true) {
       setAddingTransaction(false)
-      setEditingRow(0)
+      dispatch(setEditingRow(0))
     }
   }
 
@@ -1050,7 +1051,7 @@ export default function Account(props) {
 
   const addTransactionClick = () => {
     setAddingTransaction(true)
-    setEditingRow(0)
+    dispatch(setEditingRow(0))
   }
 
   return (
@@ -1253,8 +1254,6 @@ export default function Account(props) {
           selectedRowIds={selectedRowIds}
           cancelAddTransaction={cancelAddTransaction}
           onTransactionAdd={onTransactionAdd}
-          editingRow={editingRow}
-          setEditingRow={setEditingRow}
         />
       </Table>
     </Box>
