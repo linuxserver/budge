@@ -416,6 +416,7 @@ export default function Account(props) {
             <Autocomplete
               {...props}
               autoSelect={true}
+              disableClearable={true}
               sx={{
                 [`& .MuiOutlinedInput-root`]: { p: 0, pt: '1px' },
                 [`& #payee-text-field.MuiOutlinedInput-input`]: { px: 1, py: 0 },
@@ -496,6 +497,7 @@ export default function Account(props) {
                     <Autocomplete
                       {...props}
                       autoSelect={true}
+                      disableClearable={true}
                       disablePortal
                       disabled={disabled}
                       options={categoryIds}
