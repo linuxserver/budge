@@ -920,6 +920,7 @@ export default function Account(props) {
           headerStyle: {
             textTransform: 'uppercase',
             fontSize: theme.typography.caption.fontSize,
+            padding: 0,
           },
           headerSelectionProps: {
             size: 'small',
@@ -985,7 +986,7 @@ export default function Account(props) {
               return (
                 <PopupState variant="popover" popupId="demo-popup-menu">
                   {popupState => (
-                    <Box onClick={e => e.stopPropagation()} sx={{ width: 20 }}>
+                    <Box onClick={e => e.stopPropagation()} sx={{ width: '100%', textAlign: 'center' }}>
                       <IconButton size="small" {...bindTrigger(popupState)} sx={{ p: 0 }}>
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
