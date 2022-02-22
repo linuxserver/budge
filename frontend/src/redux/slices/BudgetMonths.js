@@ -18,20 +18,17 @@ export const fetchBudgetMonth = createAsyncThunk('budgetMonths/fetchMonth', asyn
   }
 })
 
-export const refreshBudgetMonth = createAsyncThunk(
-  'budgetMonths/refreshMonth',
-  async ({ month, categoryId }, { getState }) => {
-    const store = getState()
-    const budgetMonth = await api.fetchBudgetMonth(store.budgets.activeBudgetId, month)
-    // console.log(budgetMonth)
-    // budgetMonth.categories = budgetMonth.categories.filter(categoryMonth => categoryMonth.categoryId === categoryId)
-    const normalized = normalize(budgetMonth, budgetMonthEntity)
-    return {
-      month,
-      entities: normalized.entities,
-    }
-  },
-)
+export const refreshBudgetMonth = createAsyncThunk('budgetMonths/refreshMonth', async ({ month }, { getState }) => {
+  const store = getState()
+  const budgetMonth = await api.fetchBudgetMonth(store.budgets.activeBudgetId, month)
+  // console.log(budgetMonth)
+  // budgetMonth.categories = budgetMonth.categories.filter(categoryMonth => categoryMonth.categoryId === categoryId)
+  const normalized = normalize(budgetMonth, budgetMonthEntity)
+  return {
+    month,
+    entities: normalized.entities,
+  }
+})
 
 export const fetchBudgetMonths = createAsyncThunk('budgetMonths/fetchMonths', async ({ month }, { getState }) => {
   const store = getState()

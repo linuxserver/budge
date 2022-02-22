@@ -43,6 +43,7 @@ import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import { styled } from '@mui/material/styles'
 import UploadIcon from '@mui/icons-material/Upload'
+import EventIcon from '@mui/icons-material/Event'
 import ImportCSV from '../ImportCSV'
 import { useGlobalFilter, useRowSelect, useSortBy, useTable, useAsyncDebounce } from 'react-table'
 import Checkbox from '@mui/material/Checkbox'
@@ -243,7 +244,7 @@ export default function Account(props) {
   const classes = useStyles()
 
   // const whyDidYouRender = true
-  let tableProps = null
+  let tableProps = {}
 
   const theme = useTheme()
   const dispatch = useDispatch()

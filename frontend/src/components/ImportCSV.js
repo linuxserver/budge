@@ -103,16 +103,16 @@ export default function ImportCSV({ accountId, open, close }) {
           case 'Ignore':
             break
           case 'Amount':
-            newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.]/, '')))
+            newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, '')))
             break
           case 'Inflow':
             if (parseFloat(value) !== 0) {
-              newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.]/, '')))
+              newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, '')))
             }
             break
           case 'Outflow':
             if (parseFloat(value) !== 0) {
-              newTransaction.amount = multiply(inputToDinero(parseFloat(value.replace(/[^0-9\.]/, ''))), -1)
+              newTransaction.amount = multiply(inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, ''))), -1)
             }
             break
           case 'Memo':
