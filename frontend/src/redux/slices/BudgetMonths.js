@@ -114,16 +114,16 @@ const budgetMonthsSlice = createSlice({
 
   extraReducers: builder => {
     builder
-      .addCase(fetchBudgetMonth.fulfilled, (state, { payload: { month, entities } }) => {
+      .addCase(fetchBudgetMonth.fulfilled, (state, { payload: { entities } }) => {
         budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
       })
-      .addCase(refreshBudgetMonth.fulfilled, (state, { payload: { month, entities } }) => {
+      .addCase(refreshBudgetMonth.fulfilled, (state, { payload: { entities } }) => {
         budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
       })
-      .addCase(fetchBudgetMonths.fulfilled, (state, { payload: { month, entities } }) => {
+      .addCase(fetchBudgetMonths.fulfilled, (state, { payload: { entities } }) => {
         budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
       })
-      .addCase(refreshBudgetCategory.fulfilled, (state, { payload: { month, entities } }) => {
+      .addCase(refreshBudgetCategory.fulfilled, (state, { payload: { entities } }) => {
         budgetMonthsAdapter.upsertMany(state, entities.budgetMonths)
       })
   },

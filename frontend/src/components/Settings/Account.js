@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { updateUser } from '../../redux/slices/Users'
 
-export default function Account({ index, value, ...props }) {
+export default function Account({ index, value, close, ...props }) {
   const dispatch = useDispatch()
 
   const [email, setEmail] = useState(props.email)
@@ -26,7 +26,7 @@ export default function Account({ index, value, ...props }) {
     const payload = { email, ...(password && currentPassword && { password, currentPassword }) }
 
     await dispatch(updateUser(payload))
-    props.close()
+    close()
   }
 
   return (

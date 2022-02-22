@@ -23,7 +23,7 @@ import { useDispatch } from 'react-redux'
 import AlertDialog from './AlertDialog'
 import { formatMonthFromDateString } from '../utils/Date'
 
-export default function Login(props) {
+export default function Login() {
   /**
    * State block
    */

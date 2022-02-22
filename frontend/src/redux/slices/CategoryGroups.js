@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit'
-import { createSelectorCreator } from 'reselect'
 import api from '../../api'
 import { setCategories } from './Categories'
 

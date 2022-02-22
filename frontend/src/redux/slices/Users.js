@@ -16,7 +16,7 @@ const userSlice = createSlice({
     initComplete: false,
   },
   reducers: {
-    logout: (state, action) => {
+    logout: state => {
       state = {
         user: {},
         initComplete: false,

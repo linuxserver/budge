@@ -92,7 +92,7 @@ export const deleteTransaction = createAsyncThunk(
   'transactions/deleteTransaction',
   async ({ transaction }, { getState }) => {
     const state = getState()
-    const response = await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
+    await api.deleteTransaction(transaction.id, state.budgets.activeBudgetId)
 
     return {
       transactionId: transaction.id,
@@ -124,7 +124,9 @@ export const transactionsAdapter = createEntityAdapter()
 const accountsSlice = createSlice({
   name: 'accounts',
 
-  initialState: accountsAdapter.getInitialState(),
+  initialState: accountsAdapter.getInitialState({
+    editingRow: 0,
+  }),
 
   reducers: {
     setAccounts: (state, { payload }) => {
@@ -135,6 +137,10 @@ const accountsSlice = createSlice({
           transactions: transactionsAdapter.getInitialState(),
         })),
       )
+    },
+
+    setEditingRow: (state, { payload }) => {
+      state.editingRow = payload
     },
   },
 
@@ -206,7 +212,7 @@ const accountsSlice = createSlice({
   },
 })
 
-export const { setAccounts, mapIdToAccount } = accountsSlice.actions
+export const { setAccounts, mapIdToAccount, setEditingRow } = accountsSlice.actions
 
 export const accountsSelectors = accountsAdapter.getSelectors(state => state.accounts)
 export const transactionsSelectors = transactionsAdapter.getSelectors(state => state.transactions)

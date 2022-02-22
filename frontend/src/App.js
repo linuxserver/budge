@@ -66,6 +66,14 @@ export default function App(props) {
       //     },
       //   },
       // },
+      MuiTableCell: {
+        footer: {
+          left: 0,
+          bottom: 0, // <-- KEY
+          zIndex: 2,
+          position: 'sticky',
+        },
+      },
     },
     typography: {
       fontFamily: 'Nunito',

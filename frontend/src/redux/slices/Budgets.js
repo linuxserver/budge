@@ -21,7 +21,7 @@ export const fetchAvailableMonths = createAsyncThunk('budgets/fetchMonths', asyn
   return await api.fetchBudgetMonths(store.budgets.activeBudgetId)
 })
 
-export const setActiveBudget = createAsyncThunk('budgets/setActiveBudget', async ({ budgetId }, { dispatch }) => {
+export const setActiveBudget = createAsyncThunk('budgets/setActiveBudget', async ({ budgetId }) => {
   await api.fetchBudget(budgetId)
   return budgetId
 })
