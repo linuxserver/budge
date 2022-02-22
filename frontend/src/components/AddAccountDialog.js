@@ -5,16 +5,19 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
-import { createAccount } from '../redux/slices/Accounts'
-import { useDispatch } from 'react-redux'
+import { createAccount, fetchAccounts } from '../redux/slices/Accounts'
+import { useDispatch, useSelector } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem'
 import { fetchCategories } from '../redux/slices/CategoryGroups'
 import { refreshBudget } from '../redux/slices/Budgets'
+import { refreshBudgetMonth } from '../redux/slices/BudgetMonths'
 import { inputToDinero } from '../utils/Currency'
 
 const accountTypes = ['Bank', 'Credit Card', 'Off Budget Account']
 
 export default function AddAccountDialog(props) {
+  const month = useSelector(state => state.budgets.currentMonth)
+
   /**
    * State block
    */
@@ -41,9 +44,11 @@ export default function AddAccountDialog(props) {
     )
 
     dispatch(refreshBudget())
+    dispatch(fetchAccounts())
 
     // If adding a credit card, update all categories since we have added a payment category for it
-    if (accountType === accountTypes[1]) {
+    if (accountType === 1) {
+      console.log('fetching cats')
       dispatch(fetchCategories())
     }
     reset()
