@@ -2,13 +2,26 @@ import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
+import Box from '@mui/material/Box'
 import { valueToDinero } from '../../utils/Currency'
 import { toUnit } from 'dinero.js'
 import clsx from 'clsx'
 import { ROW_HEIGHT } from './constants'
 import { setEditingRow } from '../../redux/slices/Accounts'
+import { useTheme } from '@mui/styles'
 
-export default function AccountTableRow({ id, row, onCancel, onSave, classes, cancelAddTransaction, ...props }) {
+export default function AccountTableRow({
+  id,
+  row,
+  onCancel,
+  onSave,
+  classes,
+  cancelAddTransaction,
+  toggleRowSelected,
+  toggleAllRowsSelected,
+  ...props
+}) {
+  const theme = useTheme()
   const dispatch = useDispatch()
 
   const editing = useSelector(state => state.accounts.editingRow === row.original.id)
@@ -58,20 +71,33 @@ export default function AccountTableRow({ id, row, onCancel, onSave, classes, ca
       return
     }
 
-    cancelAddTransaction()
+    if (row.isSelected === true) {
+      return dispatch(setEditingRow(row.original.id))
+    }
 
-    return dispatch(setEditingRow(row.original.id))
+    cancelAddTransaction()
+    dispatch(setEditingRow(0))
+    toggleAllRowsSelected(false)
+    toggleRowSelected(row.id)
   }
 
-  console.log('rendering')
   return (
     <>
-      <TableRow {...row.getRowProps()} onClick={onRowClick} {...props} sx={{ width: '100%', display: 'table-row' }}>
+      <TableRow
+        {...row.getRowProps()}
+        onClick={onRowClick}
+        {...props}
+        sx={{
+          width: '100%',
+          display: 'table-row',
+          ...(row.isSelected && { backgroundColor: theme.palette.action.hover }),
+        }}
+      >
         {row.cells.map(cell => {
           return (
             <TableCell
               {...cell.getCellProps()}
-              component="div"
+              component={Box}
               variant="body"
               align={cell.column.numeric || false ? 'right' : 'left'}
               className={clsx(classes.cell, !cell.column.width && classes.expandingCell)}

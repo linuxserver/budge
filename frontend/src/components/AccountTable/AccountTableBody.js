@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import TableBody from '@mui/material/TableBody'
+import Box from '@mui/material/Box'
 import AccountTableRow from './AccountTableRow'
 import { inputToDinero, valueToDinero } from '../../utils/Currency'
 import AutoSizer from 'react-virtualized-auto-sizer'
@@ -12,10 +13,11 @@ export default function AccountTableBody({
   prepareRow,
   onRowSave,
   classes,
-  toggleRowSelected,
   selectedRowIds,
   cancelAddTransaction,
   onTransactionAdd,
+  toggleRowSelected,
+  toggleAllRowsSelected,
   ...props
 }) {
   useEffect(() => {})
@@ -50,7 +52,7 @@ export default function AccountTableBody({
     prepareRow(row)
     return (
       <AccountTableRow
-        component="div"
+        component={Box}
         style={style}
         className={classes.row}
         onSave={rowData => onSave(rowData, row.original)}
@@ -58,12 +60,14 @@ export default function AccountTableBody({
         row={row}
         classes={classes}
         cancelAddTransaction={cancelAddTransaction}
+        toggleRowSelected={toggleRowSelected}
+        toggleAllRowsSelected={toggleAllRowsSelected}
       />
     )
   }
 
   return (
-    <TableBody component="div" className={classes.tbody} {...props}>
+    <TableBody component={Box} className={classes.tbody} {...props}>
       <AutoSizer>
         {({ height, width }) => (
           <List

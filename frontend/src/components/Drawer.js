@@ -174,7 +174,7 @@ export default function AppDrawer(props) {
         </ListItemButton>
 
         <Collapse in={accountsListOpen[key]} timeout="auto" unmountOnExit>
-          <List dense={true} component="div" disablePadding>
+          <List dense={true} component={Box} disablePadding>
             {accounts.map(account => AccountItem(account))}
           </List>
         </Collapse>

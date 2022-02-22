@@ -20,8 +20,8 @@ import IconButton from '@mui/material/IconButton'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
-import { FromAPI, intlFormat, valueToDinero } from '../../utils/Currency'
-import { dinero, isPositive } from 'dinero.js'
+import { FromAPI, intlFormat, valueToDinero, inputToDinero, getBalanceColor } from '../../utils/Currency'
+import { isZero, isPositive, add } from 'dinero.js'
 import Tooltip from '@mui/material/Tooltip'
 import { useTheme } from '@mui/styles'
 import { payeesSelectors } from '../../redux/slices/Payees'
@@ -630,13 +630,7 @@ export default function Account(props) {
           field: 'status',
           width: 50,
           numeric: true,
-          Header: props => (
-            <Box sx={{ mr: 1 }}>
-              <Tooltip title="Status">
-                <AccessTimeIcon color="disabled" fontSize="small" />
-              </Tooltip>
-            </Box>
-          ),
+          Header: props => <></>,
           disableSortBy: true,
           Cell: props => {
             let statusIcon = <></>
@@ -724,7 +718,16 @@ export default function Account(props) {
           return desc ? -1 : 1
         }
 
-        return rowA[columnId] < rowB[columnId] ? -1 : 1
+        switch (columnId) {
+          case 'date':
+            return new Date(rowA.values[columnId]).getTime() < new Date(rowB.values[columnId]).getTime() ? -1 : 1
+          case 'payeeId':
+            return payeesMap[rowA.values[columnId]] < payeesMap[rowB.values[columnId]] ? -1 : 1
+          case 'categoryId':
+            return categoriesMap[rowA.values[columnId]] < categoriesMap[rowB.values[columnId]] ? -1 : 1
+          default:
+            return rowA.values[columnId] < rowB.values[columnId] ? -1 : 1
+        }
       },
     }),
     [],
@@ -739,6 +742,7 @@ export default function Account(props) {
     preGlobalFilteredRows,
     setGlobalFilter,
     toggleRowSelected,
+    toggleAllRowsSelected,
     state: { selectedRowIds, globalFilter },
   } = useTable(
     {
@@ -1054,6 +1058,15 @@ export default function Account(props) {
     dispatch(setEditingRow(0))
   }
 
+  const onKeyPress = e => {
+    console.log(e)
+  }
+
+  const selectedTransactionTotal = getSelectedRows().reduce((total, row) => {
+    total = add(total, valueToDinero(row.amount))
+    return total
+  }, inputToDinero(0))
+
   return (
     <Box
       sx={{
@@ -1074,16 +1087,16 @@ export default function Account(props) {
           setGlobalFilter={setGlobalFilter}
           globalFilter={globalFilter}
         /> */}
-      <Table {...getTableProps()} className={classes.table} component="div">
+      <Table {...getTableProps()} className={classes.table} component={Box} onKeyPress={onKeyPress}>
         <TableHead
-          component="div"
+          component={Box}
           className={classes.thead}
           sx={{
             backgroundColor: theme.palette.background.tableHeader,
           }}
         >
-          <TableRow component="div" sx={{ display: 'block', backgroundColor: theme.palette.background.tableHeader }}>
-            <TableCell colSpan={7} component="div" className={clsx(classes.row, classes.headerRow)} sx={{ p: 0 }}>
+          <TableRow component={Box} sx={{ display: 'block', backgroundColor: theme.palette.background.tableHeader }}>
+            <TableCell colSpan={7} component={Box} className={clsx(classes.row, classes.headerRow)} sx={{ p: 0 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
                 <Stack
                   direction="row"
@@ -1200,7 +1213,20 @@ export default function Account(props) {
                 </Stack>
 
                 <Box>
-                  <AccountFilter globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+                  <Stack direction="row" justifyContent="space-around" alignItems="center">
+                    {Object.keys(selectedRowIds).length > 0 && (
+                      <>
+                        <Box>Selected Total ({Object.keys(selectedRowIds).length}):</Box>
+                        <Box
+                          sx={{ fontWeight: 'bold', color: getBalanceColor(selectedTransactionTotal, theme), px: 1 }}
+                        >
+                          {intlFormat(selectedTransactionTotal)}
+                        </Box>
+                      </>
+                    )}
+
+                    <AccountFilter globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+                  </Stack>
                 </Box>
               </Stack>
             </TableCell>
@@ -1209,7 +1235,7 @@ export default function Account(props) {
           {headerGroups.map(headerGroup => (
             <TableRow
               {...headerGroup.getHeaderGroupProps()}
-              component="div"
+              component={Box}
               className={clsx(classes.row, classes.headerRow)}
             >
               {headerGroup.headers.map(column => (
@@ -1217,7 +1243,7 @@ export default function Account(props) {
                   {...(column.id === 'selection'
                     ? column.getHeaderProps()
                     : column.getHeaderProps(column.getSortByToggleProps()))}
-                  component="div"
+                  component={Box}
                   variant="head"
                   align={column.numeric || false ? 'right' : 'left'}
                   className={clsx(classes.cell, classes.column, !column.width && classes.expandingCell)}
@@ -1250,10 +1276,11 @@ export default function Account(props) {
           rows={rows}
           prepareRow={prepareRow}
           onRowSave={onTransactionEdit}
-          toggleRowSelected={toggleRowSelected}
           selectedRowIds={selectedRowIds}
           cancelAddTransaction={cancelAddTransaction}
           onTransactionAdd={onTransactionAdd}
+          toggleRowSelected={toggleRowSelected}
+          toggleAllRowsSelected={toggleAllRowsSelected}
         />
       </Table>
     </Box>

@@ -49,6 +49,7 @@ export default function TransactionDatePicker(props) {
           renderInput={params => {
             return (
               <TextField
+                autoFocus={true}
                 onKeyDown={props.onKeyDown}
                 sx={{ minWidth: 125 }}
                 onFocus={onFocus}
