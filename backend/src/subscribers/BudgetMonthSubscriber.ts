@@ -26,12 +26,11 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
   async afterInsert(event: InsertEvent<BudgetMonth>) {
     const budgetMonth = event.entity
     const manager = event.manager
-    const prevMonth = getDateFromString(budgetMonth.month)
-    prevMonth.setMonth(prevMonth.getMonth() - 1)
+    const prevMonth = getDateFromString(budgetMonth.month).minus({ month: 1 })
 
     const prevBudgetMonth = await manager.findOne(BudgetMonth, {
       budgetId: budgetMonth.budgetId,
-      month: formatMonthFromDateString(prevMonth),
+      month: formatMonthFromDateString(prevMonth.toJSDate()),
     })
 
     if (!prevBudgetMonth) {

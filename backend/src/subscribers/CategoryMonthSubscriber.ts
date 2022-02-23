@@ -20,11 +20,10 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     const categoryMonth = event.entity
     const manager = event.manager
 
-    const prevMonth = getDateFromString(categoryMonth.month)
-    prevMonth.setMonth(prevMonth.getMonth() - 1)
+    const prevMonth = getDateFromString(categoryMonth.month).minus({ month: 1 })
     const prevCategoryMonth = await manager.findOne(CategoryMonth, {
       categoryId: categoryMonth.categoryId,
-      month: formatMonthFromDateString(prevMonth),
+      month: formatMonthFromDateString(prevMonth.toJSDate()),
     })
 
     const category = await event.manager.findOne(Category, {
@@ -55,6 +54,7 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
    * Also, cascade the new balance of this month into the next month to update the carry-over amount.
    */
   private async bookkeeping(categoryMonth: CategoryMonth, manager: EntityManager) {
+    console.log(`bookeeping category month: ${categoryMonth.month}`)
     const category = await manager.findOne(Category, categoryMonth.categoryId)
     const originalCategoryMonth = CategoryMonthCache.get(categoryMonth.id)
 
@@ -98,12 +98,11 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
 
     await manager.update(BudgetMonth, budgetMonth.id, budgetMonth.getUpdatePayload())
 
-    const nextMonth = getDateFromString(categoryMonth.month)
-    nextMonth.setMonth(nextMonth.getMonth() + 1)
+    const nextMonth = getDateFromString(categoryMonth.month).plus({ month: 1 })
 
     const nextBudgetMonth = await manager.findOne(BudgetMonth, {
       budgetId: category.budgetId,
-      month: formatMonthFromDateString(nextMonth),
+      month: formatMonthFromDateString(nextMonth.toJSDate()),
     })
 
     if (!nextBudgetMonth) {
