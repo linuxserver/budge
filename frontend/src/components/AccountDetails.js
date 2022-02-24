@@ -26,7 +26,6 @@ import TableContainer from '@mui/material/TableContainer'
 import TableBody from '@mui/material/TableBody'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
-import TableBody from '@mui/material/TableBody'
 import { add } from 'dinero.js'
 import { formatMonthFromDateString } from '../utils/Date'
 
