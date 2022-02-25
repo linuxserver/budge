@@ -11,7 +11,7 @@ import {
   TransactionsRequest,
   TransactionsResponse,
 } from '../models/Transaction'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
@@ -28,17 +28,17 @@ export class TransactionsController extends Controller {
       accountId: 'def456',
       payeeId: 'xyz890',
       amount: 10000,
-      date: '2011-10-05T14:48:00.000Z',
+      date: new Date('2011-10-05T14:48:00.000Z'),
       memo: 'Mortgage payment',
       categoryId: null,
       status: TransactionStatus.Pending,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createTransaction(
     @Path() budgetId: string,
-    @Body() requestBody: TransactionRequest,
+    @Body() { categoryId, accountId, payeeId, ...requestBody }: TransactionRequest,
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
@@ -52,15 +52,18 @@ export class TransactionsController extends Controller {
 
       const transaction = await prisma.transaction.create({
         data: {
-          budgetId,
           ...requestBody,
-          date: new Date(requestBody.date),
+          date: requestBody.date,
+          budget: { connect: { id: budgetId } },
+          account: { connect: { id: accountId } },
+          payee: { connect: { id: payeeId } },
+          category: { connect: { id: categoryId } },
         },
       })
 
       return {
         message: 'success',
-        data: await transaction.toResponseModel(),
+        data: transaction,
       }
     } catch (err) {
       console.log(err)
@@ -81,12 +84,12 @@ export class TransactionsController extends Controller {
         accountId: 'def456',
         payeeId: 'xyz890',
         amount: 10000,
-        date: '2011-10-05T14:48:00.000Z',
+        date: new Date('2011-10-05T14:48:00.000Z'),
         memo: 'Mortgage payment',
         categoryId: null,
         status: TransactionStatus.Pending,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -96,7 +99,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
-      const budget = await prisma.budget.findUnique({ where: { budgetId } })
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -104,14 +107,17 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transactions: Transaction[] = []
-      for (const transaction of requestBody.transactions) {
+      const transactions = []
+      for (const { categoryId, accountId, payeeId, ...transaction } of requestBody.transactions) {
         transactions.push(
           await prisma.transaction.create({
             data: {
-              budgetId,
               ...transaction,
-              date: new Date(transaction.date),
+              date: transaction.date,
+              budget: { connect: { id: budgetId } },
+              account: { connect: { id: accountId } },
+              payee: { connect: { id: payeeId } },
+              category: { connect: { id: categoryId } },
             },
           }),
         )
@@ -119,7 +125,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(transactions.map((transaction: Transaction) => transaction.toResponseModel())),
+        data: transactions,
       }
     } catch (err) {
       console.log(err)
@@ -139,12 +145,12 @@ export class TransactionsController extends Controller {
       accountId: 'def456',
       payeeId: 'xyz890',
       amount: 10000,
-      date: '2011-10-05T14:48:00.000Z',
+      date: new Date('2011-10-05T14:48:00.000Z'),
       memo: 'Mortgage payment',
       categoryId: null,
       status: TransactionStatus.Pending,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateTransaction(
@@ -154,7 +160,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await prisma.budget.findUnique({ where: { budgetId } })
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -166,7 +172,7 @@ export class TransactionsController extends Controller {
       // and updated the category month accordingly
       // @TODO: remove relation to test db transactions
       TransactionCache.enableTransfers(transactionId)
-      const transaction: Transaction = await prisma.transaction.update({
+      const transaction = await prisma.transaction.update({
         where: { id: transactionId },
         data: {
           ...requestBody,
@@ -176,7 +182,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await transaction.toResponseModel(),
+        data: transaction,
       }
     } catch (err) {
       console.log(err)
@@ -197,12 +203,12 @@ export class TransactionsController extends Controller {
         accountId: 'def456',
         payeeId: 'xyz890',
         amount: 10000,
-        date: '2011-10-05T14:48:00.000Z',
+        date: new Date('2011-10-05T14:48:00.000Z'),
         memo: 'Mortgage payment',
         categoryId: null,
         status: TransactionStatus.Pending,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -228,7 +234,7 @@ export class TransactionsController extends Controller {
         {},
       )
 
-      const transactions: Transaction[] = await prisma.transaction.find({
+      const transactions = await prisma.transaction.findMany({
         where: { id: { in: Object.keys(transactionsMap) } },
       })
 
@@ -245,7 +251,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(transactions.map(transaction => transaction.toResponseModel())),
+        data: transactions,
       }
     } catch (err) {
       console.log(err)
@@ -308,7 +314,9 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transactions: Transaction[] = await prisma.transaction.find({ where: { id: { in: [requestBody.ids] } } })
+      const transactions = await prisma.transaction.findMany({
+        where: { id: { in: requestBody.ids } },
+      })
       for (const transaction of transactions) {
         await prisma.transaction.delete({ where: { id: transaction.id } })
       }
@@ -335,12 +343,12 @@ export class TransactionsController extends Controller {
         accountId: 'def456',
         payeeId: 'xyz890',
         amount: 10000,
-        date: '2011-10-05T14:48:00.000Z',
+        date: new Date('2011-10-05T14:48:00.000Z'),
         memo: 'Mortgage payment',
         categoryId: null,
         status: TransactionStatus.Pending,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -362,9 +370,7 @@ export class TransactionsController extends Controller {
 
       return {
         message: 'success',
-        data: await Promise.all(
-          (await account.transactions).map((transaction: Transaction) => transaction.toResponseModel()),
-        ),
+        data: account.transactions,
       }
     } catch (err) {
       console.log(err)

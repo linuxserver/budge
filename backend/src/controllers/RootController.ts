@@ -4,7 +4,7 @@ import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getRepository } from 'typeorm'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 @Route()
 export class RootController extends Controller {
@@ -18,8 +18,8 @@ export class RootController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
     token: '1234abcd',
   })
@@ -28,24 +28,24 @@ export class RootController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<LoginResponse | ErrorResponse> {
     const { email, password } = requestBody
-    const user: User = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({ where: { email } })
 
     if (!user) {
       this.setStatus(403)
       return { message: '' }
     }
 
-    if (!password || !user.checkPassword(password)) {
+    if (!password || !User.checkPassword(user.password, password)) {
       this.setStatus(403)
       return { message: '' }
     }
 
-    const token = user.generateJWT()
+    const token = User.generateJWT(user)
 
     this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
 
     return {
-      data: await user.toResponseModel(),
+      data: user,
       token: token,
     }
   }
@@ -60,18 +60,18 @@ export class RootController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async ping(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
     try {
-      const token = request.user.generateJWT()
+      const token = User.generateJWT(request.user)
 
       this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
 
       return {
-        data: await request.user.toResponseModel(),
+        data: request.user,
         message: 'success',
       }
     } catch (err) {
@@ -105,16 +105,16 @@ export class RootController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getMe(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await prisma.user.findUnique({ where: { email: request.user.email } })
+      const user = await prisma.user.findUnique({ where: { email: request.user.email } })
 
       return {
-        data: await user.toResponseModel(),
+        data: user,
         message: 'success',
       }
     } catch (err) {

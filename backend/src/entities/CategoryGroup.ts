@@ -44,32 +44,7 @@ export class CategoryGroup {
   @OneToMany(() => Category, category => category.categoryGroup, { eager: true })
   categories: Promise<Category[]>
 
-  public getUpdatePayload() {
-    return {
-      id: this.id,
-      budgetId: this.budgetId,
-      name: this.name,
-      internal: this.internal,
-      locked: this.locked,
-      order: this.order,
-    }
-  }
-
-  public async toResponseModel(): Promise<CategoryGroupModel> {
-    return {
-      id: this.id,
-      budgetId: this.budgetId,
-      name: this.name,
-      internal: this.internal,
-      locked: this.locked,
-      order: this.order,
-      categories: await Promise.all((await this.categories).map(category => category.toResponseModel())),
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
-  }
-
-  public static sort(categoryGroups: CategoryGroup[]): CategoryGroup[] {
+  public static sort(categoryGroups: any[]): any[] {
     categoryGroups = categoryGroups.sort((a, b) => {
       if (a.order === b.order) {
         return a.name > b.name ? -1 : 1

@@ -4,13 +4,13 @@ import { User } from '../entities/User'
 import config from '../config'
 import { logger } from '../config/winston'
 import { getRepository } from 'typeorm'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 export async function expressAuthentication(
   request: Request,
   securityName: string,
   scopes?: string[] | undefined,
-): Promise<User> {
+): Promise<any> {
   const token =
     request.body.token ||
     request.query.token ||
@@ -18,7 +18,7 @@ export async function expressAuthentication(
     request.headers['authorization'] ||
     request.cookies['jwt']
 
-  let user: User = null
+  let user
   if (token) {
     let jwtPayload = null
     try {

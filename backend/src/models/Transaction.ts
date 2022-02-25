@@ -40,7 +40,7 @@ export interface TransactionModel {
   /**
    * Date of the transaction
    */
-  date: string
+  date: Date
 
   /**
    * Transaction notes / memo
@@ -55,12 +55,12 @@ export interface TransactionModel {
   /**
    * Datetime transaction was created
    */
-  created: string
+  created: Date
 
   /**
    * Datetime transaction was updated
    */
-  updated: string
+  updated: Date
 }
 
 /**

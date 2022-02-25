@@ -76,21 +76,7 @@ export class Category {
     }
   }
 
-  public async toResponseModel(): Promise<CategoryModel> {
-    return {
-      id: this.id,
-      categoryGroupId: this.categoryGroupId,
-      trackingAccountId: this.trackingAccountId,
-      name: this.name,
-      inflow: this.inflow,
-      locked: this.locked,
-      order: this.order,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
-  }
-
-  public static sort(categories: Category[]): Category[] {
+  public static sort(categories: any[]): any[] {
     categories.sort((a, b) => {
       if (a.order === b.order) {
         return a.name < b.name ? -1 : 1

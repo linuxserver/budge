@@ -80,17 +80,6 @@ export class Budget {
     }
   }
 
-  public async toResponseModel(): Promise<BudgetModel> {
-    return {
-      id: this.id,
-      name: this.name,
-      toBeBudgeted: this.toBeBudgeted,
-      accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
-  }
-
   public async getMonths(): Promise<string[]> {
     return (await this.months).map(month => month.month).sort()
   }

@@ -82,36 +82,7 @@ export class Account {
   @JoinColumn()
   transferPayee: Promise<Payee>
 
-  public getUpdatePayload() {
-    return {
-      id: this.id,
-      budgetId: this.budgetId,
-      transferPayeeId: this.transferPayeeId,
-      name: this.name,
-      type: this.type,
-      balance: this.balance,
-      cleared: this.cleared,
-      uncleared: this.uncleared,
-    }
-  }
-
-  public async toResponseModel(): Promise<AccountModel> {
-    return {
-      id: this.id,
-      budgetId: this.budgetId,
-      transferPayeeId: this.transferPayeeId,
-      name: this.name,
-      type: this.type,
-      balance: this.balance,
-      cleared: this.cleared,
-      uncleared: this.uncleared,
-      order: this.order,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
-  }
-
-  public static sort(accounts: Account[]): Account[] {
+  public static sort(accounts: any[]): any[] {
     accounts = accounts.sort((a, b) => {
       if (a.order === b.order) {
         return a.name > b.name ? -1 : 1

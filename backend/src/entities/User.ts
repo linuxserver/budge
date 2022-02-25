@@ -51,23 +51,14 @@ export class User {
     }
   }
 
-  public checkPassword(this: User, password: string): boolean {
-    return bcrypt.compareSync(password, this.password)
+  public static checkPassword(currentPassword: string, comparison: string): boolean {
+    return bcrypt.compareSync(comparison, currentPassword)
   }
 
-  public generateJWT(this: User): string {
-    return jwt.sign({ userId: this.id, email: this.email, timestamp: Date.now() }, config.jwtSecret, {
+  public static generateJWT(user: any): string {
+    return jwt.sign({ userId: user.id, email: user.email, timestamp: Date.now() }, config.jwtSecret, {
       expiresIn: '1h',
     })
-  }
-
-  public async toResponseModel(): Promise<UserModel> {
-    return {
-      id: this.id,
-      email: this.email,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
   }
 
   public static hashPassword(password: string): string {

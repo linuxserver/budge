@@ -5,7 +5,7 @@ import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
 import { Payee } from '../entities/Payee'
 import { getRepository } from 'typeorm'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 @Tags('Payees')
 @Route('budgets/{budgetId}/payees')
@@ -22,8 +22,8 @@ export class PayeesController extends Controller {
       transferAccountId: null,
       name: 'Random Store Name',
       internal: false,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createPayee(
@@ -43,13 +43,13 @@ export class PayeesController extends Controller {
       const payee = await prisma.payee.create({
         data: {
           ...requestBody,
-          budgetId,
+          budget: { connect: { id: budgetId } },
         },
       })
 
       return {
         message: 'success',
-        data: await payee.toResponseModel(),
+        data: payee,
       }
     } catch (err) {
       return { message: err.message }
@@ -69,8 +69,8 @@ export class PayeesController extends Controller {
         transferAccountId: null,
         name: 'Random Store Name',
         internal: false,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -87,11 +87,11 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payees = await prisma.payee.find({ where: { budgetId } })
+      const payees = await prisma.payee.findMany({ where: { budgetId } })
 
       return {
         message: 'success',
-        data: await Promise.all(payees.map(payee => payee.toResponseModel())),
+        data: payees,
       }
     } catch (err) {
       return { message: err.message }
@@ -110,8 +110,8 @@ export class PayeesController extends Controller {
       transferAccountId: null,
       name: 'Random Store Name',
       internal: false,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getPayee(
@@ -132,7 +132,7 @@ export class PayeesController extends Controller {
 
       return {
         message: 'success',
-        data: await payee.toResponseModel(),
+        data: payee,
       }
     } catch (err) {
       return { message: err.message }

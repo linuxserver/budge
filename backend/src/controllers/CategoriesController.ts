@@ -11,7 +11,7 @@ import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } f
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -32,8 +32,8 @@ export class CategoriesController extends Controller {
         internal: false,
         order: 0,
         categories: [],
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -50,11 +50,14 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroups: CategoryGroup[] = await prisma.categoryGroup.find({ where: { budgetId } })
+      const categoryGroups = await prisma.categoryGroup.findMany({
+        where: { budgetId },
+        include: { categories: true },
+      })
 
       return {
         message: 'success',
-        data: await Promise.all(categoryGroups.map(categoryGroup => categoryGroup.toResponseModel())),
+        data: categoryGroups,
       }
     } catch (err) {
       return { message: err.message }
@@ -76,8 +79,8 @@ export class CategoriesController extends Controller {
       internal: false,
       order: 0,
       categories: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createCategoryGroup(
@@ -94,16 +97,17 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroup: CategoryGroup = await prisma.categoryGroup.create({
+      const categoryGroup = await prisma.categoryGroup.create({
         data: {
           ...requestBody,
           budgetId,
         },
+        include: { categories: true },
       })
 
       return {
         message: 'success',
-        data: await categoryGroup.toResponseModel(),
+        data: categoryGroup,
       }
     } catch (err) {
       return { message: err.message }
@@ -125,8 +129,8 @@ export class CategoriesController extends Controller {
       internal: false,
       order: 0,
       categories: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateCategoryGroup(
@@ -144,14 +148,17 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroup = await prisma.categoryGroup.findUnique({ where: { id } })
+      const { categories, ...categoryGroup } = await prisma.categoryGroup.findUnique({
+        where: { id },
+        include: { categories: true },
+      })
       categoryGroup.name = requestBody.name
 
       if (categoryGroup.order !== requestBody.order) {
         // re-order category groups
         categoryGroup.order = requestBody.order
 
-        let categoryGroups = (await prisma.categoryGroup.find({ where: { budgetId } })).map((group: CategoryGroup) => {
+        let categoryGroups = (await prisma.categoryGroup.findMany({ where: { budgetId } })).map((group: any) => {
           if (group.id === categoryGroup.id) {
             return categoryGroup
           }
@@ -165,12 +172,15 @@ export class CategoriesController extends Controller {
           await prisma.categoryGroup.update({ where: { id: categoryGroup.id }, data: categoryGroup })
         }
       } else {
-        await prisma.categoryGroup.update({ where: { id: categoryGroup.id }, data: categoryGroup.getUpdatePayload() })
+        await prisma.categoryGroup.update({ where: { id: categoryGroup.id }, data: categoryGroup })
       }
 
       return {
         message: 'success',
-        data: await categoryGroup.toResponseModel(),
+        data: {
+          ...categoryGroup,
+          categories,
+        },
       }
     } catch (err) {
       return { message: err.message }
@@ -192,13 +202,13 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createCategory(
     @Path() budgetId: string,
-    @Body() requestBody: CategoryRequest,
+    @Body() { categoryGroupId, ...requestBody }: CategoryRequest,
     @Request() request: ExpressRequest,
   ): Promise<CategoryResponse | ErrorResponse> {
     try {
@@ -210,16 +220,17 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category: Category = await prisma.category.create({
+      const category = await prisma.category.create({
         data: {
           ...requestBody,
-          budgetId,
+          budget: { connect: { id: budgetId } },
+          categoryGroup: { connect: { id: categoryGroupId } },
         },
       })
 
       return {
         message: 'success',
-        data: await category.toResponseModel(),
+        data: category,
       }
     } catch (err) {
       return { message: err.message }
@@ -241,8 +252,8 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateCategory(
@@ -260,7 +271,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category = await prisma.category.findUnique({ where: { id } }, { includes: { categoryGroups: true } })
+      const category = await prisma.category.findUnique({ where: { id }, include: { categoryGroup: true } })
 
       const originalCategoryGroupId = category.categoryGroupId
       const updateOrder =
@@ -268,30 +279,43 @@ export class CategoriesController extends Controller {
 
       category.name = requestBody.name
       category.order = requestBody.order
-      delete category.categoryGroup
-      category.categoryGroupId = requestBody.categoryGroupId
 
       if (updateOrder === true) {
-        let categories: Category[] = await prisma.category.find({
+        let categories = await prisma.category.findMany({
           where: { categoryGroupId: category.categoryGroupId },
         })
+
         if (originalCategoryGroupId !== category.categoryGroupId) {
           categories.push(category)
         } else {
-          categories = categories.map(oldCategory => (oldCategory.id === category.id ? category : oldCategory))
+          categories = categories.map((oldCategory: any) => (oldCategory.id === category.id ? category : oldCategory))
         }
 
         categories = Category.sort(categories)
         for (const category of categories) {
-          await prisma.category.update({ where: { id: category.id }, data: category })
+          await prisma.category.update({
+            where: { id: category.id },
+            data: {
+              name: category.name,
+              order: category.order,
+              categoryGroup: { connect: { id: requestBody.categoryGroupId } },
+            },
+          })
         }
       } else {
-        await prisma.category.update({ where: { id: category.id }, data: category.getUpdatePayload() })
+        await prisma.category.update({
+          where: { id: category.id },
+          data: {
+            name: category.name,
+            order: category.order,
+            categoryGroup: { connect: { id: requestBody.categoryGroupId } },
+          },
+        })
       }
 
       return {
         message: 'success',
-        data: await category.toResponseModel(),
+        data: category,
       }
     } catch (err) {
       console.log(err)
@@ -313,8 +337,8 @@ export class CategoriesController extends Controller {
       budgeted: 0,
       activity: 0,
       balance: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateCategoryMonth(
@@ -333,13 +357,13 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, categoryId, month)
-      categoryMonth.update({ budgeted: requestBody.budgeted })
-      await prisma.categoryMonth.update({ where: { id: categoryMonth.id }, data: categoryMonth.getUpdatePayload() })
+      const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
+      CategoryMonth.update(categoryMonth, { budgeted: requestBody.budgeted })
+      await prisma.categoryMonth.update({ where: { id: categoryMonth.id }, data: categoryMonth })
 
       return {
         message: 'success',
-        data: await categoryMonth.toResponseModel(),
+        data: categoryMonth,
       }
     } catch (err) {
       console.log(err)
@@ -362,8 +386,8 @@ export class CategoriesController extends Controller {
         budgeted: 0,
         activity: 0,
         balance: 0,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -388,11 +412,11 @@ export class CategoriesController extends Controller {
           ...(from && { month: { gte: from } }),
         },
       }
-      const categoryMonths: CategoryMonth[] = await prisma.categoryMonth.find(findParams)
+      const categoryMonths = await prisma.categoryMonth.findMany(findParams)
 
       return {
         message: 'success',
-        data: await Promise.all(categoryMonths.map(categoryMonth => categoryMonth.toResponseModel())),
+        data: categoryMonths,
       }
     } catch (err) {
       console.log(err)

@@ -10,60 +10,60 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
     return Account
   }
 
-  async afterInsert(event: InsertEvent<Account>) {
-    await Promise.all([this.createCreditCardCategory(event), this.createAccountPayee(event)])
-  }
+  // async afterInsert(event: InsertEvent<Account>) {
+  //   await Promise.all([this.createCreditCardCategory(event), this.createAccountPayee(event)])
+  // }
 
-  private async createAccountPayee(event: InsertEvent<Account>) {
-    const account = event.entity
-    const manager = event.manager
+  // private async createAccountPayee(event: InsertEvent<Account>) {
+  //   const account = event.entity
+  //   const manager = event.manager
 
-    const payee = manager.create(Payee, {
-      budgetId: account.budgetId,
-      name: `Transfer : ${account.name}`,
-      transferAccountId: account.id,
-    })
+  //   const payee = manager.create(Payee, {
+  //     budgetId: account.budgetId,
+  //     name: `Transfer : ${account.name}`,
+  //     transferAccountId: account.id,
+  //   })
 
-    // @TODO: I wish there was a better way around this
-    await manager.insert(Payee, payee)
-    account.transferPayeeId = payee.id
-    await manager.update(Account, account.id, account.getUpdatePayload())
-  }
+  //   // @TODO: I wish there was a better way around this
+  //   await manager.insert(Payee, payee)
+  //   account.transferPayeeId = payee.id
+  //   await manager.update(Account, account.id, account)
+  // }
 
-  private async createCreditCardCategory(event: InsertEvent<Account>) {
-    const account = event.entity
-    const manager = event.manager
+  // private async createCreditCardCategory(event: InsertEvent<Account>) {
+  //   const account = event.entity
+  //   const manager = event.manager
 
-    if (account.type === AccountTypes.CreditCard) {
-      // Create CC payments category if it doesn't exist
-      const ccGroup =
-        (await manager.findOne(CategoryGroup, {
-          budgetId: account.budgetId,
-          name: CreditCardGroupName,
-        })) ||
-        manager.create(CategoryGroup, {
-          budgetId: account.budgetId,
-          name: CreditCardGroupName,
-          locked: true,
-        })
+  //   if (account.type === AccountTypes.CreditCard) {
+  //     // Create CC payments category if it doesn't exist
+  //     const ccGroup =
+  //       (await manager.findOne(CategoryGroup, {
+  //         budgetId: account.budgetId,
+  //         name: CreditCardGroupName,
+  //       })) ||
+  //       manager.create(CategoryGroup, {
+  //         budgetId: account.budgetId,
+  //         name: CreditCardGroupName,
+  //         locked: true,
+  //       })
 
-      await manager.save(CategoryGroup, ccGroup)
+  //     await manager.save(CategoryGroup, ccGroup)
 
-      // Create payment tracking category
-      const paymentCategory = manager.create(Category, {
-        budgetId: account.budgetId,
-        categoryGroupId: ccGroup.id,
-        trackingAccountId: account.id,
-        name: account.name,
-        locked: true,
-      })
-      await manager.insert(Category, paymentCategory)
-    }
-  }
+  //     // Create payment tracking category
+  //     const paymentCategory = manager.create(Category, {
+  //       budgetId: account.budgetId,
+  //       categoryGroupId: ccGroup.id,
+  //       trackingAccountId: account.id,
+  //       name: account.name,
+  //       locked: true,
+  //     })
+  //     await manager.insert(Category, paymentCategory)
+  //   }
+  // }
 
-  async beforeUpdate(event: UpdateEvent<Account>) {
-    const account = event.entity
+  // async beforeUpdate(event: UpdateEvent<Account>) {
+  //   const account = event.entity
 
-    account.balance = account.cleared + account.uncleared
-  }
+  //   account.balance = account.cleared + account.uncleared
+  // }
 }

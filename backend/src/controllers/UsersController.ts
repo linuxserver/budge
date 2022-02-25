@@ -4,7 +4,7 @@ import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getManager, getRepository } from 'typeorm'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 @Tags('Users')
 @Route('users')
@@ -18,25 +18,26 @@ export class UsersController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createUser(@Body() requestBody: UserCreateRequest): Promise<UserResponse | ErrorResponse> {
     const { email } = requestBody
 
-    const emailCheck: User = await prisma.user.findUnique({ where: { email } })
+    const emailCheck = await prisma.user.findUnique({ where: { email } })
     if (emailCheck) {
       this.setStatus(400)
       return { message: 'Email already exists' }
     }
 
     try {
+      requestBody.password = User.hashPassword(requestBody.password)
       const newUser = await prisma.user.create({ data: requestBody })
 
       return {
         message: 'success',
-        data: await newUser.toResponseModel(),
+        data: newUser,
       }
     } catch (err) {
       return { message: err.message }
@@ -56,16 +57,16 @@ export class UsersController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getUserByEmail(@Path() email: string): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await prisma.user.findUnique({ where: { email } })
+      const user = await prisma.user.findUnique({ where: { email } })
 
       return {
-        data: await user.toResponseModel(),
+        data: user,
         message: 'success',
       }
     } catch (err) {
@@ -88,8 +89,8 @@ export class UsersController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateUser(
@@ -97,14 +98,14 @@ export class UsersController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<UserResponse | ErrorResponse> {
     if (requestBody.password && requestBody.currentPassword) {
-      if (!request.user.checkPassword(requestBody.currentPassword)) {
+      if (!User.checkPassword(request.user.password, requestBody.currentPassword)) {
         this.setStatus(400)
         return {
           message: 'Your current password is incorrect',
         }
       }
 
-      request.user.password = requestBody.password
+      request.user.password = User.hashPassword(requestBody.password)
     } else {
       delete requestBody.password
     }
@@ -119,7 +120,7 @@ export class UsersController extends Controller {
       await prisma.user.update({ where: { id: request.user.id }, data: request.user })
 
       return {
-        data: await request.user.toResponseModel(),
+        data: request.user,
         message: 'success',
       }
     } catch (err) {

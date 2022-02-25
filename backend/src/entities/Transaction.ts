@@ -171,21 +171,6 @@ export class Transaction {
     }
   }
 
-  public async toResponseModel(): Promise<TransactionModel> {
-    return {
-      id: this.id,
-      accountId: this.accountId,
-      payeeId: this.payeeId,
-      amount: this.amount,
-      date: this.date.toISOString(),
-      memo: this.memo,
-      categoryId: this.categoryId,
-      status: this.status,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
-  }
-
   public static getMonth(date: Date): string {
     return formatMonthFromDateString(date)
   }

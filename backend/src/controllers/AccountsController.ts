@@ -8,7 +8,7 @@ import { Payee } from '../entities/Payee'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
 import { getRepository } from 'typeorm'
-import { prisma } from '../prisma'
+import prisma from '../database'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')
@@ -30,8 +30,8 @@ export class AccountsController extends Controller {
       cleared: 0,
       uncleared: 0,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createAccount(
@@ -40,7 +40,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await prisma.budget.findUnique({ where: { id: budgetId, userId: request.user.id } })
+      const budget = await prisma.budget.findFirst({ where: { id: budgetId, userId: request.user.id } })
       if (!budget) {
         this.setStatus(404)
         return {
@@ -48,10 +48,10 @@ export class AccountsController extends Controller {
         }
       }
 
-      const account: Account = await prisma.account.create({
+      const account = await prisma.account.create({
         data: {
           ...requestBody,
-          budgetId,
+          budget: { connect: { id: budgetId } },
         },
       })
 
@@ -65,14 +65,14 @@ export class AccountsController extends Controller {
             amount = amount * -1 // Inverse balance for CCs
             break
           case AccountTypes.Bank:
-            const inflowCategory = await prisma.category.findUnique({
+            const inflowCategory = await prisma.category.findFirst({
               where: { budgetId: account.budgetId, inflow: true },
             })
             categoryId = inflowCategory.id
             break
         }
 
-        const startingBalancePayee = await prisma.payee.findUnique({
+        const startingBalancePayee = await prisma.payee.findFirst({
           where: {
             budgetId,
             name: 'Starting Balance',
@@ -99,7 +99,7 @@ export class AccountsController extends Controller {
 
       return {
         message: 'success',
-        data: await (await prisma.account.findUnique({ where: { id: account.id } })).toResponseModel(),
+        data: await prisma.account.findUnique({ where: { id: account.id } }),
       }
     } catch (err) {
       console.log(err)
@@ -125,8 +125,8 @@ export class AccountsController extends Controller {
       cleared: 0,
       uncleared: 0,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateAccount(
@@ -159,7 +159,7 @@ export class AccountsController extends Controller {
           account.order = requestBody.order
 
           // Update all accounts because of order change
-          let accounts: Account[] = (await prisma.account.find({ where: { budgetId } })).map((act: Account) => {
+          let accounts = (await prisma.account.findMany({ where: { budgetId } })).map((act: any) => {
             if (account.id === act.id) {
               return account
             }
@@ -172,7 +172,7 @@ export class AccountsController extends Controller {
             await prisma.account.update({ where: { id: account.id }, data: account })
           }
         } else {
-          await prisma.account.update({ where: { id: account.id }, data: account.getUpdatePayload() })
+          await prisma.account.update({ where: { id: account.id }, data: account })
         }
       }
 
@@ -180,14 +180,14 @@ export class AccountsController extends Controller {
         // Reconcile the account
         const difference = requestBody.balance - account.cleared
         if (difference !== 0) {
-          const reconciliationPayee = await prisma.payee.findUnique({
+          const reconciliationPayee = await prisma.payee.findFirst({
             where: {
               budgetId,
               name: 'Reconciliation Balance Adjustment',
               internal: true,
             },
           })
-          const inflowCategory = await prisma.category.findUnique({
+          const inflowCategory = await prisma.category.findFirst({
             where: { budgetId: account.budgetId, inflow: true },
           })
           const startingBalanceTransaction = await prisma.transaction.create({
@@ -204,7 +204,7 @@ export class AccountsController extends Controller {
           })
         }
 
-        const clearedTransactions = await prisma.transaction.find({
+        const clearedTransactions = await prisma.transaction.findMany({
           where: {
             accountId: account.id,
             status: TransactionStatus.Cleared,
@@ -212,7 +212,7 @@ export class AccountsController extends Controller {
         })
         for (const transaction of clearedTransactions) {
           transaction.status = TransactionStatus.Reconciled
-          await prisma.transaction.update({ where: { id: transaction.id }, data: transaction.getUpdatePayload() })
+          await prisma.transaction.update({ where: { id: transaction.id }, data: transaction })
         }
 
         account = await prisma.account.findUnique({ where: { id: account.id } })
@@ -220,7 +220,7 @@ export class AccountsController extends Controller {
 
       return {
         message: 'success',
-        data: await account.toResponseModel(),
+        data: account,
       }
     } catch (err) {
       console.log(err)
@@ -246,8 +246,8 @@ export class AccountsController extends Controller {
         cleared: 0,
         uncleared: 0,
         order: 0,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -256,7 +256,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountsResponse | ErrorResponse> {
     try {
-      const budget = await prisma.budget.findUnique({ where: { id: budgetId, userId: request.user.id } })
+      const budget = await prisma.budget.findFirst({ where: { id: budgetId, userId: request.user.id } })
       if (!budget) {
         this.setStatus(404)
         return {
@@ -264,11 +264,11 @@ export class AccountsController extends Controller {
         }
       }
 
-      const accounts: Account[] = await prisma.account.find({ where: { budgetId } })
+      const accounts = await prisma.account.findMany({ where: { budgetId } })
 
       return {
         message: 'success',
-        data: await Promise.all(accounts.map(account => account.toResponseModel())),
+        data: accounts,
       }
     } catch (err) {
       return { message: err.message }
@@ -292,8 +292,8 @@ export class AccountsController extends Controller {
       cleared: 0,
       uncleared: 0,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getAccount(
@@ -302,7 +302,7 @@ export class AccountsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
-      const budget = await prisma.budget.findUnique({ where: { id: budgetId, userId: request.user.id } })
+      const budget = await prisma.budget.findFirst({ where: { id: budgetId, userId: request.user.id } })
       if (!budget) {
         this.setStatus(404)
         return {
@@ -314,7 +314,7 @@ export class AccountsController extends Controller {
 
       return {
         message: 'success',
-        data: await account.toResponseModel(),
+        data: account,
       }
     } catch (err) {
       return { message: err.message }

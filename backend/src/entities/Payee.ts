@@ -1,12 +1,4 @@
-import {
-  Entity,
-  OneToOne,
-  JoinColumn,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  OneToMany,
-} from 'typeorm'
+import { Entity, OneToOne, JoinColumn, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm'
 import { Account } from './Account'
 import { PayeeModel } from '../models/Payee'
 import { Transaction } from './Transaction'
@@ -43,15 +35,4 @@ export class Payee {
    */
   @OneToMany(() => Transaction, transaction => transaction.account)
   transactions: Promise<Transaction[]>
-
-  public async toResponseModel(): Promise<PayeeModel> {
-    return {
-      id: this.id,
-      transferAccountId: this.transferAccountId,
-      name: this.name,
-      internal: this.internal,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
-    }
-  }
 }

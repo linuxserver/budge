@@ -53,12 +53,12 @@ export interface BudgetMonthModel {
   /**
    * Date created
    */
-  created: string
+  created: Date
 
   /**
    * Date updated
    */
-  updated: string
+  updated: Date
 }
 
 export interface BudgetMonthWithCategoriesModel extends BudgetMonthModel {
