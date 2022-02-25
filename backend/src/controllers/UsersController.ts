@@ -4,6 +4,7 @@ import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getManager, getRepository } from 'typeorm'
+import { prisma } from '../prisma'
 
 @Tags('Users')
 @Route('users')
@@ -24,18 +25,14 @@ export class UsersController extends Controller {
   public async createUser(@Body() requestBody: UserCreateRequest): Promise<UserResponse | ErrorResponse> {
     const { email } = requestBody
 
-    const emailCheck: User = await getRepository(User).findOne({ email })
+    const emailCheck: User = await prisma.user.findUnique({ where: { email } })
     if (emailCheck) {
       this.setStatus(400)
       return { message: 'Email already exists' }
     }
 
     try {
-      const newUser = await getManager().transaction(async transactionalEntityManager => {
-        const newUser: User = transactionalEntityManager.getRepository(User).create({ ...requestBody })
-        await transactionalEntityManager.getRepository(User).insert(newUser)
-        return newUser
-      })
+      const newUser = await prisma.user.create({ data: requestBody })
 
       return {
         message: 'success',
@@ -65,7 +62,7 @@ export class UsersController extends Controller {
   })
   public async getUserByEmail(@Path() email: string): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await getRepository(User).findOne({ email })
+      const user: User = await prisma.user.findUnique({ where: { email } })
 
       return {
         data: await user.toResponseModel(),
@@ -119,7 +116,7 @@ export class UsersController extends Controller {
     }
 
     try {
-      await getRepository(User).save(request.user)
+      await prisma.user.update({ where: { id: request.user.id }, data: request.user })
 
       return {
         data: await request.user.toResponseModel(),

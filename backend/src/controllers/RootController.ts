@@ -4,6 +4,7 @@ import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getRepository } from 'typeorm'
+import { prisma } from '../prisma'
 
 @Route()
 export class RootController extends Controller {
@@ -27,7 +28,7 @@ export class RootController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<LoginResponse | ErrorResponse> {
     const { email, password } = requestBody
-    const user: User = await getRepository(User).findOne({ email })
+    const user: User = await prisma.user.findUnique({ where: { email } })
 
     if (!user) {
       this.setStatus(403)
@@ -110,7 +111,7 @@ export class RootController extends Controller {
   })
   public async getMe(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await getRepository(User).findOne({ email: request.user.email })
+      const user: User = await prisma.user.findUnique({ where: { email: request.user.email } })
 
       return {
         data: await user.toResponseModel(),

@@ -9,6 +9,8 @@ import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../mode
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { BudgetMonths } from '../repositories/BudgetMonths'
 import { getMonthStringFromNow } from '../utils'
+import { prisma } from '../prisma'
+import { CategoryMonth } from '../entities/CategoryMonth'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -55,7 +57,10 @@ export class BudgetsController extends Controller {
   })
   public async getBudgets(@Request() request: ExpressRequest): Promise<BudgetsResponse | ErrorResponse> {
     try {
-      const budgets = await getRepository(Budget).find({ where: { userId: request.user.id }, relations: ['accounts'] })
+      const budgets: Budget[] = await prisma.budget.find({
+        where: { userId: request.user.id },
+        include: { accounts: true },
+      })
       return {
         message: 'success',
         data: await Promise.all(budgets.map(budget => budget.toResponseModel())),
@@ -87,9 +92,12 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      const budget: Budget = getRepository(Budget).create({ ...requestBody })
-      budget.user = request.user
-      await getRepository(Budget).insert(budget)
+      const budget: Budget = await prisma.budget.create({
+        data: {
+          ...requestBody,
+          userId: request.user.id,
+        },
+      })
 
       return {
         message: 'success',
@@ -122,7 +130,7 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      const budget: Budget = await getRepository(Budget).findOne(id)
+      const budget: Budget = await prisma.budget.findUnique({ where: { id } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -165,7 +173,7 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<BudgetResponse | ErrorResponse> {
     try {
-      let budget: Budget = await getRepository(Budget).findOne(id)
+      let budget: Budget = await prisma.budget.findUnique({ where: { id } })
 
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
@@ -174,8 +182,8 @@ export class BudgetsController extends Controller {
         }
       }
 
-      budget = budget.update(requestBody)
-      await getRepository(Budget).update(budget.id, budget.getUpdatePayload())
+      Object.assign(budget, requestBody)
+      await prisma.budget.update({ where: { id: budget.id }, data: budget })
 
       return {
         message: 'success',
@@ -212,7 +220,7 @@ export class BudgetsController extends Controller {
     @Request() request: ExpressRequest,
     @Query() from?: string,
   ): Promise<BudgetMonthsResponse | ErrorResponse> {
-    let budget: Budget = await getRepository(Budget).findOne(budgetId)
+    let budget: Budget = await prisma.budget.findUnique({ where: { id: budgetId } })
 
     if (!budget || budget.userId !== request.user.id) {
       this.setStatus(404)
@@ -221,10 +229,10 @@ export class BudgetsController extends Controller {
       }
     }
 
-    const budgetMonths = await getRepository(BudgetMonth).find({
+    const budgetMonths: BudgetMonth[] = await prisma.budgetMonth.find({
       where: {
         budgetId,
-        ...(from && { month: MoreThanOrEqual(from) }),
+        ...(from && { month: { gte: from } }),
       },
     })
 
@@ -270,7 +278,7 @@ export class BudgetsController extends Controller {
     @Path() month: string,
     @Request() request: ExpressRequest,
   ): Promise<BudgetMonthWithCategoriesResponse | ErrorResponse> {
-    let budget: Budget = await getRepository(Budget).findOne(budgetId)
+    let budget: Budget = await prisma.budget.findUnique({ where: { id: budgetId } })
 
     if (!budget || budget.userId !== request.user.id) {
       this.setStatus(404)
@@ -279,18 +287,19 @@ export class BudgetsController extends Controller {
       }
     }
 
-    let budgetMonth = await getRepository(BudgetMonth).findOne({
+    let budgetMonth = await prisma.budgetMonth.findUnique({
       where: { budgetId, month },
-      relations: ['categories'],
+      include: { categories: true },
     })
     if (!budgetMonth) {
       // If we don't have a budget month, then no transactions were created against that month,
       // so send down an 'empty' budget month for the UI to work with
-      budgetMonth = getRepository(BudgetMonth).create({
-        budgetId,
-        month,
+      budgetMonth = await prisma.budgetMonth.create({
+        data: {
+          budgetId,
+          month,
+        },
       })
-      budgetMonth.categories = Promise.resolve([])
     }
 
     return {
@@ -298,7 +307,7 @@ export class BudgetsController extends Controller {
       data: {
         ...(await budgetMonth.toResponseModel()),
         categories: await Promise.all(
-          (await budgetMonth.categories).map(categoryMonth => categoryMonth.toResponseModel()),
+          (await budgetMonth.categories).map((categoryMonth: CategoryMonth) => categoryMonth.toResponseModel()),
         ),
       },
     }

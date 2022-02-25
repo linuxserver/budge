@@ -11,6 +11,7 @@ import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } f
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
+import { prisma } from '../prisma'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -41,7 +42,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryGroupsResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -49,7 +50,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroups: CategoryGroup[] = await getRepository(CategoryGroup).find({ where: { budgetId } })
+      const categoryGroups: CategoryGroup[] = await prisma.categoryGroup.find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -85,7 +86,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryGroupResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -93,11 +94,12 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroup: CategoryGroup = getRepository(CategoryGroup).create({
-        ...requestBody,
-        budgetId,
+      const categoryGroup: CategoryGroup = await prisma.categoryGroup.create({
+        data: {
+          ...requestBody,
+          budgetId,
+        },
       })
-      await getRepository(CategoryGroup).insert(categoryGroup)
 
       return {
         message: 'success',
@@ -134,7 +136,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryGroupResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -142,14 +144,14 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryGroup = await getRepository(CategoryGroup).findOne(id)
+      const categoryGroup = await prisma.categoryGroup.findUnique({ where: { id } })
       categoryGroup.name = requestBody.name
 
       if (categoryGroup.order !== requestBody.order) {
         // re-order category groups
         categoryGroup.order = requestBody.order
 
-        let categoryGroups = (await getRepository(CategoryGroup).find({ budgetId })).map(group => {
+        let categoryGroups = (await prisma.categoryGroup.find({ where: { budgetId } })).map((group: CategoryGroup) => {
           if (group.id === categoryGroup.id) {
             return categoryGroup
           }
@@ -159,9 +161,11 @@ export class CategoriesController extends Controller {
 
         categoryGroups = CategoryGroup.sort(categoryGroups)
 
-        await getRepository(CategoryGroup).save(categoryGroups)
+        for (const categoryGroup of categoryGroups) {
+          await prisma.categoryGroup.update({ where: { id: categoryGroup.id }, data: categoryGroup })
+        }
       } else {
-        await getRepository(CategoryGroup).update(categoryGroup.id, categoryGroup.getUpdatePayload())
+        await prisma.categoryGroup.update({ where: { id: categoryGroup.id }, data: categoryGroup.getUpdatePayload() })
       }
 
       return {
@@ -198,7 +202,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -206,11 +210,12 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category: Category = getRepository(Category).create({
-        ...requestBody,
-        budgetId,
+      const category: Category = await prisma.category.create({
+        data: {
+          ...requestBody,
+          budgetId,
+        },
       })
-      await getRepository(Category).insert(category)
 
       return {
         message: 'success',
@@ -247,7 +252,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -255,7 +260,7 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const category = await getRepository(Category).findOne(id, { relations: ['categoryGroup'] })
+      const category = await prisma.category.findUnique({ where: { id } }, { includes: { categoryGroups: true } })
 
       const originalCategoryGroupId = category.categoryGroupId
       const updateOrder =
@@ -267,7 +272,9 @@ export class CategoriesController extends Controller {
       category.categoryGroupId = requestBody.categoryGroupId
 
       if (updateOrder === true) {
-        let categories = await getRepository(Category).find({ categoryGroupId: category.categoryGroupId })
+        let categories: Category[] = await prisma.category.find({
+          where: { categoryGroupId: category.categoryGroupId },
+        })
         if (originalCategoryGroupId !== category.categoryGroupId) {
           categories.push(category)
         } else {
@@ -275,9 +282,11 @@ export class CategoriesController extends Controller {
         }
 
         categories = Category.sort(categories)
-        await getRepository(Category).save(categories)
+        for (const category of categories) {
+          await prisma.category.update({ where: { id: category.id }, data: category })
+        }
       } else {
-        await getRepository(Category).update(category.id, category.getUpdatePayload())
+        await prisma.category.update({ where: { id: category.id }, data: category.getUpdatePayload() })
       }
 
       return {
@@ -316,7 +325,7 @@ export class CategoriesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<CategoryMonthResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -326,7 +335,7 @@ export class CategoriesController extends Controller {
 
       const categoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, categoryId, month)
       categoryMonth.update({ budgeted: requestBody.budgeted })
-      await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
+      await prisma.categoryMonth.update({ where: { id: categoryMonth.id }, data: categoryMonth.getUpdatePayload() })
 
       return {
         message: 'success',
@@ -365,7 +374,7 @@ export class CategoriesController extends Controller {
     @Query() from?: string,
   ): Promise<CategoryMonthsResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -376,10 +385,10 @@ export class CategoriesController extends Controller {
       const findParams = {
         where: {
           categoryId,
-          ...(from && { month: MoreThanOrEqual(from) }),
+          ...(from && { month: { gte: from } }),
         },
       }
-      const categoryMonths = await getRepository(CategoryMonth).find(findParams)
+      const categoryMonths: CategoryMonth[] = await prisma.categoryMonth.find(findParams)
 
       return {
         message: 'success',

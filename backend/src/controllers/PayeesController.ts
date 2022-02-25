@@ -5,6 +5,7 @@ import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
 import { Payee } from '../entities/Payee'
 import { getRepository } from 'typeorm'
+import { prisma } from '../prisma'
 
 @Tags('Payees')
 @Route('budgets/{budgetId}/payees')
@@ -31,7 +32,7 @@ export class PayeesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<PayeeResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -39,11 +40,12 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payee = getRepository(Payee).create({
-        ...requestBody,
-        budgetId,
+      const payee = await prisma.payee.create({
+        data: {
+          ...requestBody,
+          budgetId,
+        },
       })
-      await getRepository(Payee).insert(payee)
 
       return {
         message: 'success',
@@ -77,7 +79,7 @@ export class PayeesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<PayeesResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -85,7 +87,7 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payees = await getRepository(Payee).find({ where: { budgetId } })
+      const payees = await prisma.payee.find({ where: { budgetId } })
 
       return {
         message: 'success',
@@ -118,7 +120,7 @@ export class PayeesController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<PayeeResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -126,7 +128,7 @@ export class PayeesController extends Controller {
         }
       }
 
-      const payee = await getRepository(Payee).findOne(payeeId)
+      const payee = await prisma.payee.findUnique({ where: { id: payeeId } })
 
       return {
         message: 'success',

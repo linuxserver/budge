@@ -11,7 +11,7 @@ import {
   TransactionsRequest,
   TransactionsResponse,
 } from '../models/Transaction'
-import { getManager, getRepository, In } from 'typeorm'
+import { prisma } from '../prisma'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
@@ -42,7 +42,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -50,16 +50,12 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transaction = await getManager().transaction(async transactionalEntityManager => {
-        const transaction = transactionalEntityManager.getRepository(Transaction).create({
+      const transaction = await prisma.transaction.create({
+        data: {
           budgetId,
           ...requestBody,
           date: new Date(requestBody.date),
-        })
-        TransactionCache.enableTransfers(transaction.id)
-        await transactionalEntityManager.getRepository(Transaction).insert(transaction)
-
-        return transaction
+        },
       })
 
       return {
@@ -100,7 +96,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -108,19 +104,18 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transactions = requestBody.transactions.map(transaction => {
-        return getRepository(Transaction).create({
-          budgetId,
-          ...transaction,
-          date: new Date(transaction.date),
-        })
-      })
-
-      await getManager().transaction(async transactionalEntityManager => {
-        for (const transaction of transactions) {
-          await transactionalEntityManager.getRepository(Transaction).insert(transaction)
-        }
-      })
+      const transactions: Transaction[] = []
+      for (const transaction of requestBody.transactions) {
+        transactions.push(
+          await prisma.transaction.create({
+            data: {
+              budgetId,
+              ...transaction,
+              date: new Date(transaction.date),
+            },
+          }),
+        )
+      }
 
       return {
         message: 'success',
@@ -159,7 +154,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -170,20 +165,13 @@ export class TransactionsController extends Controller {
       // Load in original transaction to check if the amount has been altered
       // and updated the category month accordingly
       // @TODO: remove relation to test db transactions
-      const transaction = await getManager().transaction(async transactionalEntityManager => {
-        const transaction = await transactionalEntityManager
-          .getRepository(Transaction)
-          .findOne(transactionId, { relations: ['account'] })
-        transaction.update({
+      TransactionCache.enableTransfers(transactionId)
+      const transaction: Transaction = await prisma.transaction.update({
+        where: { id: transactionId },
+        data: {
           ...requestBody,
           ...(requestBody.date && { date: new Date(requestBody.date) }), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
-        })
-        TransactionCache.enableTransfers(transaction.id)
-        await transactionalEntityManager
-          .getRepository(Transaction)
-          .update(transaction.id, transaction.getUpdatePayload())
-
-        return transaction
+        },
       })
 
       return {
@@ -224,7 +212,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -240,25 +228,20 @@ export class TransactionsController extends Controller {
         {},
       )
 
-      const transactions = await getManager().transaction(async transactionalEntityManager => {
-        const transactions = await transactionalEntityManager
-          .getRepository(Transaction)
-          .find({ where: { id: In(Object.keys(transactionsMap)) } })
-        transactions.map(transaction =>
-          transaction.update({
+      const transactions: Transaction[] = await prisma.transaction.find({
+        where: { id: { in: Object.keys(transactionsMap) } },
+      })
+
+      for (const transaction of transactions) {
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
             ...transactionsMap[transaction.id],
             amount: transaction.amount,
             date: transaction.date,
-          }),
-        )
-
-        for (const transaction of transactions) {
-          await transactionalEntityManager.getRepository(Transaction).save(transaction)
-        }
-        // await transactionalEntityManager.getRepository(Transaction).save(transactions)
-
-        return transactions
-      })
+          },
+        })
+      }
 
       return {
         message: 'success',
@@ -284,7 +267,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -292,9 +275,7 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transaction = await getRepository(Transaction).findOne(transactionId)
-      TransactionCache.enableTransfers(transactionId)
-      await getRepository(Transaction).remove(transaction)
+      const transaction = await prisma.transaction.delete({ where: { id: transactionId } })
 
       return {
         message: 'success',
@@ -319,7 +300,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -327,12 +308,9 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const transactions = await getManager()
-        .getRepository(Transaction)
-        .find({ where: { id: In(requestBody.ids) } })
-      requestBody.ids.map(id => TransactionCache.enableTransfers(id))
+      const transactions: Transaction[] = await prisma.transaction.find({ where: { id: { in: [requestBody.ids] } } })
       for (const transaction of transactions) {
-        await getManager().getRepository(Transaction).remove(transaction)
+        await prisma.transaction.delete({ where: { id: transaction.id } })
       }
 
       return {
@@ -372,7 +350,7 @@ export class TransactionsController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<TransactionsResponse | ErrorResponse> {
     try {
-      const budget = await getRepository(Budget).findOne(budgetId)
+      const budget = await prisma.budget.findUnique({ where: { id: budgetId } })
       if (!budget || budget.userId !== request.user.id) {
         this.setStatus(404)
         return {
@@ -380,11 +358,13 @@ export class TransactionsController extends Controller {
         }
       }
 
-      const account = await getRepository(Account).findOne(accountId, { relations: ['transactions'] })
+      const account = await prisma.account.findUnique({ where: { id: accountId }, include: { transactions: true } })
 
       return {
         message: 'success',
-        data: await Promise.all((await account.transactions).map(transaction => transaction.toResponseModel())),
+        data: await Promise.all(
+          (await account.transactions).map((transaction: Transaction) => transaction.toResponseModel()),
+        ),
       }
     } catch (err) {
       console.log(err)

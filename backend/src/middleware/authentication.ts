@@ -4,6 +4,7 @@ import { User } from '../entities/User'
 import config from '../config'
 import { logger } from '../config/winston'
 import { getRepository } from 'typeorm'
+import { prisma } from '../prisma'
 
 export async function expressAuthentication(
   request: Request,
@@ -24,7 +25,7 @@ export async function expressAuthentication(
       jwtPayload = jwt.verify(token, config.jwtSecret) as any
       const { userId, email } = jwtPayload
 
-      user = await getRepository(User).findOne(userId)
+      user = await prisma.user.findUnique({ where: { id: userId } })
     } catch (err) {}
   }
 
