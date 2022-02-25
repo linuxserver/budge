@@ -9,8 +9,6 @@ import { CategoryRequest } from '../models/Category'
 import { Category } from '../entities/Category'
 import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../models/CategoryMonth'
 import { CategoryMonth } from '../entities/CategoryMonth'
-import { USD } from '@dinero.js/currencies'
-import { dinero } from 'dinero.js'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
 
@@ -327,7 +325,7 @@ export class CategoriesController extends Controller {
       }
 
       const categoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, categoryId, month)
-      categoryMonth.update({ budgeted: dinero({ amount: requestBody.budgeted, currency: USD }) })
+      categoryMonth.update({ budgeted: requestBody.budgeted })
       await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
 
       return {

@@ -174,7 +174,8 @@ export class BudgetsController extends Controller {
         }
       }
 
-      budget = await getRepository(Budget).merge(budget, { ...requestBody })
+      budget = budget.update(requestBody)
+      await getRepository(Budget).update(budget.id, budget.getUpdatePayload())
 
       return {
         message: 'success',

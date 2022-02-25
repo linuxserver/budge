@@ -11,7 +11,6 @@ import { formatMonthFromDateString } from '../utils'
 import { Category } from '../entities/Category'
 import { Payee } from '../entities/Payee'
 import { Account, AccountTypes } from '../entities/Account'
-import { add, equal, isZero, multiply, subtract } from 'dinero.js'
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { Transaction, TransactionCache, TransactionStatus } from '../entities/Transaction'
 import { CategoryMonths } from '../repositories/CategoryMonths'
@@ -123,7 +122,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         const ccCategoryMonth = await manager
           .getCustomRepository(CategoryMonths)
           .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-        ccCategoryMonth.update({ activity: multiply(transaction.amount, -1) })
+        ccCategoryMonth.update({ activity: transaction.amount * -1 })
         await manager.getRepository(CategoryMonth).update(ccCategoryMonth.id, ccCategoryMonth.getUpdatePayload())
       }
       return
@@ -158,7 +157,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       const currentCCMonth = await manager
         .getCustomRepository(CategoryMonths)
         .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-      currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
+      currentCCMonth.update({ activity: transaction.amount * -1 })
       await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
     }
   }
@@ -177,7 +176,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       payeeId: account.transferPayeeId,
       transferAccountId: account.id,
       transferTransactionId: transaction.id,
-      amount: multiply(transaction.amount, -1),
+      amount: transaction.amount * -1,
       date: transaction.date,
       status: TransactionStatus.Pending,
     })
@@ -199,12 +198,12 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
 
     switch (transaction.status) {
       case TransactionStatus.Pending:
-        account.uncleared = add(account.uncleared, transaction.amount)
+        account.uncleared = account.uncleared + transaction.amount
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared = add(account.cleared, transaction.amount)
+        account.cleared = account.cleared + transaction.amount
         break
     }
 
@@ -223,23 +222,23 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
 
     switch (originalTransaction.status) {
       case TransactionStatus.Pending:
-        account.uncleared = subtract(account.uncleared, originalTransaction.amount)
+        account.uncleared = account.uncleared - originalTransaction.amount
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared = subtract(account.cleared, originalTransaction.amount)
+        account.cleared = account.cleared - originalTransaction.amount
         break
     }
 
     switch (transaction.status) {
       case TransactionStatus.Pending:
-        account.uncleared = add(account.uncleared, transaction.amount)
+        account.uncleared = account.uncleared + transaction.amount
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared = add(account.cleared, transaction.amount)
+        account.cleared = account.cleared + transaction.amount
         break
     }
 
@@ -252,12 +251,12 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
 
     switch (transaction.status) {
       case TransactionStatus.Pending:
-        account.uncleared = subtract(account.uncleared, transaction.amount)
+        account.uncleared = account.uncleared - transaction.amount
         break
       case TransactionStatus.Cleared:
       case TransactionStatus.Reconciled:
       default:
-        account.cleared = subtract(account.cleared, transaction.amount)
+        account.cleared = account.cleared - transaction.amount
         break
     }
 
@@ -283,7 +282,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     }
 
     if (transaction.payeeId === originalTransaction.payeeId && transaction.transferTransactionId) {
-      if (equal(transaction.amount, originalTransaction.amount) && transaction.date === originalTransaction.date) {
+      if (transaction.amount === originalTransaction.amount && transaction.date === originalTransaction.date) {
         // amount and dates are the same, everything else is not linked
         return
       }
@@ -291,7 +290,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       // Payees are the same, just update details
       const transferTransaction = await manager.findOne(Transaction, { transferTransactionId: transaction.id })
       transferTransaction.update({
-        amount: multiply(transaction.amount, -1),
+        amount: transaction.amount * -1,
         date: transaction.date,
       })
       await manager.getRepository(Transaction).update(transferTransaction.id, transferTransaction.getUpdatePayload())
@@ -320,7 +319,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
           payeeId: account.transferPayeeId,
           transferAccountId: account.id,
           transferTransactionId: transaction.id,
-          amount: multiply(transaction.amount, -1),
+          amount: transaction.amount * -1,
           date: transaction.date,
           status: TransactionStatus.Pending,
         })
@@ -342,13 +341,13 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
 
     // @TODO: hanle update of transactions when going to / from a transfer to / from a non-transfer
 
-    let activity = subtract(transaction.amount, originalTransaction.amount)
+    let activity = transaction.amount - originalTransaction.amount
 
     if (transaction.transferTransactionId !== null) {
       // If this is a transfer, no need to update categories and budgets. Money doesn't 'go anywhere'. UNLESS it's a CC!!!
       if (account.type === AccountTypes.CreditCard) {
         // Update CC category
-        if (transaction.date !== originalTransaction.date && isZero(activity)) {
+        if (transaction.date !== originalTransaction.date && activity === 0) {
           // No change in time or amount, so category month data doesn't change
           return
         }
@@ -363,7 +362,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         const currentCCMonth = await manager
           .getCustomRepository(CategoryMonths)
           .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-        currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
+        currentCCMonth.update({ activity: transaction.amount * -1 })
         await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
       }
 
@@ -392,7 +391,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
             { relations: ['budgetMonth'] },
           )
 
-          originalCategoryMonth.update({ activity: multiply(originalTransaction.amount, -1) })
+          originalCategoryMonth.update({ activity: originalTransaction.amount * -1 })
           await manager
             .getRepository(CategoryMonth)
             .update(originalCategoryMonth.id, originalCategoryMonth.getUpdatePayload())
@@ -441,13 +440,13 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
             const currentCCMonth = await manager
               .getCustomRepository(CategoryMonths)
               .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-            currentCCMonth.update({ activity: multiply(transaction.amount, -1) })
+            currentCCMonth.update({ activity: transaction.amount * -1 })
             await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
           }
         }
       }
     } else {
-      if (isZero(activity)) {
+      if (activity === 0) {
         return
       }
 
@@ -471,7 +470,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         const currentCCMonth = await manager
           .getCustomRepository(CategoryMonths)
           .findOrCreate(transaction.budgetId, ccCategory.id, Transaction.getMonth(transaction.date))
-        currentCCMonth.update({ activity: multiply(activity, -1) })
+        currentCCMonth.update({ activity: activity * -1 })
         await manager.getRepository(CategoryMonth).update(currentCCMonth.id, currentCCMonth.getUpdatePayload())
       }
     }
@@ -532,7 +531,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
         { categoryId: transaction.categoryId, month: formatMonthFromDateString(transaction.date) },
         { relations: ['budgetMonth'] },
       )
-      originalCategoryMonth.update({ activity: multiply(transaction.amount, -1) })
+      originalCategoryMonth.update({ activity: transaction.amount * -1 })
       await manager
         .getRepository(CategoryMonth)
         .update(originalCategoryMonth.id, originalCategoryMonth.getUpdatePayload())

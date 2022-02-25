@@ -12,10 +12,6 @@ import {
 import { Budget } from './Budget'
 import { Transaction } from './Transaction'
 import { Payee } from './Payee'
-import { Dinero } from '@dinero.js/core'
-import { dinero } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
-import { CurrencyDBTransformer } from '../models/Currency'
 
 export enum AccountTypes {
   Bank,
@@ -43,23 +39,20 @@ export class Account {
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  balance: Dinero<number> = dinero({ amount: 0, currency: USD })
+  balance: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  cleared: Dinero<number> = dinero({ amount: 0, currency: USD })
+  cleared: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  uncleared: Dinero<number> = dinero({ amount: 0, currency: USD })
+  uncleared: number = 0
 
   @Column({ type: 'int', default: 0 })
   order: number = 0
@@ -73,7 +66,7 @@ export class Account {
   /**
    * Belongs to a budget
    */
-  @ManyToOne(() => Budget, budget => budget.accounts)
+  @ManyToOne(() => Budget, budget => budget.accounts, { onDelete: 'CASCADE' })
   budget: Promise<Budget>
 
   /**
@@ -85,7 +78,7 @@ export class Account {
   /**
    * Can have one payee
    */
-  @OneToOne(() => Payee, payee => payee.transferAccount)
+  @OneToOne(() => Payee, payee => payee.transferAccount, { onDelete: 'CASCADE' })
   @JoinColumn()
   transferPayee: Promise<Payee>
 
@@ -96,9 +89,9 @@ export class Account {
       transferPayeeId: this.transferPayeeId,
       name: this.name,
       type: this.type,
-      balance: { ...this.balance },
-      cleared: { ...this.cleared },
-      uncleared: { ...this.uncleared },
+      balance: this.balance,
+      cleared: this.cleared,
+      uncleared: this.uncleared,
     }
   }
 
@@ -109,9 +102,9 @@ export class Account {
       transferPayeeId: this.transferPayeeId,
       name: this.name,
       type: this.type,
-      balance: this.balance.toJSON().amount,
-      cleared: this.cleared.toJSON().amount,
-      uncleared: this.uncleared.toJSON().amount,
+      balance: this.balance,
+      cleared: this.cleared,
+      uncleared: this.uncleared,
       order: this.order,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),

@@ -1,7 +1,17 @@
-import { Entity, OneToOne, JoinColumn, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm'
+import {
+  Entity,
+  OneToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+  ManyToOne,
+} from 'typeorm'
 import { Account } from './Account'
 import { PayeeModel } from '../models/Payee'
 import { Transaction } from './Transaction'
+import { Budget } from './Budget'
 
 @Entity('payees')
 export class Payee {
@@ -26,7 +36,10 @@ export class Payee {
   @CreateDateColumn()
   updated: Date
 
-  @OneToOne(() => Account, account => account.transferPayee)
+  @ManyToOne(() => Budget, budget => budget.id, { onDelete: 'CASCADE' })
+  budget: Promise<Budget>
+
+  @OneToOne(() => Account, account => account.transferPayee, { onDelete: 'CASCADE' })
   @JoinColumn()
   transferAccount: Promise<Account>
 
