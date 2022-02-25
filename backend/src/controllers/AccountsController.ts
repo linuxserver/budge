@@ -7,8 +7,6 @@ import { AccountResponse, AccountsResponse, CreateAccountRequest, EditAccountReq
 import { Payee } from '../entities/Payee'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
-import { USD } from '@dinero.js/currencies'
-import { dinero, isZero, subtract } from 'dinero.js'
 import { getRepository } from 'typeorm'
 
 @Tags('Accounts')
@@ -51,7 +49,6 @@ export class AccountsController extends Controller {
 
       const account: Account = getRepository(Account).create({
         ...requestBody,
-        balance: dinero({ amount: requestBody.balance, currency: USD }),
         budgetId,
       })
       await getRepository(Account).insert(account)
@@ -81,7 +78,7 @@ export class AccountsController extends Controller {
           accountId: account.id,
           payeeId: startingBalancePayee.id,
           categoryId: categoryId,
-          amount: dinero({ amount, currency: USD }),
+          amount,
           date: requestBody.date,
           memo: 'Starting Balance',
           status: TransactionStatus.Reconciled,
@@ -171,8 +168,8 @@ export class AccountsController extends Controller {
 
       if (typeof requestBody.balance === 'number') {
         // Reconcile the account
-        const difference = subtract(dinero({ amount: requestBody.balance, currency: USD }), account.cleared)
-        if (!isZero(difference)) {
+        const difference = requestBody.balance - account.cleared
+        if (difference !== 0) {
           const reconciliationPayee = await getRepository(Payee).findOne({
             budgetId,
             name: 'Reconciliation Balance Adjustment',

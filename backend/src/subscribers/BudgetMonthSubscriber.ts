@@ -12,9 +12,7 @@ import {
 import { formatMonthFromDateString, getDateFromString } from '../utils'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { Category } from '../entities/Category'
-import { add, isZero, isNegative, isPositive, subtract, equal, dinero } from 'dinero.js'
 import { CategoryMonth, CategoryMonthCache } from '../entities/CategoryMonth'
-import { USD } from '@dinero.js/currencies'
 import { CategoryMonths } from '../repositories/CategoryMonths'
 
 @EventSubscriber()
@@ -44,15 +42,15 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
 
     // Create a category month for each category in this new budget month
     for (const previousCategoryMonth of previousCategoryMonths) {
-      let prevBalance = dinero({ amount: 0, currency: USD })
-      if (isPositive(previousCategoryMonth.balance)) {
+      let prevBalance = 0
+      if (previousCategoryMonth.balance > 0) {
         prevBalance = previousCategoryMonth.balance
       } else {
         const category = await manager.findOne(Category, {
           id: previousCategoryMonth.categoryId,
         })
 
-        if (isNegative(previousCategoryMonth.balance) && category.trackingAccountId) {
+        if (previousCategoryMonth.balance < 0 && category.trackingAccountId) {
           prevBalance = previousCategoryMonth.balance
         }
       }
@@ -62,8 +60,8 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
         categoryId: previousCategoryMonth.categoryId,
         month: budgetMonth.month,
         balance: prevBalance,
-        activity: dinero({ amount: 0, currency: USD }),
-        budgeted: dinero({ amount: 0, currency: USD }),
+        activity: 0,
+        budgeted: 0,
       })
     }
   }

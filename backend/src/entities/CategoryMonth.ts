@@ -2,15 +2,11 @@ import { CategoryMonthModel } from '../models/CategoryMonth'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, AfterLoad } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
-import { Dinero } from '@dinero.js/core'
-import { add, dinero, subtract } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
-import { CurrencyDBTransformer } from '../models/Currency'
 
 export type CategoryMonthOriginalValues = {
-  budgeted: Dinero<number>
-  activity: Dinero<number>
-  balance: Dinero<number>
+  budgeted: number
+  activity: number
+  balance: number
 }
 
 export class CategoryMonthCache {
@@ -22,17 +18,17 @@ export class CategoryMonthCache {
     }
 
     return {
-      budgeted: dinero({ amount: 0, currency: USD }),
-      activity: dinero({ amount: 0, currency: USD }),
-      balance: dinero({ amount: 0, currency: USD }),
+      budgeted: 0,
+      activity: 0,
+      balance: 0,
     }
   }
 
   public static set(categoryMonth: CategoryMonth) {
     CategoryMonthCache.cache[categoryMonth.id] = {
-      budgeted: { ...categoryMonth.budgeted },
-      activity: { ...categoryMonth.activity },
-      balance: { ...categoryMonth.balance },
+      budgeted: categoryMonth.budgeted,
+      activity: categoryMonth.activity,
+      balance: categoryMonth.balance,
     }
   }
 }
@@ -57,23 +53,20 @@ export class CategoryMonth {
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  budgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
+  budgeted: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  activity: Dinero<number> = dinero({ amount: 0, currency: USD })
+  activity: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  balance: Dinero<number> = dinero({ amount: 0, currency: USD })
+  balance: number = 0
 
   @CreateDateColumn()
   created: Date
@@ -104,21 +97,21 @@ export class CategoryMonth {
       categoryId: this.categoryId,
       budgetMonthId: this.budgetMonthId,
       month: this.month,
-      budgeted: { ...this.budgeted },
-      activity: { ...this.activity },
-      balance: { ...this.balance },
+      budgeted: this.budgeted,
+      activity: this.activity,
+      balance: this.balance,
     }
   }
 
-  public update({ activity, budgeted }: { [key: string]: Dinero<number> }) {
+  public update({ activity, budgeted }: { [key: string]: number }) {
     if (activity !== undefined) {
-      this.activity = add(this.activity, activity)
-      this.balance = add(this.balance, activity)
+      this.activity = this.activity + activity
+      this.balance = this.balance + activity
     }
     if (budgeted !== undefined) {
-      const budgetedDifference = subtract(budgeted, this.budgeted)
-      this.budgeted = add(this.budgeted, budgetedDifference)
-      this.balance = add(this.balance, budgetedDifference)
+      const budgetedDifference = budgeted - this.budgeted
+      this.budgeted = this.budgeted + budgetedDifference
+      this.balance = this.balance + budgetedDifference
     }
   }
 
@@ -127,9 +120,9 @@ export class CategoryMonth {
       id: this.id,
       categoryId: this.categoryId,
       month: this.month,
-      budgeted: this.budgeted.toJSON().amount,
-      activity: this.activity.toJSON().amount,
-      balance: this.balance.toJSON().amount,
+      budgeted: this.budgeted,
+      activity: this.activity,
+      balance: this.balance,
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),
     }

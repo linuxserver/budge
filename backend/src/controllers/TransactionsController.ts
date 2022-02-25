@@ -11,8 +11,6 @@ import {
   TransactionsRequest,
   TransactionsResponse,
 } from '../models/Transaction'
-import { dinero } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
 import { getManager, getRepository, In } from 'typeorm'
 
 @Tags('Budgets')
@@ -56,7 +54,6 @@ export class TransactionsController extends Controller {
         const transaction = transactionalEntityManager.getRepository(Transaction).create({
           budgetId,
           ...requestBody,
-          amount: dinero({ amount: requestBody.amount, currency: USD }),
           date: new Date(requestBody.date),
         })
         TransactionCache.enableTransfers(transaction.id)
@@ -115,7 +112,6 @@ export class TransactionsController extends Controller {
         return getRepository(Transaction).create({
           budgetId,
           ...transaction,
-          amount: dinero({ amount: transaction.amount, currency: USD }),
           date: new Date(transaction.date),
         })
       })
@@ -180,7 +176,6 @@ export class TransactionsController extends Controller {
           .findOne(transactionId, { relations: ['account'] })
         transaction.update({
           ...requestBody,
-          amount: dinero({ amount: requestBody.amount, currency: USD }),
           ...(requestBody.date && { date: new Date(requestBody.date) }), // @TODO: this is hacky and I don't like it, but the update keeps date as a string and breaks the sanitize function
         })
         TransactionCache.enableTransfers(transaction.id)

@@ -3,7 +3,6 @@ import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent,
 import { formatMonthFromDateString, getDateFromString } from '../utils'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { Category } from '../entities/Category'
-import { add, isZero, isNegative, isPositive, subtract, equal } from 'dinero.js'
 import { CategoryMonth, CategoryMonthCache } from '../entities/CategoryMonth'
 import { CategoryMonths } from '../repositories/CategoryMonths'
 
@@ -30,13 +29,13 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
       id: event.entity.categoryId,
     })
 
-    if (prevCategoryMonth && (category.trackingAccountId || isPositive(prevCategoryMonth.balance))) {
-      categoryMonth.balance = add(prevCategoryMonth.balance, add(categoryMonth.budgeted, categoryMonth.activity))
+    if (prevCategoryMonth && (category.trackingAccountId || prevCategoryMonth.balance > 0)) {
+      categoryMonth.balance = prevCategoryMonth.balance + categoryMonth.budgeted + categoryMonth.activity
     }
   }
 
   async afterInsert(event: InsertEvent<CategoryMonth>) {
-    if (isZero(event.entity.balance)) {
+    if (event.entity.balance === 0) {
       return
     }
 
@@ -61,38 +60,38 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     // Update budget month activity and and budgeted
     const budgetMonth = await manager.findOne(BudgetMonth, categoryMonth.budgetMonthId)
 
-    budgetMonth.budgeted = add(budgetMonth.budgeted, subtract(categoryMonth.budgeted, originalCategoryMonth.budgeted))
+    budgetMonth.budgeted = budgetMonth.budgeted + (categoryMonth.budgeted - originalCategoryMonth.budgeted)
 
     if (category.inflow === false && category.trackingAccountId === null) {
       // Don't update budget month activity for CC transactions. These are 'inverse' transactions of other
       // category transactions, so this would 'negate' them.
-      budgetMonth.activity = add(budgetMonth.activity, subtract(categoryMonth.activity, originalCategoryMonth.activity))
+      budgetMonth.activity = budgetMonth.activity + (categoryMonth.activity - originalCategoryMonth.activity)
     }
 
-    const budgetedDifference = subtract(originalCategoryMonth.budgeted, categoryMonth.budgeted)
-    const activityDifference = subtract(categoryMonth.activity, originalCategoryMonth.activity)
-    if (!isZero(budgetedDifference) || !isZero(activityDifference)) {
+    const budgetedDifference = originalCategoryMonth.budgeted - categoryMonth.budgeted
+    const activityDifference = categoryMonth.activity - originalCategoryMonth.activity
+    if (budgetedDifference !== 0 || activityDifference !== 0) {
       const budget = await manager.findOne(Budget, budgetMonth.budgetId)
-      budget.toBeBudgeted = add(budget.toBeBudgeted, budgetedDifference)
+      budget.toBeBudgeted = budget.toBeBudgeted + budgetedDifference
 
       if (category.inflow) {
-        budget.toBeBudgeted = add(budget.toBeBudgeted, activityDifference)
+        budget.toBeBudgeted = budget.toBeBudgeted + activityDifference
       }
 
       await manager.update(Budget, budget.id, budget.getUpdatePayload())
     }
 
     if (category.inflow) {
-      budgetMonth.income = add(budgetMonth.income, subtract(categoryMonth.activity, originalCategoryMonth.activity))
+      budgetMonth.income = budgetMonth.income + (categoryMonth.activity - originalCategoryMonth.activity)
     }
 
     // Underfunded only counts for non-CC accounts as a negative CC value could mean cash bach for that month
     if (!category.trackingAccountId) {
-      if (isNegative(originalCategoryMonth.balance)) {
-        budgetMonth.underfunded = add(budgetMonth.underfunded, originalCategoryMonth.balance)
+      if (originalCategoryMonth.balance < 0) {
+        budgetMonth.underfunded = budgetMonth.underfunded + originalCategoryMonth.balance
       }
-      if (isNegative(categoryMonth.balance)) {
-        budgetMonth.underfunded = subtract(budgetMonth.underfunded, categoryMonth.balance)
+      if (categoryMonth.balance < 0) {
+        budgetMonth.underfunded = budgetMonth.underfunded - categoryMonth.balance
       }
     }
 
@@ -113,15 +112,12 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
       .getCustomRepository(CategoryMonths)
       .findOrCreate(nextBudgetMonth.budgetId, categoryMonth.categoryId, nextBudgetMonth.month)
 
-    if (isPositive(categoryMonth.balance) || category.trackingAccountId) {
-      nextCategoryMonth.balance = add(
-        categoryMonth.balance,
-        add(nextCategoryMonth.budgeted, nextCategoryMonth.activity),
-      )
+    if (categoryMonth.balance > 0 || category.trackingAccountId) {
+      nextCategoryMonth.balance = categoryMonth.balance + nextCategoryMonth.budgeted + nextCategoryMonth.activity
     } else {
       // If the next month's balance already matched it's activity, no need to keep cascading
-      const calculatedNextMonth = add(nextCategoryMonth.budgeted, nextCategoryMonth.activity)
-      if (equal(nextCategoryMonth.balance, calculatedNextMonth)) {
+      const calculatedNextMonth = nextCategoryMonth.budgeted + nextCategoryMonth.activity
+      if (nextCategoryMonth.balance === calculatedNextMonth) {
         return
       }
 
