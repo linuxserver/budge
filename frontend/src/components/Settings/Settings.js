@@ -6,6 +6,7 @@ import Tab from '@mui/material/Tab'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Account from './Account'
+import Budget from './Budget'
 import Backdrop from '@mui/material/Backdrop'
 import { useSelector, useDispatch } from 'react-redux'
 
@@ -49,6 +50,11 @@ export default function Settings({ open, close }) {
         email: email,
       },
     },
+    {
+      name: 'Budget',
+      Component: Budget,
+      props: {},
+    },
   ]
 
   const handleChange = (event, newValue) => {
@@ -68,7 +74,8 @@ export default function Settings({ open, close }) {
             height: 400,
             bgcolor: 'background.paper',
             boxShadow: 24,
-            p: 4,
+            px: 2,
+            pb: 2,
           }}
         >
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

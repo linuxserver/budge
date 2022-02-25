@@ -4,7 +4,7 @@ import { selectActiveBudget, setCurrentMonth } from '../../redux/slices/Budgets'
 import IconButton from '@mui/material/IconButton'
 import { formatMonthFromDateString, getDateFromString } from '../../utils/Date'
 import { isZero } from 'dinero.js'
-import { getBalanceColor, inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
+import { getBalanceColor, Currency } from '../../utils/Currency'
 import BudgetMonthPicker from '../BudgetMonthPicker'
 import Button from '@mui/material/Button'
 import { useTheme } from '@mui/styles'
@@ -33,7 +33,7 @@ export default function BudgetTableHeader(props) {
   const availableMonths = useSelector(state => state.budgets.availableMonths)
   const budget = useSelector(selectActiveBudget)
 
-  const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
+  const toBeBudgeted = budget ? Currency.valueToDinero(budget.toBeBudgeted) : Currency.inputToDinero(0)
 
   const isToday = month === formatMonthFromDateString(new Date())
 
@@ -55,7 +55,7 @@ export default function BudgetTableHeader(props) {
               p: 1,
             }}
           />
-          <CardContent sx={{ p: '10px !important' }}>{intlFormat(toBeBudgeted)}</CardContent>
+          <CardContent sx={{ p: '10px !important' }}>{Currency.intlFormat(toBeBudgeted)}</CardContent>
         </Card> */}
 
         <Paper sx={{ p: 2, mx: 2 }}>
@@ -80,7 +80,7 @@ export default function BudgetTableHeader(props) {
                   color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
                 }}
               >
-                {intlFormat(toBeBudgeted)}
+                {Currency.intlFormat(toBeBudgeted)}
               </Typography>
             </Box>
           </Stack>

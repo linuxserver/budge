@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import { useSelector, useDispatch } from 'react-redux'
-import { FromAPI, intlFormat, inputToDinero } from '../utils/Currency'
+import { FromAPI, Currency } from '../utils/Currency'
 import { useTheme } from '@mui/styles'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
@@ -96,7 +96,7 @@ export default function BudgetDetails({ accountId, name }) {
 
       return vals
     },
-    [inputToDinero(0), inputToDinero(0), 0],
+    [Currency.inputToDinero(0), Currency.inputToDinero(0), 0],
   )
 
   return (
@@ -197,12 +197,12 @@ export default function BudgetDetails({ accountId, name }) {
 
                 <TableRow>
                   <TableCell>Income</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(income)}</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{Currency.intlFormat(income)}</TableCell>
                 </TableRow>
 
                 <TableRow>
                   <TableCell>Activity</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(activity)}</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{Currency.intlFormat(activity)}</TableCell>
                 </TableRow>
               </Table>
             </TableContainer>

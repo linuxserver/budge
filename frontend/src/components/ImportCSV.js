@@ -21,7 +21,7 @@ import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
 import CircularProgress from '@mui/material/CircularProgress'
-import { FromAPI, inputToDinero, intlFormat } from '../utils/Currency'
+import { FromAPI, Currency } from '../utils/Currency'
 import {
   fetchAccounts,
   createTransaction,
@@ -120,16 +120,16 @@ export default function ImportCSV({ accountId, open, close }) {
           case 'Ignore':
             break
           case 'Amount':
-            newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.]/, '')))
+            newTransaction.amount = Currency.inputToDinero(parseFloat(value.replace(/[^0-9\.]/, '')))
             break
           case 'Inflow':
             if (parseFloat(value) !== 0) {
-              newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.]/, '')))
+              newTransaction.amount = Currency.inputToDinero(parseFloat(value.replace(/[^0-9\.]/, '')))
             }
             break
           case 'Outflow':
             if (parseFloat(value) !== 0) {
-              newTransaction.amount = multiply(inputToDinero(parseFloat(value.replace(/[^0-9\.]/, ''))), -1)
+              newTransaction.amount = multiply(Currency.inputToDinero(parseFloat(value.replace(/[^0-9\.]/, ''))), -1)
             }
             break
           case 'Memo':

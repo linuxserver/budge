@@ -11,7 +11,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import Collapse from '@mui/material/Collapse'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
+import { Currency } from '../utils/Currency'
 import LogoutIcon from '@mui/icons-material/Logout'
 import api from '../api'
 import { add, isNegative } from 'dinero.js'
@@ -201,7 +201,7 @@ export default function AppDrawer(props) {
   }
 
   const AccountItem = account => {
-    const balance = valueToDinero(account.balance)
+    const balance = Currency.valueToDinero(account.balance)
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
     return (
       <ListItem
@@ -236,7 +236,7 @@ export default function AppDrawer(props) {
         {drawerOpen === true && (
           <ListItemText
             primary={account.name}
-            secondary={<Box sx={{ color: balanceColor }}>{intlFormat(balance)}</Box>}
+            secondary={<Box sx={{ color: balanceColor }}>{Currency.intlFormat(balance)}</Box>}
             primaryTypographyProps={{
               style: {
                 fontWeight: 'bold',

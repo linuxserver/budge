@@ -10,7 +10,7 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import { intlFormat, FromAPI } from '../utils/Currency'
+import { Currency, FromAPI } from '../utils/Currency'
 import { formatMonthFromDateString } from '../utils/Date'
 import { useTheme } from '@mui/styles'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
@@ -84,7 +84,7 @@ export default function CategoryMonthActivity(props) {
                     </TableCell>
                   </Tooltip>
                   <TableCell>{payees[transaction.payeeId].name}</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{intlFormat(transaction.amount)}</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>{Currency.intlFormat(transaction.amount)}</TableCell>
                 </TableRow>
               )
             })}

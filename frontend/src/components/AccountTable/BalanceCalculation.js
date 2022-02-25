@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { accountsSelectors, editAccount } from '../../redux/slices/Accounts'
-import { FromAPI, getBalanceColor, intlFormat } from '../../utils/Currency'
+import { FromAPI, getBalanceColor, Currency } from '../../utils/Currency'
 import { usePopupState } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
@@ -28,7 +28,7 @@ export default function BalanceCalculation({ account }) {
             }}
             variant="subtitle1"
           >
-            {intlFormat(account.cleared)}
+            {Currency.intlFormat(account.cleared)}
           </Typography>
           <Typography
             variant="caption"
@@ -63,7 +63,7 @@ export default function BalanceCalculation({ account }) {
             }}
             variant="subtitle1"
           >
-            {intlFormat(account.uncleared)}
+            {Currency.intlFormat(account.uncleared)}
           </Typography>
           <Typography
             variant="caption"
@@ -98,7 +98,7 @@ export default function BalanceCalculation({ account }) {
             }}
             variant="subtitle1"
           >
-            {intlFormat(account.balance)}
+            {Currency.intlFormat(account.balance)}
           </Typography>
           <Typography
             variant="caption"

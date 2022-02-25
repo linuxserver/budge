@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { accountsSelectors, editAccount } from '../../redux/slices/Accounts'
 import TextField from '@mui/material/TextField'
-import { FromAPI, getBalanceColor, intlFormat } from '../../utils/Currency'
+import { FromAPI, getBalanceColor, Currency } from '../../utils/Currency'
 import Button from '@mui/material/Button'
 import Popover from '@mui/material/Popover'
 import { usePopupState, bindTrigger, bindPopover } from 'material-ui-popup-state/hooks'
@@ -99,7 +99,7 @@ export default function AccountTableHeader({ accountId, name }) {
                 }}
                 variant="h6"
               >
-                {intlFormat(account.cleared)}
+                {Currency.intlFormat(account.cleared)}
               </Typography>
               <Typography
                 variant="caption"
@@ -136,7 +136,7 @@ export default function AccountTableHeader({ accountId, name }) {
                 }}
                 variant="h6"
               >
-                {intlFormat(account.uncleared)}
+                {Currency.intlFormat(account.uncleared)}
               </Typography>
               <Typography
                 variant="caption"
@@ -173,7 +173,7 @@ export default function AccountTableHeader({ accountId, name }) {
                 }}
                 variant="h6"
               >
-                {intlFormat(account.balance)}
+                {Currency.intlFormat(account.balance)}
               </Typography>
               <Typography
                 variant="caption"

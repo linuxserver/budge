@@ -31,7 +31,7 @@ import IconButton from '@mui/material/IconButton'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
-import { FromAPI, inputToDinero, intlFormat } from '../../utils/Currency'
+import { FromAPI, Currency } from '../../utils/Currency'
 import { dinero, toUnit, isPositive, greaterThan } from 'dinero.js'
 import { toSnapshot } from '@dinero.js/core'
 import Tooltip from '@mui/material/Tooltip'
@@ -367,14 +367,14 @@ export default function Account(props) {
       // type: 'currency',
       align: 'right',
       customSort: (a, b) => (greaterThan(a.amount, b.amount) ? -1 : 1),
-      initialEditValue: toSnapshot(inputToDinero(0)),
+      initialEditValue: toSnapshot(Currency.inputToDinero(0)),
       render: rowData => {
         const color = isPositive(rowData.amount) ? 'success' : 'error'
         return (
           <Typography
             sx={{ fontWeight: 'bold', fontSize: theme.typography.subtitle2.fontSize, color: theme.palette[color].main }}
           >
-            {intlFormat(rowData.amount)}
+            {Currency.intlFormat(rowData.amount)}
           </Typography>
         )
       },
@@ -387,7 +387,7 @@ export default function Account(props) {
               variant="standard"
               value={toUnit(value, { digits: 2 })}
               onChange={value => {
-                props.onChange(toSnapshot(inputToDinero(value)))
+                props.onChange(toSnapshot(Currency.inputToDinero(value)))
               }}
               // onFocus={focusOutflowField}
             />
@@ -395,7 +395,7 @@ export default function Account(props) {
         )
       },
       customExport: rowData => {
-        return intlFormat(rowData.amount)
+        return Currency.intlFormat(rowData.amount)
       },
     },
     {

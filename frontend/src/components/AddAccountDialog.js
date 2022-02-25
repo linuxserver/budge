@@ -10,7 +10,7 @@ import { useDispatch } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem'
 import { fetchCategories } from '../redux/slices/CategoryGroups'
 import { refreshBudget } from '../redux/slices/Budgets'
-import { inputToDinero } from '../utils/Currency'
+import { Currency } from '../utils/Currency'
 
 const accountTypes = ['Bank', 'Credit Card', 'Off Budget Account']
 
@@ -35,7 +35,7 @@ export default function AddAccountDialog(props) {
       createAccount({
         name,
         accountType,
-        balance: inputToDinero(balance),
+        balance: Currency.inputToDinero(balance),
         date: new Date(),
       }),
     )
