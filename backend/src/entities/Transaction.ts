@@ -14,10 +14,6 @@ import { Category } from './Category'
 import { formatMonthFromDateString } from '../utils'
 import { Budget } from './Budget'
 import { Payee } from './Payee'
-import { Dinero } from '@dinero.js/core'
-import { dinero } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
-import { CurrencyDBTransformer } from '../models/Currency'
 
 export enum TransactionStatus {
   Pending,
@@ -28,7 +24,7 @@ export enum TransactionStatus {
 export type TransactionOriginalValues = {
   payeeId: string
   categoryId: string
-  amount: Dinero<number>
+  amount: number
   date: Date
   status: TransactionStatus
 }
@@ -50,7 +46,7 @@ export class TransactionCache {
     TransactionCache.cache[transaction.id] = {
       payeeId: transaction.payeeId,
       categoryId: transaction.categoryId,
-      amount: { ...transaction.amount },
+      amount: transaction.amount,
       date: new Date(transaction.date.getTime()),
       status: transaction.status,
     }
@@ -107,9 +103,8 @@ export class Transaction {
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  amount: Dinero<number> = dinero({ amount: 0, currency: USD })
+  amount: number = 0
 
   @Column({ type: 'datetime' })
   date: Date
@@ -181,7 +176,7 @@ export class Transaction {
       id: this.id,
       accountId: this.accountId,
       payeeId: this.payeeId,
-      amount: this.amount.toJSON().amount,
+      amount: this.amount,
       date: this.date.toISOString(),
       memo: this.memo,
       categoryId: this.categoryId,

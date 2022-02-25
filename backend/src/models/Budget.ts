@@ -44,6 +44,7 @@ export interface BudgetModel {
 /**
  * @example {
  *  "name": "My Budget",
+ *  "currency": "USD",
  * }
  */
 export interface BudgetRequest {

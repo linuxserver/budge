@@ -1,15 +1,11 @@
 import { BudgetModel } from '../models/Budget'
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, DeepPartial } from 'typeorm'
 import { User } from './User'
 import { Account } from './Account'
 import { CategoryGroup } from './CategoryGroup'
 import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
-import { Dinero } from '@dinero.js/core'
-import { dinero } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
-import { CurrencyDBTransformer } from '../models/Currency'
 
 @Entity('budgets')
 export class Budget {
@@ -25,9 +21,8 @@ export class Budget {
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  toBeBudgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
+  toBeBudgeted: number = 0
 
   @CreateDateColumn()
   created: Date
@@ -71,12 +66,17 @@ export class Budget {
   @OneToMany(() => Transaction, transaction => transaction.budget)
   transactions: Promise<Transaction[]>
 
+  public update(partial: DeepPartial<Budget>): Budget {
+    Object.assign(this, partial)
+    return this
+  }
+
   public getUpdatePayload() {
     return {
       id: this.id,
       userId: this.userId,
       name: this.name,
-      toBeBudgeted: { ...this.toBeBudgeted },
+      toBeBudgeted: this.toBeBudgeted || 0,
     }
   }
 
@@ -84,7 +84,7 @@ export class Budget {
     return {
       id: this.id,
       name: this.name,
-      toBeBudgeted: this.toBeBudgeted.toJSON().amount,
+      toBeBudgeted: this.toBeBudgeted,
       accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
       created: this.created.toISOString(),
       updated: this.updated.toISOString(),

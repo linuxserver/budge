@@ -2,10 +2,6 @@ import { BudgetMonthModel } from '../models/BudgetMonth'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, OneToMany } from 'typeorm'
 import { Budget } from './Budget'
 import { CategoryMonth } from './CategoryMonth'
-import { Dinero } from '@dinero.js/core'
-import { dinero } from 'dinero.js'
-import { USD } from '@dinero.js/currencies'
-import { CurrencyDBTransformer } from '../models/Currency'
 
 @Entity('budget_months')
 export class BudgetMonth {
@@ -23,30 +19,26 @@ export class BudgetMonth {
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  income: Dinero<number> = dinero({ amount: 0, currency: USD })
+  income: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  budgeted: Dinero<number> = dinero({ amount: 0, currency: USD })
+  budgeted: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  activity: Dinero<number> = dinero({ amount: 0, currency: USD })
+  activity: number = 0
 
   @Column({
     type: 'int',
     default: 0,
-    transformer: new CurrencyDBTransformer(),
   })
-  underfunded: Dinero<number> = dinero({ amount: 0, currency: USD })
+  underfunded: number = 0
 
   @CreateDateColumn()
   created: Date
@@ -71,10 +63,10 @@ export class BudgetMonth {
       id: this.id,
       budgetId: this.budgetId,
       month: this.month,
-      income: { ...this.income },
-      budgeted: { ...this.budgeted },
-      activity: { ...this.activity },
-      underfunded: { ...this.underfunded },
+      income: this.income,
+      budgeted: this.budgeted,
+      activity: this.activity,
+      underfunded: this.underfunded,
     }
   }
 
@@ -83,10 +75,10 @@ export class BudgetMonth {
       id: this.id,
       budgetId: this.budgetId,
       month: this.month,
-      income: this.income.toJSON().amount,
-      budgeted: this.budgeted.toJSON().amount,
-      activity: this.activity.toJSON().amount,
-      underfunded: this.underfunded.toJSON().amount,
+      income: this.income,
+      budgeted: this.budgeted,
+      activity: this.activity,
+      underfunded: this.underfunded,
       created: this.created ? this.created.toISOString() : new Date().toISOString(),
       updated: this.updated ? this.updated.toISOString() : new Date().toISOString(),
     }

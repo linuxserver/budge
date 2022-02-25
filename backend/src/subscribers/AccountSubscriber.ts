@@ -3,7 +3,6 @@ import { CategoryGroup, CreditCardGroupName } from '../entities/CategoryGroup'
 import { Category } from '../entities/Category'
 import { Payee } from '../entities/Payee'
 import { Account, AccountTypes } from '../entities/Account'
-import { add } from 'dinero.js'
 
 @EventSubscriber()
 export class AccountSubscriber implements EntitySubscriberInterface<Account> {
@@ -65,6 +64,6 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
   async beforeUpdate(event: UpdateEvent<Account>) {
     const account = event.entity
 
-    account.balance = add(account.cleared, account.uncleared)
+    account.balance = account.cleared + account.uncleared
   }
 }
