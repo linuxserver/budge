@@ -4,7 +4,7 @@ import { User } from '../entities/User'
 import config from '../config'
 import { logger } from '../config/winston'
 import { getRepository } from 'typeorm'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 export async function expressAuthentication(
   request: Request,

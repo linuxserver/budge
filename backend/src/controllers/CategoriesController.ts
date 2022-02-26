@@ -11,7 +11,7 @@ import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } f
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')

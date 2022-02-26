@@ -2,7 +2,7 @@ import { BudgetMonthModel } from '../models/BudgetMonth'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, OneToMany } from 'typeorm'
 import { Budget } from './Budget'
 import { CategoryMonth } from './CategoryMonth'
-import prisma from '../database'
+import {prisma} from '../prisma'
 import { DateTime } from 'luxon'
 import { formatMonthFromDateString } from '../utils'
 

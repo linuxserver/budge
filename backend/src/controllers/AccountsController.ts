@@ -8,7 +8,7 @@ import { Payee } from '../entities/Payee'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
 import { Category } from '../entities/Category'
 import { getRepository } from 'typeorm'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')

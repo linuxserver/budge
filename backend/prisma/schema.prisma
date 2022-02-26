@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                                        String        @id @default(uuid())
+  budgetId                                  String
+  transferPayeeId                           String?       @unique(map: "sqlite_autoindex_accounts_2")
+  name                                      String
+  type                                      Int
+  balance                                   Int           @default(0)
+  cleared                                   Int           @default(0)
+  uncleared                                 Int           @default(0)
+  order                                     Int           @default(0)
+  created                                   DateTime      @default(now())
+  updated                                   DateTime      @updatedAt
+  budget                                    Budget        @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transferPayee   Payee?        @relation("accounts_transferPayeeIdTopayees", fields: [transferPayeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payees_accountsTopayees_transferAccountId Payee?        @relation("accountsTopayees_transferAccountId")
+  transactions                              Transaction[]
+}
+
+model BudgetMonth {
+  id             String          @id @default(uuid())
+  budgetId       String
+  month          String
+  income         Int             @default(0)
+  budgeted       Int             @default(0)
+  activity       Int             @default(0)
+  underfunded    Int             @default(0)
+  created        DateTime        @default(now())
+  updated        DateTime        @updatedAt
+  budget         Budget          @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoryMonths CategoryMonth[]
+
+  @@index([month], map: "IDX_0c21df54422306fdf78621fc18")
+  @@index([budgetId], map: "IDX_398c07457719d1899ba4f11914")
+}
+
+model Budget {
+  id             String          @id @default(uuid())
+  userId         String
+  name           String
+  toBeBudgeted   Int             @default(0)
+  created        DateTime        @default(now())
+  updated        DateTime        @updatedAt
+  users          User            @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  accounts       Account[]
+  budgetMonths   BudgetMonth[]
+  categories     Category[]
+  categoryGroups CategoryGroup[]
+  transactions   Transaction[]
+  Payee          Payee[]
+}
+
+model Category {
+  id                String          @id @default(uuid())
+  budgetId          String
+  categoryGroupId   String
+  trackingAccountId String?         @unique(map: "IDX_af173d6048d44da16b00e49e24")
+  name              String
+  inflow            Boolean         @default(false)
+  locked            Boolean         @default(false)
+  order             Int             @default(0)
+  created           DateTime        @default(now())
+  updated           DateTime        @updatedAt
+  budget            Budget          @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoryGroup     CategoryGroup   @relation(fields: [categoryGroupId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoryMonths    CategoryMonth[]
+  transactions      Transaction[]
+
+  @@index([budgetId], map: "IDX_e6d5be2f8c1fbd283150e043a0")
+}
+
+model CategoryGroup {
+  id         String     @id @default(uuid())
+  budgetId   String
+  name       String
+  internal   Boolean    @default(false)
+  locked     Boolean    @default(false)
+  order      Int        @default(0)
+  created    DateTime   @default(now())
+  updated    DateTime   @updatedAt
+  budget     Budget     @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categories Category[]
+
+  @@index([budgetId], map: "IDX_0dcceebef7c019bc892be7b5d0")
+}
+
+model CategoryMonth {
+  id            String      @id @default(uuid())
+  categoryId    String
+  budgetMonthId String
+  month         String
+  budgeted      Int         @default(0)
+  activity      Int         @default(0)
+  balance       Int         @default(0)
+  created       DateTime    @default(now())
+  updated       DateTime    @updatedAt
+  budgetMonth   BudgetMonth @relation(fields: [budgetMonthId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([month], map: "IDX_23f4c8894717fb764a2b88ff29")
+  @@index([budgetMonthId], map: "IDX_de0f1ed5fe7ad4f2254bb815be")
+  @@index([categoryId], map: "IDX_cba488e36ca6ff6eec83e91440")
+}
+
+model Payee {
+  id                                          String        @id @default(uuid())
+  budgetId                                    String
+  transferAccountId                           String?       @unique(map: "sqlite_autoindex_payees_2")
+  name                                        String
+  internal                                    Boolean       @default(false)
+  created                                     DateTime      @default(now())
+  updated                                     DateTime      @updatedAt
+  budget                                      Budget        @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transferAccount Account?      @relation("accountsTopayees_transferAccountId", fields: [transferAccountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  accounts_accounts_transferPayeeIdTopayees   Account?      @relation("accounts_transferPayeeIdTopayees")
+  transactions                                Transaction[]
+}
+
+model Transaction {
+  id                    String    @id @default(uuid())
+  budgetId              String
+  accountId             String
+  payeeId               String
+  transferAccountId     String?
+  transferTransactionId String?
+  categoryId            String?
+  amount                Int       @default(0)
+  date                  DateTime
+  memo                  String    @default("")
+  status                Int       @default(0)
+  created               DateTime  @default(now())
+  updated               DateTime  @updatedAt
+  account               Account   @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  budget                Budget    @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category              Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payee                 Payee     @relation(fields: [payeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([transferTransactionId], map: "IDX_7098ffeb5373b7d6344f4f1663")
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique(map: "IDX_97672ac88f789774dd47f7c8be")
+  password String
+  created  DateTime @default(now())
+  updated  DateTime @updatedAt
+  budgets  Budget[]
+}

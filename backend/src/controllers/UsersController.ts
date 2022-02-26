@@ -4,7 +4,7 @@ import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getManager, getRepository } from 'typeorm'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 @Tags('Users')
 @Route('users')
@@ -33,13 +33,16 @@ export class UsersController extends Controller {
 
     try {
       requestBody.password = User.hashPassword(requestBody.password)
+      console.log(requestBody)
       const newUser = await prisma.user.create({ data: requestBody })
+      console.log(newUser)
 
       return {
         message: 'success',
         data: newUser,
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }

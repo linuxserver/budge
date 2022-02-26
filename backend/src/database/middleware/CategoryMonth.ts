@@ -1,15 +1,15 @@
 import { CreditCardGroupName } from '../../entities/CategoryGroup'
 import { AccountTypes } from '../../entities/Account'
-import { prisma } from '../prisma'
 import { getDateFromString, formatMonthFromDateString } from '../../utils'
 import { CategoryMonthCache } from '../../entities/CategoryMonth'
 import { CategoryMonth } from '../../entities/CategoryMonth'
+import { PrismaClient } from '@prisma/client'
 
 export default class CategoryMonthMiddleware {
   /**
    * Get the previous month's 'balance' as this will be the 'carry over' amount for this new month
    */
-  public static async beforeInsert(categoryMonth: any) {
+  public static async beforeInsert(categoryMonth: any, prisma: PrismaClient) {
     const prevMonth = getDateFromString(categoryMonth.month).minus({ month: 1 })
     const prevCategoryMonth = await prisma.categoryMonth.findFirst({
       where: {
@@ -35,7 +35,7 @@ export default class CategoryMonthMiddleware {
    * Cascade the new assigned and activity amounts up into the parent budget month for new totals.
    * Also, cascade the new balance of this month into the next month to update the carry-over amount.
    */
-  public static async bookkeeping(categoryMonth: any) {
+  public static async bookkeeping(categoryMonth: any, prisma: PrismaClient) {
     const category = await prisma.category.findUnique({ where: { id: categoryMonth.categoryId } })
     const originalCategoryMonth = CategoryMonthCache.get(categoryMonth.id)
 

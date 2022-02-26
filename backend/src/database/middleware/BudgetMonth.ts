@@ -1,8 +1,8 @@
+import { PrismaClient } from '@prisma/client'
 import { getDateFromString, formatMonthFromDateString } from '../../utils'
-import { prisma } from '../prisma'
 
 export default class BudgetMonthMiddleware {
-  public static async afterInsert(budgetMonth: any) {
+  public static async afterInsert(budgetMonth: any, prisma: PrismaClient) {
     const prevMonth = getDateFromString(budgetMonth.month).minus({ month: 1 })
 
     const prevBudgetMonth = await prisma.budgetMonth.findFirst({

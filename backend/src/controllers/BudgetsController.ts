@@ -9,7 +9,7 @@ import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../mode
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { BudgetMonths } from '../repositories/BudgetMonths'
 import { getMonthStringFromNow } from '../utils'
-import prisma from '../database'
+import {prisma} from '../prisma'
 import { CategoryMonth } from '../entities/CategoryMonth'
 
 @Tags('Budgets')

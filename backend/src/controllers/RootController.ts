@@ -4,7 +4,7 @@ import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getRepository } from 'typeorm'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 @Route()
 export class RootController extends Controller {

@@ -1,11 +1,11 @@
 import { formatMonthFromDateString } from '../../utils'
 import { CategoryMonth } from '../../entities/CategoryMonth'
-import { prisma } from '../prisma'
 import { AccountTypes } from '../../entities/Account'
 import { TransactionStatus, TransactionCache } from '../../entities/Transaction'
+import { PrismaClient } from '@prisma/client'
 
 export default class TransactionMiddleware {
-  public static async beforeDelete(transaction: any) {
+  public static async beforeDelete(transaction: any, prisma: PrismaClient) {
     if (transaction.transferTransactionId === null) {
       return
     }
@@ -18,7 +18,7 @@ export default class TransactionMiddleware {
     await prisma.transaction.delete({ where: { id: transferTransaction.id } })
   }
 
-  public static async checkCreateTransferTransaction(transaction: any) {
+  public static async checkCreateTransferTransaction(transaction: any, prisma: PrismaClient) {
     // This is only called on INSERT. If the id is null AND the transferAccountId is null,
     // then this is the 'origin' transfer transaction
     if (transaction.transferAccountId) {
@@ -35,7 +35,7 @@ export default class TransactionMiddleware {
     transaction.transferTransactionId = '0'
   }
 
-  public static async createCategoryMonth(transaction: any) {
+  public static async createCategoryMonth(transaction: any, prisma: PrismaClient) {
     if (transaction.categoryId) {
       // First, ensure category month exists
       await CategoryMonth.findOrCreate(
@@ -59,7 +59,7 @@ export default class TransactionMiddleware {
     }
   }
 
-  public static async updateTransferTransaction(transaction: any) {
+  public static async updateTransferTransaction(transaction: any, prisma: PrismaClient) {
     if (!TransactionCache.transfersEnabled(transaction.id)) {
       return
     }
@@ -131,7 +131,7 @@ export default class TransactionMiddleware {
     }
   }
 
-  public static async updateAccountBalanceOnUpdate(transaction: any) {
+  public static async updateAccountBalanceOnUpdate(transaction: any, prisma: PrismaClient) {
     const originalTransaction = TransactionCache.get(transaction.id)
     if (transaction.amount === originalTransaction.amount && transaction.status === originalTransaction.status) {
       // amount and status hasn't changed, no balance update necessary
@@ -166,7 +166,7 @@ export default class TransactionMiddleware {
     await prisma.account.update({ where: { id: account.id }, data: account })
   }
 
-  public static async bookkeepingOnUpdate(transaction: any) {
+  public static async bookkeepingOnUpdate(transaction: any, prisma: PrismaClient) {
     const account = await prisma.account.findUnique({ where: { id: transaction.accountId } })
 
     // No bookkeeping necessary for tracking accounts
@@ -329,7 +329,7 @@ export default class TransactionMiddleware {
     }
   }
 
-  public static async updateAccountBalanceOnAdd(transaction: any) {
+  public static async updateAccountBalanceOnAdd(transaction: any, prisma: PrismaClient) {
     const account = await prisma.account.findUnique({ where: { id: transaction.accountId } })
 
     switch (transaction.status) {
@@ -346,7 +346,7 @@ export default class TransactionMiddleware {
     await prisma.account.update({ where: { id: account.id }, data: account })
   }
 
-  public static async bookkeepingOnAdd(transaction: any) {
+  public static async bookkeepingOnAdd(transaction: any, prisma: PrismaClient) {
     const account = await prisma.account.findUnique({ where: { id: transaction.accountId } })
 
     // No bookkeeping necessary for tracking accounts
@@ -409,7 +409,7 @@ export default class TransactionMiddleware {
     }
   }
 
-  public static async createTransferTransaction(transaction: any) {
+  public static async createTransferTransaction(transaction: any, prisma: PrismaClient) {
     if (transaction.transferTransactionId !== '0') {
       return
     }
@@ -443,7 +443,7 @@ export default class TransactionMiddleware {
     })
   }
 
-  public static async updateAccountBalanceOnRemove(transaction: any) {
+  public static async updateAccountBalanceOnRemove(transaction: any, prisma: PrismaClient) {
     // First, 'undo' the original amount / status then add in new. Easier than a bunch of if statements
     const account = await prisma.account.findUnique({ where: { id: transaction.accountId } })
 
@@ -461,7 +461,7 @@ export default class TransactionMiddleware {
     await prisma.account.update({ where: { id: account.id }, data: account })
   }
 
-  public static async bookkeepingOnDelete(transaction: any) {
+  public static async bookkeepingOnDelete(transaction: any, prisma: PrismaClient) {
     const account = await prisma.account.findUnique({ where: { id: transaction.accountId } })
 
     // No bookkeeping necessary for tracking accounts

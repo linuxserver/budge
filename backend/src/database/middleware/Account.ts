@@ -1,9 +1,9 @@
 import { CreditCardGroupName } from '../../entities/CategoryGroup'
 import { AccountTypes } from '../../entities/Account'
-import { prisma } from '../prisma'
+import { PrismaClient } from '@prisma/client'
 
 export default class AccountMiddleware {
-  public static async createAccountPayee(account: any) {
+  public static async createAccountPayee(account: any, prisma: PrismaClient) {
     const payee = await prisma.payee.create({
       data: {
         name: `Transfer : ${account.name}`,
@@ -15,7 +15,7 @@ export default class AccountMiddleware {
     await prisma.account.update({ where: { id: account.id }, data: { transferPayeeId: payee.id } })
   }
 
-  public static async createCreditCardCategory(account: any) {
+  public static async createCreditCardCategory(account: any, prisma: PrismaClient) {
     if (account.type !== AccountTypes.CreditCard) {
       return
     }

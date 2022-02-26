@@ -11,7 +11,7 @@ import {
   TransactionsRequest,
   TransactionsResponse,
 } from '../models/Transaction'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')

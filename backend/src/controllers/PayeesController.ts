@@ -5,7 +5,7 @@ import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
 import { Payee } from '../entities/Payee'
 import { getRepository } from 'typeorm'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 @Tags('Payees')
 @Route('budgets/{budgetId}/payees')

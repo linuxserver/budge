@@ -2,7 +2,7 @@ import { CategoryMonthModel } from '../models/CategoryMonth'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, AfterLoad } from 'typeorm'
 import { BudgetMonth } from './BudgetMonth'
 import { Category } from './Category'
-import prisma from '../database'
+import {prisma} from '../prisma'
 
 export type CategoryMonthOriginalValues = {
   budgeted: number

@@ -1,9 +1,9 @@
+import { PrismaClient } from '@prisma/client'
 import { CategoryGroup } from '../../entities/CategoryGroup'
 import { getDateFromString, formatMonthFromDateString, getMonthString, getMonthStringFromNow } from '../../utils'
-import { prisma } from '../prisma'
 
 export default class BudgetMiddleware {
-  public static async afterInsert(budget: any) {
+  public static async afterInsert(budget: any, prisma: PrismaClient) {
     const today = getMonthString()
     const prevMonth = getMonthStringFromNow(-1)
     const nextMonth = getMonthStringFromNow(1)
