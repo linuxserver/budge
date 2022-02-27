@@ -28,4 +28,4 @@ BudgE (pronounced "budgie", like the bird) is an open source "budgeting with env
 See [linuxserver/docker-BudgE](https://github.com/linuxserver/docker-BudgE).
 
 # Support
-(https://discord.gg/hKJWjDqCBz)[https://discord.gg/hKJWjDqCBz] or through GitHub issues
+[https://discord.gg/hKJWjDqCBz](https://discord.gg/hKJWjDqCBz) or through GitHub issues
