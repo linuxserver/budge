@@ -11,8 +11,6 @@ import {prisma} from './prisma'
     // await sleep(5000)
   }
 
-  prisma.$connect()
-
   process.on('unhandledRejection', error => {
     // Won't execute
     console.log('unhandledRejection', error);

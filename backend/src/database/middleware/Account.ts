@@ -7,8 +7,8 @@ export default class AccountMiddleware {
     const payee = await prisma.payee.create({
       data: {
         name: `Transfer : ${account.name}`,
-        budgetId: account.budgetId,
-        transferAccountId: account.id,
+        budget: { connect: { id: account.budgetId } },
+        transferAccount: { connect: { id: account.id } },
       },
     })
 

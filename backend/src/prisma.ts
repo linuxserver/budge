@@ -5,117 +5,109 @@ import BudgetMonthMiddleware from './database/middleware/BudgetMonth'
 import CategoryMiddleware from './database/middleware/Category'
 import CategoryMonthMiddleware from './database/middleware/CategoryMonth'
 import TransactionMiddleware from './database/middleware/Transaction'
+import { CategoryMonthCache } from './entities/CategoryMonth'
+import { TransactionCache } from './entities/Transaction'
 
-export const prisma = new PrismaClient({log: ['query', 'info', 'warn', 'error'],})
+export const prisma = new PrismaClient()
 
 prisma.$use(async (params: any, next: any) => {
-  if (params.model === 'Account') {
-    if (params.action.match(/insert/i)) {
-      const result = await next(params)
-      await Promise.all([
-        AccountMiddleware.createAccountPayee(params.args.data, prisma),
-        AccountMiddleware.createCreditCardCategory(params.args.data, prisma),
-      ])
+  let result = null
 
-      return result
+  if (params.model === 'Account') {
+    if (params.action.match(/create/i)) {
+      result = await next(params)
+      await AccountMiddleware.createAccountPayee(result, prisma)
+      await AccountMiddleware.createCreditCardCategory(result, prisma)
     }
 
     if (params.action.match(/update/i)) {
       params.args.data.balance = params.args.data.cleared + params.args.data.uncleared
-      return next(params)
     }
   }
 
   if (params.model === 'Budget') {
-    if (params.action.match(/insert/i)) {
-      const result = await next(params)
+    if (params.action.match(/create/i)) {
+      result = await next(params)
 
-      BudgetMiddleware.afterInsert(params.args.data, prisma)
-
-      return result
+      BudgetMiddleware.afterInsert(result, prisma)
     }
   }
 
   if (params.model === 'BudgetMonth') {
-    if (params.action.match(/insert/i)) {
-      const result = await next(params)
+    if (params.action.match(/create/i)) {
+      result = await next(params)
 
-      await BudgetMonthMiddleware.afterInsert(params.args.data, prisma)
-
-      return result
+      await BudgetMonthMiddleware.afterInsert(result, prisma)
     }
   }
 
   if (params.model === 'Category') {
-    if (params.action.match(/insert/i)) {
-      const result = await next(params)
-      console.log(result)
+    if (params.action.match(/create/i)) {
+      result = await next(params)
 
-      await CategoryMiddleware.afterInsert(params.args.data, prisma)
-
-      return result
+      await CategoryMiddleware.afterInsert(result, prisma)
     }
   }
 
   if (params.model === 'CategoryMonth') {
-    if (params.action.match(/insert/i)) {
+    if (params.action.match(/create/i)) {
       await CategoryMonthMiddleware.beforeInsert(params.args.data, prisma)
-      const result = await next(params)
+      result = await next(params)
 
-      if (params.args.data.balance !== 0) {
-        await CategoryMonthMiddleware.bookkeeping(params.args.data, prisma)
+      if (result.balance !== 0) {
+        await CategoryMonthMiddleware.bookkeeping(result, prisma)
       }
-
-      return result
     }
 
     if (params.action.match(/update/i)) {
-      const result = await next(params)
-      await CategoryMonthMiddleware.bookkeeping(params.args.data, prisma)
-      return result
+      result = await next(params)
+      await CategoryMonthMiddleware.bookkeeping(result, prisma)
     }
   }
 
   if (params.model === 'Transaction') {
-    if (params.action.match(/insert/i)) {
-      await Promise.all([
-        TransactionMiddleware.checkCreateTransferTransaction(params.args.data, prisma),
-        TransactionMiddleware.createCategoryMonth(params.args.data, prisma),
-      ])
+    if (params.action.match(/create/i)) {
+      await TransactionMiddleware.checkCreateTransferTransaction(params.args.data, prisma)
+      await TransactionMiddleware.createCategoryMonth(params.args.data, prisma)
 
-      const result = await next(params)
+      result = await next(params)
 
-      await Promise.all([
-        TransactionMiddleware.updateAccountBalanceOnAdd(params.args.data, prisma),
-        TransactionMiddleware.bookkeepingOnAdd(params.args.data, prisma),
-        TransactionMiddleware.createTransferTransaction(params.args.data, prisma),
-      ])
-
-      return result
+      await TransactionMiddleware.updateAccountBalanceOnAdd(result, prisma)
+      await TransactionMiddleware.bookkeepingOnAdd(result, prisma)
+      await TransactionMiddleware.createTransferTransaction(result, prisma)
     }
 
     if (params.action.match(/update/i)) {
-      await Promise.all([
-        TransactionMiddleware.createCategoryMonth(params.args.data, prisma),
-        TransactionMiddleware.updateTransferTransaction(params.args.data, prisma),
-        TransactionMiddleware.updateAccountBalanceOnUpdate(params.args.data, prisma),
-        TransactionMiddleware.bookkeepingOnUpdate(params.args.data, prisma),
-      ])
-
-      return await next(params)
+      await TransactionMiddleware.createCategoryMonth(params.args.data, prisma)
+      await TransactionMiddleware.updateTransferTransaction(params.args.data, prisma)
+      await TransactionMiddleware.updateAccountBalanceOnUpdate(params.args.data, prisma)
+      await TransactionMiddleware.bookkeepingOnUpdate(params.args.data, prisma)
     }
 
     if (params.action.match(/delete/i)) {
       await TransactionMiddleware.beforeDelete(params.args.data, prisma)
 
-      const result = await next(params)
+      result = await next(params)
 
-      await Promise.all([
-        TransactionMiddleware.updateAccountBalanceOnRemove(params.args.data, prisma),
-        TransactionMiddleware.bookkeepingOnDelete(params.args.data, prisma),
-      ])
-
-      return result
+      await TransactionMiddleware.updateAccountBalanceOnRemove(result, prisma)
+      await TransactionMiddleware.bookkeepingOnDelete(result, prisma)
     }
   }
+
+  if (!result) {
+    result = await next(params)
+  }
+
+  // After load
+  if (params.action.match(/find/i)) {
+    if (params.model === 'CategoryMonth' && result) {
+      CategoryMonthCache.set(result)
+    }
+
+    if (params.model === 'Transaction' && result) {
+      TransactionCache.set(result)
+    }
+  }
+
+  return result
 })

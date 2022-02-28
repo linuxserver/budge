@@ -11,7 +11,7 @@ import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } f
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
-import {prisma} from '../prisma'
+import { prisma } from '../prisma'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -233,6 +233,7 @@ export class CategoriesController extends Controller {
         data: category,
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -359,7 +360,11 @@ export class CategoriesController extends Controller {
 
       const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
       CategoryMonth.update(categoryMonth, { budgeted: requestBody.budgeted })
-      await prisma.categoryMonth.update({ where: { id: categoryMonth.id }, data: categoryMonth })
+      await prisma.categoryMonth.update({ where: { id: categoryMonth.id }, data: {
+        activity: categoryMonth.activity,
+        budgeted: categoryMonth.budgeted,
+        balance: categoryMonth.balance,
+      } })
 
       return {
         message: 'success',

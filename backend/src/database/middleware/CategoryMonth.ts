@@ -20,7 +20,7 @@ export default class CategoryMonthMiddleware {
 
     const category = await prisma.category.findUnique({
       where: {
-        id: categoryMonth.categoryId,
+        id: categoryMonth.category.connect.id,
       },
     })
 
@@ -60,7 +60,12 @@ export default class CategoryMonthMiddleware {
         budget.toBeBudgeted = budget.toBeBudgeted + activityDifference
       }
 
-      await prisma.budget.update({ where: { id: budget.id }, data: budget })
+      await prisma.budget.update({
+        where: { id: budget.id },
+        data: {
+          toBeBudgeted: budget.toBeBudgeted,
+        },
+      })
     }
 
     if (category.inflow) {
@@ -77,7 +82,15 @@ export default class CategoryMonthMiddleware {
       }
     }
 
-    await prisma.budgetMonth.update({ where: { id: budgetMonth.id }, data: budgetMonth })
+    await prisma.budgetMonth.update({
+      where: { id: budgetMonth.id },
+      data: {
+        budgeted: budgetMonth.budgeted,
+        activity: budgetMonth.activity,
+        underfunded: budgetMonth.underfunded,
+        income: budgetMonth.income,
+      },
+    })
 
     const nextMonth = getDateFromString(categoryMonth.month).plus({ month: 1 })
 
@@ -111,6 +124,11 @@ export default class CategoryMonthMiddleware {
     }
 
     // await CategoryMonth.update(nextCategoryMonth.id, { balance: nextCategoryMonth.balance })
-    await prisma.categoryMonth.update({ where: { id: nextCategoryMonth.id }, data: nextCategoryMonth })
+    await prisma.categoryMonth.update({
+      where: { id: nextCategoryMonth.id },
+      data: {
+        balance: nextCategoryMonth.balance,
+      },
+    })
   }
 }

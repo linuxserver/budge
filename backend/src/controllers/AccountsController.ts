@@ -1,14 +1,11 @@
 import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { Account, AccountTypes } from '../entities/Account'
+import { Accounts, AccountTypes } from '../entities/Account'
 import { AccountResponse, AccountsResponse, CreateAccountRequest, EditAccountRequest } from '../models/Account'
-import { Payee } from '../entities/Payee'
 import { Transaction, TransactionStatus } from '../entities/Transaction'
-import { Category } from '../entities/Category'
 import { getRepository } from 'typeorm'
-import {prisma} from '../prisma'
+import { prisma } from '../prisma'
 
 @Tags('Accounts')
 @Route('budgets/{budgetId}/accounts')
@@ -36,7 +33,7 @@ export class AccountsController extends Controller {
   })
   public async createAccount(
     @Path() budgetId: string,
-    @Body() requestBody: CreateAccountRequest,
+    @Body() { date, ...requestBody }: CreateAccountRequest,
     @Request() request: ExpressRequest,
   ): Promise<AccountResponse | ErrorResponse> {
     try {
@@ -87,7 +84,7 @@ export class AccountsController extends Controller {
             payeeId: startingBalancePayee.id,
             categoryId: categoryId,
             amount,
-            date: requestBody.date,
+            date: date,
             memo: 'Starting Balance',
             status: TransactionStatus.Reconciled,
           },
@@ -167,12 +164,24 @@ export class AccountsController extends Controller {
             return act
           })
 
-          accounts = Account.sort(accounts)
+          accounts = Accounts.sort(accounts)
           for (const account of accounts) {
-            await prisma.account.update({ where: { id: account.id }, data: account })
+            await prisma.account.update({
+              where: { id: account.id },
+              data: {
+                name: account.name,
+                order: account.order,
+              },
+            })
           }
         } else {
-          await prisma.account.update({ where: { id: account.id }, data: account })
+          await prisma.account.update({
+            where: { id: account.id },
+            data: {
+              name: account.name,
+              order: account.order,
+            },
+          })
         }
       }
 
@@ -212,7 +221,12 @@ export class AccountsController extends Controller {
         })
         for (const transaction of clearedTransactions) {
           transaction.status = TransactionStatus.Reconciled
-          await prisma.transaction.update({ where: { id: transaction.id }, data: transaction })
+          await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              status: TransactionStatus.Reconciled,
+            },
+          })
         }
 
         account = await prisma.account.findUnique({ where: { id: account.id } })

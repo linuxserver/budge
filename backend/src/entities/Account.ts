@@ -12,6 +12,9 @@ import {
 import { Budget } from './Budget'
 import { Transaction } from './Transaction'
 import { Payee } from './Payee'
+import { prisma } from '../prisma'
+import BaseEntity from './BaseEntity'
+import { PrismaClient } from '@prisma/client'
 
 export enum AccountTypes {
   Bank,
@@ -19,70 +22,8 @@ export enum AccountTypes {
   Tracking,
 }
 
-@Entity('accounts')
-export class Account {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', nullable: false })
-  budgetId: string
-
-  @Column({ type: 'varchar', nullable: true })
-  transferPayeeId: string
-
-  @Column({ type: 'varchar' })
-  name: string
-
-  @Column({ type: 'int' })
-  type: AccountTypes
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  balance: number = 0
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  cleared: number = 0
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  uncleared: number = 0
-
-  @Column({ type: 'int', default: 0 })
-  order: number = 0
-
-  @CreateDateColumn()
-  created: Date
-
-  @CreateDateColumn()
-  updated: Date
-
-  /**
-   * Belongs to a budget
-   */
-  @ManyToOne(() => Budget, budget => budget.accounts)
-  budget: Promise<Budget>
-
-  /**
-   * Has many transactions
-   */
-  @OneToMany(() => Transaction, transaction => transaction.account)
-  transactions: Promise<Transaction[]>
-
-  /**
-   * Can have one payee
-   */
-  @OneToOne(() => Payee, payee => payee.transferAccount)
-  @JoinColumn()
-  transferPayee: Promise<Payee>
-
-  public static sort(accounts: any[]): any[] {
+export const Accounts = Object.assign(prisma.account, {
+  sort(accounts: any[]): any[] {
     accounts = accounts.sort((a, b) => {
       if (a.order === b.order) {
         return a.name > b.name ? -1 : 1
@@ -94,5 +35,5 @@ export class Account {
       group.order = index
       return group
     })
-  }
-}
+  },
+})

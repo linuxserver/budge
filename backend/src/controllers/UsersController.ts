@@ -33,9 +33,7 @@ export class UsersController extends Controller {
 
     try {
       requestBody.password = User.hashPassword(requestBody.password)
-      console.log(requestBody)
       const newUser = await prisma.user.create({ data: requestBody })
-      console.log(newUser)
 
       return {
         message: 'success',

@@ -25,7 +25,7 @@ export class CategoryMonthCache {
     }
   }
 
-  public static set(categoryMonth: CategoryMonth) {
+  public static set(categoryMonth: any) {
     CategoryMonthCache.cache[categoryMonth.id] = {
       budgeted: categoryMonth.budgeted,
       activity: categoryMonth.activity,
@@ -36,74 +36,6 @@ export class CategoryMonthCache {
 
 @Entity('category_months')
 export class CategoryMonth {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', nullable: false })
-  @Index()
-  categoryId: string
-
-  @Column({ type: 'varchar', nullable: false })
-  @Index()
-  budgetMonthId: string
-
-  @Column({ type: 'varchar', nullable: false })
-  @Index()
-  month: string
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  budgeted: number = 0
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  activity: number = 0
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  balance: number = 0
-
-  @CreateDateColumn()
-  created: Date
-
-  @CreateDateColumn()
-  updated: Date
-
-  /**
-   * Belongs to a category
-   */
-  @ManyToOne(() => Category, category => category.categoryMonths)
-  category: Promise<Category>
-
-  /**
-   * Belongs to a budget month
-   */
-  @ManyToOne(() => BudgetMonth, budgetMonth => budgetMonth.categories)
-  budgetMonth: Promise<BudgetMonth>
-
-  @AfterLoad()
-  private storeOriginalValues(): void {
-    CategoryMonthCache.set(this)
-  }
-
-  public getUpdatePayload() {
-    return {
-      id: this.id,
-      categoryId: this.categoryId,
-      budgetMonthId: this.budgetMonthId,
-      month: this.month,
-      budgeted: this.budgeted,
-      activity: this.activity,
-      balance: this.balance,
-    }
-  }
-
   public static update(categoryMonth: any, { activity, budgeted }: { [key: string]: number }) {
     if (activity !== undefined) {
       categoryMonth.activity = categoryMonth.activity + activity

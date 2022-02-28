@@ -9,7 +9,6 @@ import {
   DeepPartial,
   Index,
 } from 'typeorm'
-import { Account } from './Account'
 import { Category } from './Category'
 import { formatMonthFromDateString } from '../utils'
 import { Budget } from './Budget'
@@ -42,7 +41,7 @@ export class TransactionCache {
     return null
   }
 
-  public static set(transaction: Transaction) {
+  public static set(transaction: any) {
     TransactionCache.cache[transaction.id] = {
       payeeId: transaction.payeeId,
       categoryId: transaction.categoryId,
@@ -78,100 +77,19 @@ export class TransactionCache {
 
 @Entity('transactions')
 export class Transaction {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', nullable: false })
-  budgetId: string
-
-  @Column({ type: 'varchar', nullable: false })
-  accountId: string
-
-  @Column({ type: 'varchar', nullable: false })
-  payeeId: string
-
-  @Column({ type: 'varchar', nullable: true })
-  transferAccountId: string
-
-  @Index()
-  @Column({ type: 'varchar', nullable: true, default: null })
-  transferTransactionId: string
-
-  @Column({ type: 'varchar', nullable: true })
-  categoryId: string
-
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  amount: number = 0
-
-  @Column({ type: 'datetime' })
-  date: Date
-
-  @Column({ type: 'varchar', default: '' })
-  memo: string
-
-  @Column({ type: 'int', default: TransactionStatus.Pending })
-  status: TransactionStatus
-
-  @CreateDateColumn()
-  created: Date
-
-  @CreateDateColumn()
-  updated: Date
-
-  /**
-   * Belongs to a budget
-   */
-  @ManyToOne(() => Budget, budget => budget.transactions)
-  budget: Promise<Budget>
-
-  /**
-   * Belongs to an account
-   */
-  @ManyToOne(() => Account, account => account.transactions)
-  account: Promise<Account>
-
-  /**
-   * Belongs to a payee (account type)
-   */
-  @ManyToOne(() => Payee, payee => payee.transactions)
-  payee: Promise<Payee>
-
-  /**
-   * Belongs to a category
-   */
-  @ManyToOne(() => Category, category => category.transactions)
-  category: Promise<Category>
-
-  @AfterLoad()
-  private storeOriginalValues() {
-    TransactionCache.set(this)
-  }
-
-  public update(partial: DeepPartial<Transaction>): Transaction {
-    Object.assign(this, partial)
-    return this
-  }
-
   public getUpdatePayload() {
-    return {
-      id: this.id,
-      budgetId: this.budgetId,
-      accountId: this.accountId,
-      payeeId: this.payeeId,
-      transferAccountId: this.transferAccountId,
-      transferTransactionId: this.transferTransactionId,
-      categoryId: this.categoryId,
-      amount: this.amount,
-      date: this.date,
-      memo: this.memo,
-      status: this.status,
-    }
-  }
-
-  public static getMonth(date: Date): string {
-    return formatMonthFromDateString(date)
+    // return {
+    //   id: this.id,
+    //   budgetId: this.budgetId,
+    //   accountId: this.accountId,
+    //   payeeId: this.payeeId,
+    //   transferAccountId: this.transferAccountId,
+    //   transferTransactionId: this.transferTransactionId,
+    //   categoryId: this.categoryId,
+    //   amount: this.amount,
+    //   date: this.date,
+    //   memo: this.memo,
+    //   status: this.status,
+    // }
   }
 }

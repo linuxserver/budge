@@ -26,19 +26,17 @@ export default class BudgetMiddleware {
     })
 
     // Create internal categories
-    await Promise.all(
-      ['To be Budgeted'].map(name => {
-        return prisma.category.create({
-          data: {
-            name: name,
-            inflow: true,
-            locked: true,
-            budget: { connect: { id: budget.id } },
-            categoryGroup: { connect: { id: internalCategoryGroup.id } },
-          },
-        })
-      }),
-    )
+    for (const internalCategory of ['To be Budgeted']) {
+      await prisma.category.create({
+        data: {
+          name: internalCategory,
+          inflow: true,
+          locked: true,
+          budget: { connect: { id: budget.id } },
+          categoryGroup: { connect: { id: internalCategoryGroup.id } },
+        },
+      })
+    }
 
     // Create special 'Starting Balance' payee
     const startingBalancePayee = await prisma.payee.create({

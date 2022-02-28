@@ -2,7 +2,6 @@ import { Get, Put, Delete, Route, Path, Security, Post, Body, Controller, Tags, 
 import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { Account } from '../entities/Account'
 import { Transaction, TransactionCache, TransactionStatus } from '../entities/Transaction'
 import {
   TransactionRequest,
@@ -11,7 +10,7 @@ import {
   TransactionsRequest,
   TransactionsResponse,
 } from '../models/Transaction'
-import {prisma} from '../prisma'
+import { prisma } from '../prisma'
 
 @Tags('Budgets')
 @Route('budgets/{budgetId}')
