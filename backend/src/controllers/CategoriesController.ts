@@ -1,5 +1,4 @@
 import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example, Query } from 'tsoa'
-import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { CategoryGroup } from '../entities/CategoryGroup'
@@ -8,9 +7,7 @@ import { CategoryResponse } from '../models/Category'
 import { CategoryRequest } from '../models/Category'
 import { Category } from '../entities/Category'
 import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../models/CategoryMonth'
-import { CategoryMonth } from '../entities/CategoryMonth'
-import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
-import { CategoryMonths } from '../repositories/CategoryMonths'
+import { CategoryMonths } from '../entities/CategoryMonth'
 import { prisma } from '../prisma'
 
 @Tags('Categories')
@@ -358,13 +355,8 @@ export class CategoriesController extends Controller {
         }
       }
 
-      const categoryMonth = await CategoryMonth.findOrCreate(budgetId, categoryId, month)
-      CategoryMonth.update(categoryMonth, { budgeted: requestBody.budgeted })
-      await prisma.categoryMonth.update({ where: { id: categoryMonth.id }, data: {
-        activity: categoryMonth.activity,
-        budgeted: categoryMonth.budgeted,
-        balance: categoryMonth.balance,
-      } })
+      const categoryMonth = await CategoryMonths.findOrCreate(budgetId, categoryId, month)
+      await CategoryMonths.updateActivity(categoryMonth, { budgeted: requestBody.budgeted })
 
       return {
         message: 'success',

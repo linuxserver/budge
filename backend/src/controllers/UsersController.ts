@@ -3,8 +3,7 @@ import { Get, Route, Path, Security, Post, Put, Body, Controller, Tags, Request,
 import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { getManager, getRepository } from 'typeorm'
-import {prisma} from '../prisma'
+import { prisma } from '../prisma'
 
 @Tags('Users')
 @Route('users')

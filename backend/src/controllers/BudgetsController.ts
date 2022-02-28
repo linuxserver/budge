@@ -1,16 +1,12 @@
 import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example, Query } from 'tsoa'
-import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { BudgetRequest, BudgetResponse, BudgetsResponse } from '../models/Budget'
 import { AccountTypes } from '../entities/Account'
-import { BudgetMonth } from '../entities/BudgetMonth'
+import { BudgetMonths } from '../entities/BudgetMonth'
 import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../models/BudgetMonth'
-import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
-import { BudgetMonths } from '../repositories/BudgetMonths'
 import { getMonthStringFromNow } from '../utils'
-import {prisma} from '../prisma'
-import { CategoryMonth } from '../entities/CategoryMonth'
+import { prisma } from '../prisma'
 
 @Tags('Budgets')
 @Route('budgets')
@@ -143,7 +139,7 @@ export class BudgetsController extends Controller {
 
       // Ensure that a budget month for next month exists
       // @TODO: create ALL budget months since the last one - what if someone hasn't logged in for several months?
-      await BudgetMonth.findOrCreate(id, getMonthStringFromNow(1))
+      await BudgetMonths.findOrCreate(id, getMonthStringFromNow(1))
 
       return {
         message: 'success',

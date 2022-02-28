@@ -1,19 +1,3 @@
-import { TransactionModel } from '../models/Transaction'
-import {
-  Entity,
-  AfterLoad,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  DeepPartial,
-  Index,
-} from 'typeorm'
-import { Category } from './Category'
-import { formatMonthFromDateString } from '../utils'
-import { Budget } from './Budget'
-import { Payee } from './Payee'
-
 export enum TransactionStatus {
   Pending,
   Cleared,
@@ -75,7 +59,6 @@ export class TransactionCache {
   }
 }
 
-@Entity('transactions')
 export class Transaction {
   public getUpdatePayload() {
     // return {

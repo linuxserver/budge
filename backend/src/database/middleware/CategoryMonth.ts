@@ -1,8 +1,5 @@
-import { CreditCardGroupName } from '../../entities/CategoryGroup'
-import { AccountTypes } from '../../entities/Account'
 import { getDateFromString, formatMonthFromDateString } from '../../utils'
-import { CategoryMonthCache } from '../../entities/CategoryMonth'
-import { CategoryMonth } from '../../entities/CategoryMonth'
+import { CategoryMonths, CategoryMonthCache } from '../../entities/CategoryMonth'
 import { PrismaClient } from '@prisma/client'
 
 export default class CategoryMonthMiddleware {
@@ -27,6 +24,10 @@ export default class CategoryMonthMiddleware {
     if (prevCategoryMonth && (category.trackingAccountId || prevCategoryMonth.balance > 0)) {
       categoryMonth.balance = prevCategoryMonth.balance + categoryMonth.budgeted + categoryMonth.activity
     }
+  }
+
+  public static async afterLoad(categoryMonth: any) {
+    CategoryMonthCache.set(categoryMonth)
   }
 
   /**
@@ -105,7 +106,7 @@ export default class CategoryMonthMiddleware {
       return
     }
 
-    const nextCategoryMonth = await CategoryMonth.findOrCreate(
+    const nextCategoryMonth = await CategoryMonths.findOrCreate(
       nextBudgetMonth.budgetId,
       categoryMonth.categoryId,
       nextBudgetMonth.month,

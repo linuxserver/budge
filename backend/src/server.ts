@@ -3,8 +3,8 @@ import { AddressInfo } from 'net'
 import config from './config'
 import { createConnection } from 'typeorm'
 import dbConfig from '../ormconfig'
-import {prisma} from './prisma'
-
+import { prisma } from './prisma'
+import './database/middleware'
 ;(async () => {
   if (config.env !== 'production') {
     console.log('!!!WARNING!!! Running in development mode!')
@@ -13,8 +13,8 @@ import {prisma} from './prisma'
 
   process.on('unhandledRejection', error => {
     // Won't execute
-    console.log('unhandledRejection', error);
-  });
+    console.log('unhandledRejection', error)
+  })
 
   // await createConnection(dbConfig)
 

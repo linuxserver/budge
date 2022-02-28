@@ -12,7 +12,10 @@ export default class AccountMiddleware {
       },
     })
 
-    await prisma.account.update({ where: { id: account.id }, data: { transferPayeeId: payee.id } })
+    await prisma.account.update({
+      where: { id: account.id },
+      data: { transferPayeeId: payee.id, cleared: 0, uncleared: 0 },
+    })
   }
 
   public static async createCreditCardCategory(account: any, prisma: PrismaClient) {

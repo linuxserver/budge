@@ -1,5 +1,4 @@
 import express from 'express'
-import { User } from '../entities/User'
 
 export interface ExpressRequest extends express.Request {
   user?: any

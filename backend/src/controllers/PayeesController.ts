@@ -1,10 +1,7 @@
 import { Get, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
-import { Payee } from '../entities/Payee'
-import { getRepository } from 'typeorm'
 import {prisma} from '../prisma'
 
 @Tags('Payees')

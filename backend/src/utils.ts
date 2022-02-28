@@ -10,8 +10,11 @@ export function getDateFromString(date: string): DateTime {
   return DateTime.fromISO(date)
 }
 
-export function formatMonthFromDateString(date: Date): string {
-  let tempDate = DateTime.fromISO(date.toISOString())
+export function formatMonthFromDateString(date: Date | string): string {
+  if (typeof date !== 'string') {
+    date = date.toISOString()
+  }
+  let tempDate = DateTime.fromISO(date)
   tempDate = tempDate.set({ day: 1 })
   return tempDate.toISO().split('T')[0]
 }

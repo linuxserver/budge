@@ -1,11 +1,11 @@
 import { formatMonthFromDateString } from '../../utils'
-import { CategoryMonth } from '../../entities/CategoryMonth'
+import { CategoryMonths } from '../../entities/CategoryMonth'
 import { AccountTypes } from '../../entities/Account'
 import { TransactionStatus, TransactionCache } from '../../entities/Transaction'
 import { PrismaClient } from '@prisma/client'
 
 export default class TransactionMiddleware {
-  public static async beforeDelete(transaction: any, prisma: PrismaClient) {
+  public static async afterDelete(transaction: any, prisma: PrismaClient) {
     if (transaction.transferTransactionId === null) {
       return
     }
@@ -14,8 +14,14 @@ export default class TransactionMiddleware {
       where: { transferTransactionId: transaction.id },
     })
 
-    transferTransaction.transferTransactionId = null
-    await prisma.transaction.delete({ where: { id: transferTransaction.id } })
+    if (transferTransaction) {
+      transferTransaction.transferTransactionId = null
+      await prisma.transaction.delete({ where: { id: transferTransaction.id } })
+    }
+  }
+
+  public static async afterLoad(transaction: any) {
+    TransactionCache.set(transaction)
   }
 
   public static async checkCreateTransferTransaction(transaction: any, prisma: PrismaClient) {
@@ -38,7 +44,7 @@ export default class TransactionMiddleware {
   public static async createCategoryMonth(transaction: any, prisma: PrismaClient) {
     if (transaction.categoryId) {
       // First, ensure category month exists
-      await CategoryMonth.findOrCreate(
+      await CategoryMonths.findOrCreate(
         transaction.budgetId,
         transaction.categoryId,
         formatMonthFromDateString(transaction.date),
@@ -51,7 +57,7 @@ export default class TransactionMiddleware {
     if (account.type === AccountTypes.CreditCard) {
       // First, ensure category month exists
       const trackingCategory = await prisma.category.findFirst({ where: { trackingAccountId: account.id } })
-      await CategoryMonth.findOrCreate(
+      await CategoryMonths.findOrCreate(
         transaction.budgetId,
         trackingCategory.id,
         formatMonthFromDateString(transaction.date),
@@ -208,30 +214,14 @@ export default class TransactionMiddleware {
             month: formatMonthFromDateString(originalTransaction.date),
           },
         })
-        CategoryMonth.update(originalCCMonth, { activity: originalTransaction.amount })
-        await prisma.categoryMonth.update({
-          where: { id: originalCCMonth.id },
-          data: {
-            activity: originalCCMonth.activity,
-            budgeted: originalCCMonth.budgeted,
-            balance: originalCCMonth.balance,
-          },
-        })
+        await CategoryMonths.updateActivity(originalCCMonth, { activity: originalTransaction.amount })
 
-        const currentCCMonth = await CategoryMonth.findOrCreate(
+        const currentCCMonth = await CategoryMonths.findOrCreate(
           transaction.budgetId,
           ccCategory.id,
           formatMonthFromDateString(transaction.date),
         )
-        CategoryMonth.update(currentCCMonth, { activity: transaction.amount * -1 })
-        await prisma.categoryMonth.update({
-          where: { id: currentCCMonth.id },
-          data: {
-            activity: currentCCMonth.activity,
-            budgeted: currentCCMonth.budgeted,
-            balance: currentCCMonth.balance,
-          },
-        })
+        await CategoryMonths.updateActivity(currentCCMonth, { activity: transaction.amount * -1 })
       }
 
       return
@@ -259,15 +249,7 @@ export default class TransactionMiddleware {
             include: { budgetMonth: true },
           })
 
-          CategoryMonth.update(originalCategoryMonth, { activity: originalTransaction.amount * -1 })
-          await prisma.categoryMonth.update({
-            where: { id: originalCategoryMonth.id },
-            data: {
-              activity: originalCategoryMonth.activity,
-              balance: originalCategoryMonth.balance,
-              budgeted: originalCategoryMonth.budgeted,
-            },
-          })
+          await CategoryMonths.updateActivity(originalCategoryMonth, { activity: originalTransaction.amount * -1 })
         }
 
         if (account.type === AccountTypes.CreditCard) {
@@ -285,15 +267,7 @@ export default class TransactionMiddleware {
                 month: formatMonthFromDateString(originalTransaction.date),
               },
             })
-            CategoryMonth.update(originalCCMonth, { activity: originalTransaction.amount })
-            await prisma.categoryMonth.update({
-              where: { id: originalCCMonth.id },
-              data: {
-                activity: originalCCMonth.activity,
-                budgeted: originalCCMonth.budgeted,
-                balance: originalCCMonth.balance,
-              },
-            })
+            await CategoryMonths.updateActivity(originalCCMonth, { activity: originalTransaction.amount })
           }
         }
       }
@@ -304,15 +278,7 @@ export default class TransactionMiddleware {
           const transactionCategoryMonth = await prisma.categoryMonth.findFirst({
             where: { categoryId: transaction.categoryId, month: formatMonthFromDateString(transaction.date) },
           })
-          CategoryMonth.update(transactionCategoryMonth, { activity })
-          await prisma.categoryMonth.update({
-            where: { id: transactionCategoryMonth.id },
-            data: {
-              activity: transactionCategoryMonth.activity,
-              budgeted: transactionCategoryMonth.budgeted,
-              balance: transactionCategoryMonth.balance,
-            },
-          })
+          await CategoryMonths.updateActivity(transactionCategoryMonth, { activity })
         }
 
         if (account.type === AccountTypes.CreditCard) {
@@ -324,20 +290,12 @@ export default class TransactionMiddleware {
            */
 
           if (category && category.inflow === false) {
-            const currentCCMonth = await CategoryMonth.findOrCreate(
+            const currentCCMonth = await CategoryMonths.findOrCreate(
               transaction.budgetId,
               ccCategory.id,
               formatMonthFromDateString(transaction.date),
             )
-            CategoryMonth.update(currentCCMonth, { activity: transaction.amount * -1 })
-            await prisma.categoryMonth.update({
-              where: { id: currentCCMonth.id },
-              data: {
-                activity: currentCCMonth.activity,
-                budgeted: currentCCMonth.budgeted,
-                balance: currentCCMonth.balance,
-              },
-            })
+            await CategoryMonths.updateActivity(currentCCMonth, { activity: transaction.amount * -1 })
           }
         }
       }
@@ -358,32 +316,16 @@ export default class TransactionMiddleware {
       const categoryMonth = await prisma.categoryMonth.findFirst({
         where: { categoryId: category.id, month: formatMonthFromDateString(transaction.date) },
       })
-      CategoryMonth.update(categoryMonth, { activity })
-      await prisma.categoryMonth.update({
-        where: { id: categoryMonth.id },
-        data: {
-          activity: categoryMonth.activity,
-          budgeted: categoryMonth.budgeted,
-          balance: categoryMonth.balance,
-        },
-      })
+      await CategoryMonths.updateActivity(categoryMonth, { activity })
 
       if (account.type === AccountTypes.CreditCard) {
         const ccCategory = await prisma.category.findFirst({ where: { trackingAccountId: account.id } })
-        const currentCCMonth = await CategoryMonth.findOrCreate(
+        const currentCCMonth = await CategoryMonths.findOrCreate(
           transaction.budgetId,
           ccCategory.id,
           formatMonthFromDateString(transaction.date),
         )
-        CategoryMonth.update(currentCCMonth, { activity: activity * -1 })
-        await prisma.categoryMonth.update({
-          where: { id: currentCCMonth.id },
-          data: {
-            activity: currentCCMonth.activity,
-            budgeted: currentCCMonth.budgeted,
-            balance: currentCCMonth.balance,
-          },
-        })
+        await CategoryMonths.updateActivity(currentCCMonth, { activity: activity * -1 })
       }
     }
   }
@@ -429,20 +371,12 @@ export default class TransactionMiddleware {
       if (account.type === AccountTypes.CreditCard) {
         // Update CC category
         const ccCategory = await prisma.category.findFirst({ where: { trackingAccountId: account.id } })
-        const ccCategoryMonth = await CategoryMonth.findOrCreate(
+        const ccCategoryMonth = await CategoryMonths.findOrCreate(
           transaction.budgetId,
           ccCategory.id,
           formatMonthFromDateString(transaction.date),
         )
-        CategoryMonth.update(ccCategoryMonth, { activity: transaction.amount * -1 })
-        await prisma.categoryMonth.update({
-          where: { id: ccCategoryMonth.id },
-          data: {
-            activity: ccCategoryMonth.activity,
-            budgeted: ccCategoryMonth.budgeted,
-            balance: ccCategoryMonth.balance,
-          },
-        })
+        await CategoryMonths.updateActivity(ccCategoryMonth, { activity: transaction.amount * -1 })
       }
       return
     }
@@ -464,34 +398,18 @@ export default class TransactionMiddleware {
       const transactionCategoryMonth = await prisma.categoryMonth.findFirst({
         where: { categoryId: transaction.categoryId, month: formatMonthFromDateString(transaction.date) },
       })
-      CategoryMonth.update(transactionCategoryMonth, { activity: transaction.amount })
-      await prisma.categoryMonth.update({
-        where: { id: transactionCategoryMonth.id },
-        data: {
-          activity: transactionCategoryMonth.activity,
-          budgeted: transactionCategoryMonth.budgeted,
-          balance: transactionCategoryMonth.balance,
-        },
-      })
+      await CategoryMonths.updateActivity(transactionCategoryMonth, { activity: transaction.amount })
     }
 
     if (account.type === AccountTypes.CreditCard) {
       // Update CC category
       const ccCategory = await prisma.category.findFirst({ where: { trackingAccountId: account.id } })
-      const currentCCMonth = await CategoryMonth.findOrCreate(
+      const currentCCMonth = await CategoryMonths.findOrCreate(
         transaction.budgetId,
         ccCategory.id,
         formatMonthFromDateString(transaction.date),
       )
-      CategoryMonth.update(currentCCMonth, { activity: transaction.amount * -1 })
-      await prisma.categoryMonth.update({
-        where: { id: currentCCMonth.id },
-        data: {
-          activity: currentCCMonth.activity,
-          budgeted: currentCCMonth.budgeted,
-          balance: currentCCMonth.balance,
-        },
-      })
+      await CategoryMonths.updateActivity(currentCCMonth, { activity: transaction.amount * -1 })
     }
   }
 
@@ -576,15 +494,7 @@ export default class TransactionMiddleware {
             month: formatMonthFromDateString(transaction.date),
           },
         })
-        CategoryMonth.update(ccCategoryMonth, { activity: transaction.amount })
-        await prisma.categoryMonth.update({
-          where: { id: ccCategoryMonth.id },
-          data: {
-            activity: ccCategoryMonth.activity,
-            budgeted: ccCategoryMonth.budgeted,
-            balance: ccCategoryMonth.balance,
-          },
-        })
+        await CategoryMonths.updateActivity(ccCategoryMonth, { activity: transaction.amount })
       }
 
       return
@@ -601,15 +511,7 @@ export default class TransactionMiddleware {
           month: formatMonthFromDateString(transaction.date),
         },
       })
-      CategoryMonth.update(ccCategoryMonth, { activity: transaction.amount })
-      await prisma.categoryMonth.update({
-        where: { id: ccCategoryMonth.id },
-        data: {
-          activity: ccCategoryMonth.activity,
-          budgeted: ccCategoryMonth.budgeted,
-          balance: ccCategoryMonth.balance,
-        },
-      })
+      await CategoryMonths.updateActivity(ccCategoryMonth, { activity: transaction.amount })
     }
 
     if (!transaction.categoryId) {
@@ -627,15 +529,7 @@ export default class TransactionMiddleware {
         where: { categoryId: transaction.categoryId, month: formatMonthFromDateString(transaction.date) },
         include: { budgetMonth: true },
       })
-      CategoryMonth.update(originalCategoryMonth, { activity: transaction.amount * -1 })
-      await prisma.categoryMonth.update({
-        where: { id: originalCategoryMonth.id },
-        data: {
-          activity: originalCategoryMonth.activity,
-          budgeted: originalCategoryMonth.budgeted,
-          balance: originalCategoryMonth.balance,
-        },
-      })
+      await CategoryMonths.updateActivity(originalCategoryMonth, { activity: transaction.amount * -1 })
     }
   }
 }

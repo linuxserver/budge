@@ -1,20 +1,4 @@
-import { AccountModel } from '../models/Account'
-import {
-  Entity,
-  OneToOne,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-} from 'typeorm'
-import { Budget } from './Budget'
-import { Transaction } from './Transaction'
-import { Payee } from './Payee'
 import { prisma } from '../prisma'
-import BaseEntity from './BaseEntity'
-import { PrismaClient } from '@prisma/client'
 
 export enum AccountTypes {
   Bank,

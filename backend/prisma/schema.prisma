@@ -13,14 +13,14 @@ model Account {
   transferPayeeId                           String?       @unique(map: "sqlite_autoindex_accounts_2")
   name                                      String
   type                                      Int
-  balance                                   Int?           @default(0)
-  cleared                                   Int?           @default(0)
-  uncleared                                 Int?           @default(0)
-  order                                     Int?           @default(0)
+  balance                                   Int?          @default(0)
+  cleared                                   Int?          @default(0)
+  uncleared                                 Int?          @default(0)
+  order                                     Int?          @default(0)
   created                                   DateTime      @default(now())
   updated                                   DateTime      @updatedAt
   budget                                    Budget        @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  transferPayee   Payee?        @relation("accounts_transferPayeeIdTopayees", fields: [transferPayeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transferPayee                             Payee?        @relation("accounts_transferPayeeIdTopayees", fields: [transferPayeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   payees_accountsTopayees_transferAccountId Payee?        @relation("accountsTopayees_transferAccountId")
   transactions                              Transaction[]
 }
@@ -29,10 +29,10 @@ model BudgetMonth {
   id             String          @id @default(uuid())
   budgetId       String
   month          String
-  income         Int?             @default(0)
-  budgeted       Int?             @default(0)
-  activity       Int?             @default(0)
-  underfunded    Int?             @default(0)
+  income         Int?            @default(0)
+  budgeted       Int?            @default(0)
+  activity       Int?            @default(0)
+  underfunded    Int?            @default(0)
   created        DateTime        @default(now())
   updated        DateTime        @updatedAt
   budget         Budget          @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -46,10 +46,10 @@ model Budget {
   id             String          @id @default(uuid())
   userId         String
   name           String
-  toBeBudgeted   Int?             @default(0)
+  toBeBudgeted   Int?            @default(0)
   created        DateTime        @default(now())
   updated        DateTime        @updatedAt
-  users          User            @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user          User            @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   accounts       Account[]
   budgetMonths   BudgetMonth[]
   categories     Category[]
@@ -111,17 +111,17 @@ model CategoryMonth {
 }
 
 model Payee {
-  id                                          String        @id @default(uuid())
-  budgetId                                    String
-  transferAccountId                           String?       @unique(map: "sqlite_autoindex_payees_2")
-  name                                        String
-  internal                                    Boolean       @default(false)
-  created                                     DateTime      @default(now())
-  updated                                     DateTime      @updatedAt
-  budget                                      Budget        @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  transferAccount Account?      @relation("accountsTopayees_transferAccountId", fields: [transferAccountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  accounts_accounts_transferPayeeIdTopayees   Account?      @relation("accounts_transferPayeeIdTopayees")
-  transactions                                Transaction[]
+  id                                        String        @id @default(uuid())
+  budgetId                                  String
+  transferAccountId                         String?       @unique(map: "sqlite_autoindex_payees_2")
+  name                                      String
+  internal                                  Boolean       @default(false)
+  created                                   DateTime      @default(now())
+  updated                                   DateTime      @updatedAt
+  budget                                    Budget        @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transferAccount                           Account?      @relation("accountsTopayees_transferAccountId", fields: [transferAccountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  accounts_accounts_transferPayeeIdTopayees Account?      @relation("accounts_transferPayeeIdTopayees")
+  transactions                              Transaction[]
 }
 
 model Transaction {

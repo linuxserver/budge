@@ -1,8 +1,5 @@
-import { CategoryMonthModel } from '../models/CategoryMonth'
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, AfterLoad } from 'typeorm'
-import { BudgetMonth } from './BudgetMonth'
-import { Category } from './Category'
-import {prisma} from '../prisma'
+import { BudgetMonths } from './BudgetMonth'
+import { prisma } from '../prisma'
 
 export type CategoryMonthOriginalValues = {
   budgeted: number
@@ -34,9 +31,8 @@ export class CategoryMonthCache {
   }
 }
 
-@Entity('category_months')
-export class CategoryMonth {
-  public static update(categoryMonth: any, { activity, budgeted }: { [key: string]: number }) {
+export const CategoryMonths = Object.assign(prisma.categoryMonth, {
+  async updateActivity(categoryMonth: any, { activity, budgeted }: { [key: string]: number }) {
     if (activity !== undefined) {
       categoryMonth.activity = categoryMonth.activity + activity
       categoryMonth.balance = categoryMonth.balance + activity
@@ -46,23 +42,19 @@ export class CategoryMonth {
       categoryMonth.budgeted = categoryMonth.budgeted + budgetedDifference
       categoryMonth.balance = categoryMonth.balance + budgetedDifference
     }
-  }
 
-  public static async findOrCreate(budgetId: string, categoryId: string, month: string): Promise<any> {
-    let categoryMonth = await prisma.categoryMonth.findFirst({
-      where: { categoryId, month: month },
-      include: { budgetMonth: true },
+    return await prisma.categoryMonth.update({
+      where: { id: categoryMonth.id },
+      data: {
+        ...(categoryMonth.activity && { activity: categoryMonth.activity }),
+        ...(categoryMonth.balance && { balance: categoryMonth.balance }),
+        ...(categoryMonth.budgeted && { budgeted: categoryMonth.budgeted }),
+      },
     })
+  },
 
-    if (!categoryMonth) {
-      categoryMonth = await CategoryMonth.createNew(budgetId, categoryId, month)
-    }
-
-    return categoryMonth
-  }
-
-  public static async createNew(budgetId: string, categoryId: string, month: string): Promise<any> {
-    const budgetMonth = await BudgetMonth.findOrCreate(budgetId, month)
+  async createNew(budgetId: string, categoryId: string, month: string): Promise<any> {
+    const budgetMonth = await BudgetMonths.findOrCreate(budgetId, month)
     const categoryMonth = await prisma.categoryMonth.create({
       data: {
         month: month,
@@ -72,5 +64,18 @@ export class CategoryMonth {
     })
 
     return categoryMonth
-  }
-}
+  },
+
+  async findOrCreate(budgetId: string, categoryId: string, month: string): Promise<any> {
+    let categoryMonth = await prisma.categoryMonth.findFirst({
+      where: { categoryId, month: month },
+      include: { budgetMonth: true },
+    })
+
+    if (!categoryMonth) {
+      categoryMonth = await CategoryMonths.createNew(budgetId, categoryId, month)
+    }
+
+    return categoryMonth
+  },
+})

@@ -3,7 +3,6 @@ import { Get, Security, Route, Post, Body, Controller, Tags, Example, Request } 
 import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { getRepository } from 'typeorm'
 import {prisma} from '../prisma'
 
 @Route()

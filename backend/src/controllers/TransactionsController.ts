@@ -1,8 +1,7 @@
 import { Get, Put, Delete, Route, Path, Security, Post, Body, Controller, Tags, Request, Example } from 'tsoa'
-import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
-import { Transaction, TransactionCache, TransactionStatus } from '../entities/Transaction'
+import { TransactionCache, TransactionStatus } from '../entities/Transaction'
 import {
   TransactionRequest,
   TransactionResponse,

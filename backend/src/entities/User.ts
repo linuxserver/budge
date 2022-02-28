@@ -1,21 +1,7 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  AfterLoad,
-  BeforeUpdate,
-  BeforeInsert,
-  Index,
-  CreateDateColumn,
-  OneToMany,
-} from 'typeorm'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import config from '../config'
-import { UserModel } from '../models/User'
-import { Budget } from './Budget'
 
-@Entity('users')
 export class User {
   public static checkPassword(currentPassword: string, comparison: string): boolean {
     return bcrypt.compareSync(comparison, currentPassword)

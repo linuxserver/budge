@@ -1,5 +1,3 @@
-import { CreditCardGroupName } from '../../entities/CategoryGroup'
-import { AccountTypes } from '../../entities/Account'
 import { PrismaClient } from '@prisma/client'
 
 export default class CategoryMiddleware {
