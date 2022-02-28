@@ -64,8 +64,8 @@ export class CategoryGroup {
       locked: this.locked,
       order: this.order,
       categories: await Promise.all((await this.categories).map(category => category.toResponseModel())),
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.created,
     }
   }
 

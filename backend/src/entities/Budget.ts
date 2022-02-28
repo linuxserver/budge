@@ -86,8 +86,8 @@ export class Budget {
       name: this.name,
       toBeBudgeted: this.toBeBudgeted,
       accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 

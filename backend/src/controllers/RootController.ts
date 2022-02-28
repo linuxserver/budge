@@ -17,8 +17,8 @@ export class RootController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
     token: '1234abcd',
   })
@@ -59,8 +59,8 @@ export class RootController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async ping(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
@@ -104,8 +104,8 @@ export class RootController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getMe(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {

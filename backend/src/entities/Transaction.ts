@@ -177,12 +177,12 @@ export class Transaction {
       accountId: this.accountId,
       payeeId: this.payeeId,
       amount: this.amount,
-      date: this.date.toISOString(),
+      date: this.date,
       memo: this.memo,
       categoryId: this.categoryId,
       status: this.status,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 

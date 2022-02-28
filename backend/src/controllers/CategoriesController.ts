@@ -31,8 +31,8 @@ export class CategoriesController extends Controller {
         internal: false,
         order: 0,
         categories: [],
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -75,8 +75,8 @@ export class CategoriesController extends Controller {
       internal: false,
       order: 0,
       categories: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createCategoryGroup(
@@ -99,11 +99,16 @@ export class CategoriesController extends Controller {
       })
       await getRepository(CategoryGroup).insert(categoryGroup)
 
+      let categoryGroups = await getRepository(CategoryGroup).find({ budgetId })
+      categoryGroups = CategoryGroup.sort(categoryGroups)
+      await getRepository(CategoryGroup).save(categoryGroups)
+
       return {
         message: 'success',
-        data: await categoryGroup.toResponseModel(),
+        data: await categoryGroups.find(catGroup => catGroup.id === categoryGroup.id).toResponseModel(),
       }
     } catch (err) {
+      console.log(err)
       return { message: err.message }
     }
   }
@@ -123,8 +128,8 @@ export class CategoriesController extends Controller {
       internal: false,
       order: 0,
       categories: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateCategoryGroup(
@@ -188,8 +193,8 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createCategory(
@@ -212,9 +217,13 @@ export class CategoriesController extends Controller {
       })
       await getRepository(Category).insert(category)
 
+      let categories = await getRepository(Category).find({ categoryGroupId: category.categoryGroupId })
+      categories = Category.sort(categories)
+      await getRepository(Category).save(categories)
+
       return {
         message: 'success',
-        data: await category.toResponseModel(),
+        data: await categories.find(cat => cat.id === category.id).toResponseModel(),
       }
     } catch (err) {
       return { message: err.message }
@@ -236,8 +245,8 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateCategory(
@@ -304,8 +313,8 @@ export class CategoriesController extends Controller {
       budgeted: 0,
       activity: 0,
       balance: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateCategoryMonth(
@@ -353,8 +362,8 @@ export class CategoriesController extends Controller {
         budgeted: 0,
         activity: 0,
         balance: 0,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })

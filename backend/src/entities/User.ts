@@ -65,8 +65,8 @@ export class User {
     return {
       id: this.id,
       email: this.email,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 

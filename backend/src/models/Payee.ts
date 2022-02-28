@@ -33,12 +33,12 @@ export interface PayeeModel {
   /**
    * Datetime user was created
    */
-  created: string
+  created: Date
 
   /**
    * Datetime user was updated
    */
-  updated: string
+  updated: Date
 }
 
 /**

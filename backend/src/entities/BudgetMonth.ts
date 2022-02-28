@@ -79,8 +79,8 @@ export class BudgetMonth {
       budgeted: this.budgeted,
       activity: this.activity,
       underfunded: this.underfunded,
-      created: this.created ? this.created.toISOString() : new Date().toISOString(),
-      updated: this.updated ? this.updated.toISOString() : new Date().toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 }

@@ -21,8 +21,8 @@ export class PayeesController extends Controller {
       transferAccountId: null,
       name: 'Random Store Name',
       internal: false,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createPayee(
@@ -67,8 +67,8 @@ export class PayeesController extends Controller {
         transferAccountId: null,
         name: 'Random Store Name',
         internal: false,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -108,8 +108,8 @@ export class PayeesController extends Controller {
       transferAccountId: null,
       name: 'Random Store Name',
       internal: false,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getPayee(

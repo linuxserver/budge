@@ -106,8 +106,8 @@ export class Account {
       cleared: this.cleared,
       uncleared: this.uncleared,
       order: this.order,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 

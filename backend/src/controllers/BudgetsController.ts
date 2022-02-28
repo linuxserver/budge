@@ -36,20 +36,20 @@ export class BudgetsController extends Controller {
             cleared: 0,
             uncleared: 0,
             order: 0,
-            created: '2011-10-05T14:48:00.000Z',
-            updated: '2011-10-05T14:48:00.000Z',
+            created: new Date('2011-10-05T14:48:00.000Z'),
+            updated: new Date('2011-10-05T14:48:00.000Z'),
           },
         ],
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
       {
         id: 'abc456',
         name: 'Another Budget',
         toBeBudgeted: 0,
         accounts: [],
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -78,8 +78,8 @@ export class BudgetsController extends Controller {
       name: 'My Budget',
       toBeBudgeted: 0,
       accounts: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createBudget(
@@ -113,8 +113,8 @@ export class BudgetsController extends Controller {
       name: 'My Budget',
       toBeBudgeted: 0,
       accounts: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getBudget(
@@ -155,8 +155,8 @@ export class BudgetsController extends Controller {
       name: 'My Budget',
       toBeBudgeted: 0,
       accounts: [],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async editBudget(
@@ -202,8 +202,8 @@ export class BudgetsController extends Controller {
         activity: 0,
         budgeted: 0,
         underfunded: 0,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -257,12 +257,12 @@ export class BudgetsController extends Controller {
           budgeted: 0,
           activity: 0,
           balance: 0,
-          created: '2011-10-05T14:48:00.000Z',
-          updated: '2011-10-05T14:48:00.000Z',
+          created: new Date('2011-10-05T14:48:00.000Z'),
+          updated: new Date('2011-10-05T14:48:00.000Z'),
         },
       ],
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getBudgetMonth(

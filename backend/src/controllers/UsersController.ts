@@ -17,8 +17,8 @@ export class UsersController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createUser(@Body() requestBody: UserCreateRequest): Promise<UserResponse | ErrorResponse> {
@@ -59,8 +59,8 @@ export class UsersController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getUserByEmail(@Path() email: string): Promise<UserResponse | ErrorResponse> {
@@ -91,8 +91,8 @@ export class UsersController extends Controller {
     data: {
       id: 'abc123',
       email: 'alex@example.com',
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateUser(

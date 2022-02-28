@@ -50,12 +50,12 @@ export interface CategoryModel {
   /**
    * Datetime transaction was created
    */
-  created: string
+  created: Date
 
   /**
    * Datetime transaction was updated
    */
-  updated: string
+  updated: Date
 }
 
 /**

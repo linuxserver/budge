@@ -123,8 +123,8 @@ export class CategoryMonth {
       budgeted: this.budgeted,
       activity: this.activity,
       balance: this.balance,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 }

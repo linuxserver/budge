@@ -85,8 +85,8 @@ export class Category {
       inflow: this.inflow,
       locked: this.locked,
       order: this.order,
-      created: this.created.toISOString(),
-      updated: this.updated.toISOString(),
+      created: this.created,
+      updated: this.updated,
     }
   }
 

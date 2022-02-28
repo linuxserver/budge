@@ -29,8 +29,8 @@ export class AccountsController extends Controller {
       cleared: 0,
       uncleared: 0,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async createAccount(
@@ -117,8 +117,8 @@ export class AccountsController extends Controller {
       cleared: 0,
       uncleared: 0,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async updateAccount(
@@ -229,8 +229,8 @@ export class AccountsController extends Controller {
         cleared: 0,
         uncleared: 0,
         order: 0,
-        created: '2011-10-05T14:48:00.000Z',
-        updated: '2011-10-05T14:48:00.000Z',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
       },
     ],
   })
@@ -275,8 +275,8 @@ export class AccountsController extends Controller {
       cleared: 0,
       uncleared: 0,
       order: 0,
-      created: '2011-10-05T14:48:00.000Z',
-      updated: '2011-10-05T14:48:00.000Z',
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
     },
   })
   public async getAccount(
