@@ -280,15 +280,15 @@ export default function Account(props) {
   const categoryIds = useSelector(categoriesSelectors.selectIds)
 
   const selectCategoriesMap = createSelector(categoriesSelectors.selectAll, categories => {
-    return categories.reduce(
-      (acc, category) => {
-        acc[category.id] = category.name
-        return acc
-      },
-      { 0: 'Category Not Needed' },
-    )
+    const retval = [{ 0: 'Category Not Needed' }, { 'Category Not Needed': '0' }]
+    for (const category of categories) {
+      retval[0][category.id] = category.name
+      retval[1][category.name] = category.id
+    }
+
+    return retval
   })
-  const categoriesMap = useSelector(selectCategoriesMap)
+  const [categoriesMap, categoriesToIds] = useSelector(selectCategoriesMap)
 
   const payeesMap = useSelector(selectPayeesMap)
 
@@ -459,7 +459,7 @@ export default function Account(props) {
                 if (transferAccount.length === 1 && transferAccount[0].type !== 2) {
                   updateProps.categoryId = '0'
                 } else if (props.rowData.categoryId === 'Category Not Needed') {
-                  updateProps.categoryId = Object.keys(categoriesMap)[1]
+                  updateProps.categoryId = categoryIds[1]
                 }
 
                 const newRow = {
@@ -533,13 +533,10 @@ export default function Account(props) {
                       )}
                       value={props.value}
                       onInputChange={(e, value) => {
-                        props.onChange(value)
+                        props.onChange(categoriesToIds[value])
                       }}
                       onChange={(e, value) => {
-                        return props.onRowDataChange({
-                          ...props.rowData,
-                          categoryId: value,
-                        })
+                        props.onChange(value)
                       }}
                     />
                   )
@@ -818,9 +815,12 @@ export default function Account(props) {
   const onTransactionAdd = async newRow => {
     let refreshPayees = false
 
-    console.log(newRow)
     if (!payeesMap[newRow.payeeId]) {
       newRow.payeeId = (await createNewPayee(newRow.payeeId)).id
+    }
+
+    if (categoriesToIds[newRow.categoryId]) {
+      newRow.categoryId = categoriesToIds[newRow.categoryId]
     }
 
     await dispatch(
@@ -880,10 +880,8 @@ export default function Account(props) {
       }
     }
 
-    if (!categoriesMap[newRow.categoryId]) {
-      // @TODO: Fix : Because of the 'onInputChange' autocomplete, the edited value gets subbed out for the 'text' value. Make sure this doesn't truly already exist.
-      const category = Object.keys(categoriesMap).find(key => categoriesMap[key] === newRow.categoryId)
-      newRow.categoryId = category
+    if (categoriesToIds[newRow.categoryId]) {
+      newRow.categoryId = categoriesToIds[newRow.categoryId]
     }
 
     await dispatch(
