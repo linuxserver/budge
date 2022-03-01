@@ -467,7 +467,8 @@ export default function BudgetTable(props) {
       } else {
         // placing into same or new group, at the position dropped
         from.groupId = to.groupId
-        from.order = to.order + 0.5
+
+        from.order = from.order > to.order ? to.order - 0.5 : to.order + 0.5
       }
 
       await dispatch(
@@ -479,7 +480,7 @@ export default function BudgetTable(props) {
         to = categoryGroupsMap[to.groupId]
       }
 
-      from.order = to.order + 0.5
+      from.order = from.order > to.order ? to.order - 0.5 : to.order + 0.5
       await dispatch(updateCategoryGroup({ id: from.id, name: from.name, order: from.order }))
     }
 
