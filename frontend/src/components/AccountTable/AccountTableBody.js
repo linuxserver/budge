@@ -18,6 +18,7 @@ export default function AccountTableBody({
   onTransactionAdd,
   toggleRowSelected,
   toggleAllRowsSelected,
+  categoriesMap,
   ...props
 }) {
   useEffect(() => {})
@@ -62,6 +63,7 @@ export default function AccountTableBody({
         cancelAddTransaction={cancelAddTransaction}
         toggleRowSelected={toggleRowSelected}
         toggleAllRowsSelected={toggleAllRowsSelected}
+        categoriesMap={categoriesMap}
       />
     )
   }

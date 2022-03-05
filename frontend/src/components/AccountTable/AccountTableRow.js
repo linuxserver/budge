@@ -19,6 +19,7 @@ export default function AccountTableRow({
   cancelAddTransaction,
   toggleRowSelected,
   toggleAllRowsSelected,
+  categoriesMap,
   ...props
 }) {
   const theme = useTheme()
@@ -26,6 +27,16 @@ export default function AccountTableRow({
 
   const editing = useSelector(state => state.accounts.editingRow === row.original.id)
 
+  const buildCategoryOptions = rowData => {
+    let options = { ...categoriesMap }
+    if (rowData.categoryId !== '0') {
+      delete options['0']
+    }
+
+    return options
+  }
+
+  const [categoryOptions, setCategoryOptions] = useState(buildCategoryOptions(row.original))
   const [rowData, setRowData] = useState({
     ...row.original,
     amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
@@ -36,6 +47,18 @@ export default function AccountTableRow({
       ...rowData,
       [field]: val,
     })
+  }
+
+  const onRowDataChange = newRowData => {
+    const options = buildCategoryOptions(newRowData)
+
+    setCategoryOptions(options)
+
+    if (rowData.categoryId === '0') {
+      newRowData.categoryId = row.original.categoryId || Object.keys(categoriesMap)[1]
+    }
+
+    setRowData(newRowData)
   }
 
   const onCellKeyPress = e => {
@@ -114,7 +137,8 @@ export default function AccountTableRow({
                 value: rowData[cell.column.id],
                 rowData,
                 onChange: val => updateRowData(cell.column.id, val),
-                onRowDataChange: val => setRowData(val),
+                onRowDataChange: onRowDataChange,
+                categoryOptions: categoryOptions,
                 onKeyDown: onCellKeyPress,
                 save: save,
                 cancel: cancel,

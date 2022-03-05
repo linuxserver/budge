@@ -458,7 +458,7 @@ export default function Account(props) {
                 const updateProps = {}
                 if (transferAccount.length === 1 && transferAccount[0].type !== 2) {
                   updateProps.categoryId = '0'
-                } else if (props.rowData.categoryId === 'Category Not Needed') {
+                } else if (props.rowData.categoryId === '0') {
                   updateProps.categoryId = categoryIds[1]
                 }
 
@@ -488,12 +488,7 @@ export default function Account(props) {
                 sortType: 'defaultSort',
                 Cell: props => <Box>{categoriesMap[props.cell.value]}</Box>,
                 Editing: props => {
-                  const disabled =
-                    props.rowData.categoryId === '0' || props.rowData.categoryId === 'Category Not Needed'
-                  const options = { ...categoriesMap }
-                  if (disabled === false) {
-                    delete options['0']
-                  }
+                  const disabled = props.value === '0' || props.value === 'Category Not Needed'
 
                   return (
                     <Autocomplete
@@ -502,10 +497,10 @@ export default function Account(props) {
                       disableClearable={true}
                       disablePortal
                       disabled={disabled}
-                      options={categoryIds}
+                      options={Object.keys(props.categoryOptions)}
                       getOptionLabel={option => {
-                        if (categoriesMap[option]) {
-                          return categoriesMap[option]
+                        if (props.categoryOptions[option]) {
+                          return props.categoryOptions[option]
                         }
 
                         return option
@@ -1280,6 +1275,7 @@ export default function Account(props) {
           onTransactionAdd={onTransactionAdd}
           toggleRowSelected={toggleRowSelected}
           toggleAllRowsSelected={toggleAllRowsSelected}
+          categoriesMap={categoriesMap}
         />
       </Table>
     </Box>
