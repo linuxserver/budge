@@ -109,7 +109,7 @@ export default function BudgetDetails({ accountId, name }) {
               <Box>
                 <Box
                   {...bindTrigger(editAccountPopupState)}
-                  sx={{ fontWeight: 'bold', fontSize: theme.typography.h6.fontSize, cursor: 'pointer' }}
+                  sx={{ fontWeight: 'bold', fontSize: theme.typography.subtitle1.fontSize, cursor: 'pointer' }}
                 >
                   {account.name}
                 </Box>
@@ -171,10 +171,11 @@ export default function BudgetDetails({ accountId, name }) {
         <Card sx={{ mx: 2 }}>
           <CardHeader
             title={
-              <Box sx={{ fontWeight: 'bold', fontSize: theme.typography.h6.fontSize }}>{`${new Date(
+              <Box sx={{ fontWeight: 'bold', fontSize: theme.typography.subtitle1.fontSize }}>{`${new Date(
                 Date.UTC(...month.split('-')),
               ).toLocaleDateString(undefined, {
                 month: 'long',
+                year: 'numeric',
               })} Activity`}</Box>
             }
             sx={{

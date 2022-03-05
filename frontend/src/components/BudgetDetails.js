@@ -68,7 +68,7 @@ export default function BudgetDetails(props) {
           <Box sx={{ width: '100%' }}>
             <Card sx={{ mx: 2 }}>
               <CardHeader
-                title={<Box sx={{ fontSize: theme.typography.h6.fontSize, fontWeight: 'bold' }}>Balance</Box>}
+                title={<Box sx={{ fontSize: theme.typography.subtitle1.fontSize, fontWeight: 'bold' }}>Balance</Box>}
                 sx={{
                   backgroundColor: theme.palette.success.main,
                   // color: 'black',
@@ -80,7 +80,7 @@ export default function BudgetDetails(props) {
                   <Box>
                     <Typography
                       style={{
-                        fontSize: theme.typography.h6.fontSize,
+                        fontSize: theme.typography.subtitle1.fontSize,
                       }}
                     >
                       Available
@@ -134,7 +134,9 @@ export default function BudgetDetails(props) {
           <Box sx={{ width: '100%' }}>
             <Card sx={{ mx: 2 }}>
               <CardHeader
-                title={<Box sx={{ fontSize: theme.typography.h6.fontSize, fontWeight: 'bold' }}>Monthly Summary</Box>}
+                title={
+                  <Box sx={{ fontSize: theme.typography.subtitle1.fontSize, fontWeight: 'bold' }}>Monthly Summary</Box>
+                }
                 sx={{
                   backgroundColor: '#5bc0de',
                   // color: 'black',
@@ -151,7 +153,7 @@ export default function BudgetDetails(props) {
             <Card sx={{ mx: 2 }}>
               <CardHeader
                 title={
-                  <Box sx={{ fontSize: theme.typography.h6.fontSize, fontWeight: 'bold' }}>
+                  <Box sx={{ fontSize: theme.typography.subtitle1.fontSize, fontWeight: 'bold' }}>
                     {selectedCategory ? `${selectedCategory.name} Activity` : 'Activity'}
                   </Box>
                 }
