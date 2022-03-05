@@ -169,6 +169,14 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
 
     const account = await manager.getRepository(Account).findOne(transaction.accountId)
     const payee = await manager.getRepository(Payee).findOne(transaction.payeeId)
+    const transferAccount = await manager.getRepository(Account).findOne(payee.transferAccountId)
+
+    // Set memo to either memo of the original transaction or name of the category it was in
+    let memo = transaction.memo
+    if (!memo && transaction.categoryId && transferAccount.type === AccountTypes.Tracking) {
+      const transactionCategory = await manager.getRepository(Category).findOne(transaction.categoryId)
+      memo = transactionCategory.name
+    }
 
     const transferTransaction = manager.create(Transaction, {
       budgetId: transaction.budgetId,
@@ -179,11 +187,10 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
       amount: transaction.amount * -1,
       date: transaction.date,
       status: TransactionStatus.Pending,
+      memo,
     })
 
     await manager.insert(Transaction, transferTransaction)
-
-    const transferAccount = await manager.getRepository(Account).findOne(transferTransaction.accountId)
 
     transaction.payeeId = transferAccount.transferPayeeId
     transaction.transferAccountId = transferAccount.id
@@ -323,7 +330,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
           date: transaction.date,
           status: TransactionStatus.Pending,
         })
-        await manager.update(Transaction, transferTransaction.id, transferTransaction.getUpdatePayload())
+        await manager.getRepository(Transaction).insert(transferTransaction.getUpdatePayload())
         transaction.transferTransactionId = transferTransaction.id
       }
     }
