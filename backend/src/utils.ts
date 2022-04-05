@@ -31,13 +31,7 @@ export function getMonthString(): string {
 
 export function getMonthStringFromNow(monthsAway: number): string {
   let today: DateTime = DateTime.now()
-  today = today.set({ day: 1 })
-
-  if (monthsAway > 0) {
-    today = today.plus({ month: monthsAway })
-  } else {
-    today = today.minus({ month: monthsAway })
-  }
+  today = today.set({ day: 1 }).plus({ month: monthsAway })
 
   return today.toISO().split('T')[0]
 }
