@@ -42,7 +42,7 @@ export default function BudgetDetails(props) {
 
   const underfunded = budgetMonth ? valueToDinero(budgetMonth.underfunded) : inputToDinero(0)
   const budget = useSelector(selectActiveBudget)
-  const toBeBudgeted = budget ? valueToDinero(budget.toBeBudgeted) : inputToDinero(0)
+  const toBeBudgeted = budgetMonth ? valueToDinero(budgetMonth.available) : inputToDinero(0)
 
   const selectedCategory = useSelector(state => {
     if (!state.categories.selected) {
