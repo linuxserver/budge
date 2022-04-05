@@ -18,12 +18,6 @@ export class Budget {
   @Column({ type: 'varchar' })
   name: string
 
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  toBeBudgeted: number = 0
-
   @CreateDateColumn()
   created: Date
 
@@ -76,7 +70,6 @@ export class Budget {
       id: this.id,
       userId: this.userId,
       name: this.name,
-      toBeBudgeted: this.toBeBudgeted || 0,
     }
   }
 
@@ -84,7 +77,6 @@ export class Budget {
     return {
       id: this.id,
       name: this.name,
-      toBeBudgeted: this.toBeBudgeted,
       accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
       created: this.created,
       updated: this.updated,
