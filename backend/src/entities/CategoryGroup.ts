@@ -35,7 +35,7 @@ export class CategoryGroup {
   /**
    * Belongs to a budget
    */
-  @ManyToOne(() => Budget, budget => budget.categoryGroups)
+  @ManyToOne(() => Budget, budget => budget.categoryGroups, { onDelete: 'CASCADE' })
   budget: Budget
 
   /**

@@ -6,6 +6,7 @@ import { CategoryGroup } from './CategoryGroup'
 import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
+import { Payee } from './Payee'
 
 @Entity('budgets')
 export class Budget {
@@ -27,7 +28,7 @@ export class Budget {
   /**
    * Belongs to a user
    */
-  @ManyToOne(() => User, user => user.budgets)
+  @ManyToOne(() => User, user => user.budgets, { onDelete: 'CASCADE' })
   user: User
 
   /**
@@ -59,6 +60,12 @@ export class Budget {
    */
   @OneToMany(() => Transaction, transaction => transaction.budget)
   transactions: Promise<Transaction[]>
+
+  /**
+   * Has many budget transactions
+   */
+  @OneToMany(() => Payee, payee => payee.budget)
+  payees: Promise<Payee[]>
 
   public update(partial: DeepPartial<Budget>): Budget {
     Object.assign(this, partial)

@@ -124,16 +124,22 @@ describe('Budget Tests', () => {
     await getRepository(Transaction).insert(transaction)
 
     account = await getRepository(Account).findOne(account.id)
-    budget = await getRepository(Budget).findOne(budget.id)
+    let budgetMonth = await getRepository(BudgetMonth).findOne({
+      budgetId: budget.id,
+      month: formatMonthFromDateString(new Date()),
+    })
 
     expect(account.balance).toBe(100)
-    expect(budget.toBeBudgeted).toBe(100)
+    expect(budgetMonth.available).toBe(100)
 
     await getRepository(Transaction).remove(transaction)
     account = await getRepository(Account).findOne(account.id)
-    budget = await getRepository(Budget).findOne(budget.id)
+    budgetMonth = await getRepository(BudgetMonth).findOne({
+      budgetId: budget.id,
+      month: formatMonthFromDateString(new Date()),
+    })
 
-    expect(budget.toBeBudgeted).toBe(0)
+    expect(budgetMonth.available).toBe(0)
     expect(account.balance).toBe(0)
   })
 
@@ -187,9 +193,12 @@ describe('Budget Tests', () => {
 
     checkingAccount = await getRepository(Account).findOne(checkingAccount.id)
     savingsAccount = await getRepository(Account).findOne(savingsAccount.id)
-    budget = await getRepository(Budget).findOne(budget.id)
+    let budgetMonth = await getRepository(BudgetMonth).findOne({
+      budgetId: budget.id,
+      month: formatMonthFromDateString(new Date()),
+    })
 
-    expect(budget.toBeBudgeted).toBe(100)
+    expect(budgetMonth.available).toBe(100)
     expect(checkingAccount.balance).toBe(50)
     expect(savingsAccount.balance).toBe(50)
 
@@ -197,9 +206,12 @@ describe('Budget Tests', () => {
     await getRepository(Transaction).remove(transferTransaction)
     checkingAccount = await getRepository(Account).findOne(checkingAccount.id)
     savingsAccount = await getRepository(Account).findOne(savingsAccount.id)
-    budget = await getRepository(Budget).findOne(budget.id)
+    budgetMonth = await getRepository(BudgetMonth).findOne({
+      budgetId: budget.id,
+      month: formatMonthFromDateString(new Date()),
+    })
 
-    expect(budget.toBeBudgeted).toBe(100)
+    expect(budgetMonth.available).toBe(100)
     expect(checkingAccount.balance).toBe(100)
     expect(savingsAccount.balance).toBe(0)
   })

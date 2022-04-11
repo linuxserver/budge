@@ -100,7 +100,7 @@ export class BudgetMonth {
   /**
    * Belongs to a budget
    */
-  @ManyToOne(() => Budget, budget => budget.months)
+  @ManyToOne(() => Budget, budget => budget.months, { onDelete: 'CASCADE' })
   budget: Promise<Budget>
 
   /**

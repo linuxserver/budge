@@ -130,7 +130,7 @@ export class Transaction {
   /**
    * Belongs to an account
    */
-  @ManyToOne(() => Account, account => account.transactions)
+  @ManyToOne(() => Account, account => account.transactions, { onDelete: 'CASCADE' })
   account: Promise<Account>
 
   /**

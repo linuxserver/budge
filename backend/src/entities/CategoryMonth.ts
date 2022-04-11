@@ -77,7 +77,7 @@ export class CategoryMonth {
   /**
    * Belongs to a category
    */
-  @ManyToOne(() => Category, category => category.categoryMonths)
+  @ManyToOne(() => Category, category => category.categoryMonths, { onDelete: 'CASCADE' })
   category: Promise<Category>
 
   /**

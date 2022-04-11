@@ -48,7 +48,7 @@ export class Category {
   /**
    * Belongs to a category group
    */
-  @ManyToOne(() => CategoryGroup, categoryGroup => categoryGroup.categories)
+  @ManyToOne(() => CategoryGroup, categoryGroup => categoryGroup.categories, { onDelete: 'CASCADE' })
   categoryGroup: CategoryGroup
 
   /**

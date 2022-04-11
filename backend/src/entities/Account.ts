@@ -66,7 +66,7 @@ export class Account {
   /**
    * Belongs to a budget
    */
-  @ManyToOne(() => Budget, budget => budget.accounts)
+  @ManyToOne(() => Budget, budget => budget.accounts, { onDelete: 'CASCADE' })
   budget: Promise<Budget>
 
   /**
