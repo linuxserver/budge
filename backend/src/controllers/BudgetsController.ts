@@ -24,7 +24,6 @@ export class BudgetsController extends Controller {
       {
         id: 'abc123',
         name: 'My Budget',
-        toBeBudgeted: 0,
         accounts: [
           {
             id: 'def123',
@@ -46,7 +45,6 @@ export class BudgetsController extends Controller {
       {
         id: 'abc456',
         name: 'Another Budget',
-        toBeBudgeted: 0,
         accounts: [],
         created: new Date('2011-10-05T14:48:00.000Z'),
         updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -76,7 +74,6 @@ export class BudgetsController extends Controller {
     data: {
       id: 'abc123',
       name: 'My Budget',
-      toBeBudgeted: 0,
       accounts: [],
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -111,7 +108,6 @@ export class BudgetsController extends Controller {
     data: {
       id: 'abc123',
       name: 'My Budget',
-      toBeBudgeted: 0,
       accounts: [],
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -153,7 +149,6 @@ export class BudgetsController extends Controller {
     data: {
       id: 'abc123',
       name: 'My Budget',
-      toBeBudgeted: 0,
       accounts: [],
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -201,6 +196,7 @@ export class BudgetsController extends Controller {
         income: 0,
         activity: 0,
         budgeted: 0,
+        available: 0,
         underfunded: 0,
         created: new Date('2011-10-05T14:48:00.000Z'),
         updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -248,6 +244,7 @@ export class BudgetsController extends Controller {
       income: 0,
       activity: 0,
       budgeted: 0,
+      available: 0,
       underfunded: 0,
       categories: [
         {

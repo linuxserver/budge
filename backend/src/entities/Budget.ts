@@ -6,6 +6,7 @@ import { CategoryGroup } from './CategoryGroup'
 import { Category } from './Category'
 import { BudgetMonth } from './BudgetMonth'
 import { Transaction } from './Transaction'
+import { Payee } from './Payee'
 
 @Entity('budgets')
 export class Budget {
@@ -18,12 +19,6 @@ export class Budget {
   @Column({ type: 'varchar' })
   name: string
 
-  @Column({
-    type: 'int',
-    default: 0,
-  })
-  toBeBudgeted: number = 0
-
   @CreateDateColumn()
   created: Date
 
@@ -33,7 +28,7 @@ export class Budget {
   /**
    * Belongs to a user
    */
-  @ManyToOne(() => User, user => user.budgets)
+  @ManyToOne(() => User, user => user.budgets, { onDelete: 'CASCADE' })
   user: User
 
   /**
@@ -66,6 +61,12 @@ export class Budget {
   @OneToMany(() => Transaction, transaction => transaction.budget)
   transactions: Promise<Transaction[]>
 
+  /**
+   * Has many budget transactions
+   */
+  @OneToMany(() => Payee, payee => payee.budget)
+  payees: Promise<Payee[]>
+
   public update(partial: DeepPartial<Budget>): Budget {
     Object.assign(this, partial)
     return this
@@ -76,7 +77,6 @@ export class Budget {
       id: this.id,
       userId: this.userId,
       name: this.name,
-      toBeBudgeted: this.toBeBudgeted || 0,
     }
   }
 
@@ -84,7 +84,6 @@ export class Budget {
     return {
       id: this.id,
       name: this.name,
-      toBeBudgeted: this.toBeBudgeted,
       accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
       created: this.created,
       updated: this.updated,

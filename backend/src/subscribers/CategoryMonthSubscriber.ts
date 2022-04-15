@@ -53,7 +53,6 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
    * Also, cascade the new balance of this month into the next month to update the carry-over amount.
    */
   private async bookkeeping(categoryMonth: CategoryMonth, manager: EntityManager) {
-    console.log(`bookeeping category month: ${categoryMonth.month}`)
     const category = await manager.findOne(Category, categoryMonth.categoryId)
     const originalCategoryMonth = CategoryMonthCache.get(categoryMonth.id)
 
@@ -72,10 +71,10 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     const activityDifference = categoryMonth.activity - originalCategoryMonth.activity
     if (budgetedDifference !== 0 || activityDifference !== 0) {
       const budget = await manager.findOne(Budget, budgetMonth.budgetId)
-      budget.toBeBudgeted = budget.toBeBudgeted + budgetedDifference
+      budgetMonth.available += budgetedDifference
 
       if (category.inflow) {
-        budget.toBeBudgeted = budget.toBeBudgeted + activityDifference
+        budgetMonth.available += activityDifference
       }
 
       await manager.update(Budget, budget.id, budget.getUpdatePayload())

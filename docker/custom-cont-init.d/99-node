@@ -1,3 +1,8 @@
 #!/usr/bin/with-contenv bash
 
-apk add nodejs npm
+curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+apt-get install -y nodejs
+
+cd /app/backend
+npx prisma generate
+npx prisma migrate dev --name init

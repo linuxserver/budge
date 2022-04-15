@@ -46,6 +46,11 @@ export interface BudgetMonthModel {
   activity: number
 
   /**
+   * Amount available to budget
+   */
+  available: number
+
+  /**
    * Deficit amount for the month
    */
   underfunded: number

@@ -102,7 +102,16 @@ export default function Login() {
   }
 
   const userCreation = async () => {
-    await api.createUser(email, password)
+    try {
+      await api.createUser(email, password)
+    } catch (err) {
+      const response = JSON.parse(err.request.response)
+
+      setAlertDialogBody(response?.message || 'Failed to create user')
+      setAlertDialogOpen(true)
+
+      throw err
+    }
 
     await dispatch(
       login({

@@ -22,6 +22,7 @@ export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
 
     // Create initial budget months
     for (const month of [prevMonth, today, nextMonth]) {
+      console.log(`creating budget month ${month}`)
       const newBudgetMonth = manager.create(BudgetMonth, { budgetId: budget.id, month })
       await manager.insert(BudgetMonth, newBudgetMonth)
     }

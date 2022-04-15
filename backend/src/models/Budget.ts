@@ -26,11 +26,6 @@ export interface BudgetModel {
   accounts: AccountModel[]
 
   /**
-   * Amount left to budget
-   */
-  toBeBudgeted: number
-
-  /**
    * Datetime user was created
    */
   created: Date

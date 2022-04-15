@@ -1,24 +1,67 @@
-import { Budget } from '../entities/Budget'
-import {
-  EntityManager,
-  EntitySubscriberInterface,
-  EventSubscriber,
-  InsertEvent,
-  MoreThan,
-  MoreThanOrEqual,
-  Not,
-  UpdateEvent,
-} from 'typeorm'
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
-import { BudgetMonth } from '../entities/BudgetMonth'
+import { BudgetMonth, BudgetMonthCache } from '../entities/BudgetMonth'
 import { Category } from '../entities/Category'
-import { CategoryMonth, CategoryMonthCache } from '../entities/CategoryMonth'
-import { CategoryMonths } from '../repositories/CategoryMonths'
+import { CategoryMonth } from '../entities/CategoryMonth'
 
 @EventSubscriber()
 export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMonth> {
   listenTo() {
     return BudgetMonth
+  }
+
+  async beforeInsert(event: InsertEvent<BudgetMonth>) {
+    const budgetMonth = event.entity
+    const manager = event.manager
+    const prevMonth = getDateFromString(budgetMonth.month).minus({ month: 1 })
+
+    const prevBudgetMonth = await manager.findOne(BudgetMonth, {
+      budgetId: budgetMonth.budgetId,
+      month: formatMonthFromDateString(prevMonth.toJSDate()),
+    })
+
+    if (!prevBudgetMonth) {
+      return
+    }
+
+    budgetMonth.available = prevBudgetMonth.available
+  }
+
+  async afterUpdate(event: UpdateEvent<BudgetMonth>) {
+    const budgetMonth = event.entity
+    const manager = event.manager
+
+    const nextMonth = getDateFromString(budgetMonth.month).plus({ month: 1 })
+    const nextBudgetMonth = await manager.findOne(BudgetMonth, {
+      budgetId: budgetMonth.budgetId,
+      month: formatMonthFromDateString(nextMonth.toJSDate()),
+    })
+
+    if (!nextBudgetMonth) {
+      return
+    }
+
+    const originalBudgetMonth = BudgetMonthCache.get(budgetMonth.id)
+
+    if (
+      budgetMonth.income === originalBudgetMonth.income &&
+      budgetMonth.budgeted === originalBudgetMonth.budgeted &&
+      budgetMonth.underfunded === originalBudgetMonth.underfunded &&
+      budgetMonth.available === originalBudgetMonth.available
+    ) {
+      return
+    }
+
+    // The carryover for next month needs to include the available cash
+    // but also account for underfunded categories.
+    const availableDiff =
+      originalBudgetMonth.available -
+      budgetMonth.available -
+      (originalBudgetMonth.underfunded - budgetMonth.underfunded)
+
+    nextBudgetMonth.available -= availableDiff
+
+    await manager.getRepository(BudgetMonth).update(nextBudgetMonth.id, nextBudgetMonth.getUpdatePayload())
   }
 
   async afterInsert(event: InsertEvent<BudgetMonth>) {

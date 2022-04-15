@@ -22,6 +22,11 @@ export class UsersController extends Controller {
     },
   })
   public async createUser(@Body() requestBody: UserCreateRequest): Promise<UserResponse | ErrorResponse> {
+    if (process.env.REGISTRATION_DISABLED?.match(/true|1/i)) {
+      this.setStatus(400)
+      return { message: 'Registration is disabled' }
+    }
+
     const { email } = requestBody
 
     const emailCheck: User = await getRepository(User).findOne({ email })
