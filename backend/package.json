@@ -1,6 +1,6 @@
 {
   "name": "BudgE",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "tsoa spec-and-routes && tsc",
     "start": "node build/src/server.js",
     "test": "jest",
-    "migrate": "ts-node ./node_modules/typeorm/cli.js migration:run"
+    "migrate": "npx --yes ts-node ./node_modules/typeorm/cli.js migration:run"
   },
   "keywords": [],
   "author": "",
