@@ -2,9 +2,15 @@ import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } fr
 import api from '../../api'
 import { formatMonthFromDateString } from '../../utils/Date'
 import { fetchBudgetMonth } from './BudgetMonths'
+import { Currency } from '../../utils/Currency'
 
 export const createBudget = createAsyncThunk('budgets/create', async ({ name }) => {
   return await api.createBudget(name)
+})
+
+export const updateBudget = createAsyncThunk('budgets/update', async ({ name, currency }, { getState }) => {
+  const store = getState()
+  return await api.updateBudget(store.budgets.activeBudgetId, name, currency)
 })
 
 export const fetchBudgets = createAsyncThunk('budgets/fetchBudgets', async () => {
@@ -42,16 +48,15 @@ const budgetsSlice = createSlice({
     availableMonths: [],
   }),
 
-  reducers: {
-    setActiveBudget: (state, { payload }) => {
-      state.activeBudgetId = payload
-    },
-  },
+  reducers: {},
 
   extraReducers: builder => {
     builder
       .addCase(createBudget.fulfilled, (state, { payload }) => {
         budgetsAdapter.setOne(state, payload)
+      })
+      .addCase(updateBudget.fulfilled, (state, { payload }) => {
+        budgetsAdapter.upsertOne(state, payload)
       })
       .addCase(fetchBudgets.fulfilled, (state, { payload }) => {
         budgetsAdapter.setAll(
@@ -67,6 +72,7 @@ const budgetsSlice = createSlice({
       })
       .addCase(setActiveBudget.fulfilled, (state, { payload }) => {
         state.activeBudgetId = payload
+        Currency.setCurrency(state.entities[payload].currency)
       })
       .addCase(setCurrentMonth.fulfilled, (state, { payload }) => {
         state.currentMonth = payload

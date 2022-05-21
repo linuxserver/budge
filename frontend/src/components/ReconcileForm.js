@@ -8,7 +8,7 @@ import { bindPopover } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack'
 import { toUnit } from 'dinero.js'
 import Typography from '@mui/material/Typography'
-import { inputToDinero, intlFormat } from '../utils/Currency'
+import { Currency } from '../utils/Currency'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import { editAccount, fetchAccountTransactions } from '../redux/slices/Accounts'
 
@@ -35,7 +35,7 @@ export default function ReconcileForm(props) {
     await dispatch(
       editAccount({
         id: props.accountId,
-        balance: inputToDinero(balance),
+        balance: Currency.inputToDinero(balance),
       }),
     )
     await dispatch(fetchAccountTransactions({ accountId: props.accountId }))
@@ -56,7 +56,7 @@ export default function ReconcileForm(props) {
         {balanceCorrectAnswer === null && (
           <Stack direction="column" spacing={0.5} justifyContent="center" alignItems="center">
             <Typography>Is this your current balance?</Typography>
-            <Typography variant="h6">{intlFormat(props.balance)}</Typography>
+            <Typography variant="h6">{Currency.intlFormat(props.balance)}</Typography>
             <ButtonGroup variant="contained" aria-label="outlined primary button group">
               <Button size="small" onClick={submit}>
                 Yes

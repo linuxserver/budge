@@ -21,6 +21,11 @@ export interface BudgetModel {
   name: string
 
   /**
+   * Currency setting of the budget
+   */
+  currency: string
+
+  /**
    * Budget's accounts
    */
   accounts: AccountModel[]
@@ -44,6 +49,7 @@ export interface BudgetModel {
  */
 export interface BudgetRequest {
   name: string
+  currency?: string
 }
 
 export type BudgetResponse = DataResponse<BudgetModel>

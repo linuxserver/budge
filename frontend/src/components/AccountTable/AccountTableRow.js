@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
 import Box from '@mui/material/Box'
-import { valueToDinero } from '../../utils/Currency'
+import { Currency } from '../../utils/Currency'
 import { toUnit } from 'dinero.js'
 import clsx from 'clsx'
 import { ROW_HEIGHT } from './constants'
@@ -39,7 +39,7 @@ export default function AccountTableRow({
   const [categoryOptions, setCategoryOptions] = useState(buildCategoryOptions(row.original))
   const [rowData, setRowData] = useState({
     ...row.original,
-    amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
+    amount: toUnit(Currency.valueToDinero(row.original.amount), { digits: 2 }),
   })
 
   const updateRowData = (field, val) => {
@@ -83,7 +83,7 @@ export default function AccountTableRow({
 
     setRowData({
       ...row.original,
-      amount: toUnit(valueToDinero(row.original.amount), { digits: 2 }),
+      amount: toUnit(Currency.valueToDinero(row.original.amount), { digits: 2 }),
     })
     dispatch(setEditingRow(0))
     onCancel(row.original.id)

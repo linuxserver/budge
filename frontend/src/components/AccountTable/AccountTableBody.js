@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import TableBody from '@mui/material/TableBody'
 import Box from '@mui/material/Box'
 import AccountTableRow from './AccountTableRow'
-import { inputToDinero, valueToDinero } from '../../utils/Currency'
+import { Currency } from '../../utils/Currency'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList as List } from 'react-window'
 import { ROW_HEIGHT } from './constants'
@@ -27,18 +27,18 @@ export default function AccountTableBody({
     if (newData.id === 0) {
       return onTransactionAdd({
         ...newData,
-        amount: inputToDinero(newData.amount),
+        amount: Currency.inputToDinero(newData.amount),
       })
     }
 
     onRowSave(
       {
         ...newData,
-        amount: inputToDinero(newData.amount),
+        amount: Currency.inputToDinero(newData.amount),
       },
       {
         ...oldData,
-        amount: valueToDinero(oldData.amount),
+        amount: Currency.valueToDinero(oldData.amount),
       },
     )
   }

@@ -11,7 +11,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import Collapse from '@mui/material/Collapse'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { inputToDinero, intlFormat, valueToDinero } from '../utils/Currency'
+import { Currency } from '../utils/Currency'
 import LogoutIcon from '@mui/icons-material/Logout'
 import api from '../api'
 import { add, isNegative } from 'dinero.js'
@@ -132,8 +132,8 @@ export default function AppDrawer(props) {
 
   const AccountList = (label, accounts) => {
     const balance = accounts.reduce((total, account) => {
-      return add(valueToDinero(account.balance), total)
-    }, inputToDinero(0))
+      return add(Currency.valueToDinero(account.balance), total)
+    }, Currency.inputToDinero(0))
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
     const key = label.replace(' ', '_')
 
@@ -163,7 +163,7 @@ export default function AppDrawer(props) {
             <div>
               <ListItemText
                 edge="end"
-                secondary={intlFormat(balance)}
+                secondary={Currency.intlFormat(balance)}
                 secondaryTypographyProps={{
                   fontWeight: 'bold',
                   sx: { color: balanceColor },
@@ -211,7 +211,7 @@ export default function AppDrawer(props) {
   }
 
   const AccountItem = account => {
-    const balance = valueToDinero(account.balance)
+    const balance = Currency.valueToDinero(account.balance)
     const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
     return (
       <ListItemButton
@@ -254,7 +254,7 @@ export default function AppDrawer(props) {
 
           <div>
             <ListItemText
-              secondary={intlFormat(balance)}
+              secondary={Currency.intlFormat(balance)}
               secondaryTypographyProps={{
                 fontWeight: 'bold',
                 color: balanceColor,
@@ -272,7 +272,7 @@ export default function AppDrawer(props) {
 
   return (
     <>
-      <Settings close={setSettingsOpen} open={settingsOpen} close={closeSettings} />
+      <Settings open={settingsOpen} close={closeSettings} />
 
       <Drawer
         variant="permanent"
