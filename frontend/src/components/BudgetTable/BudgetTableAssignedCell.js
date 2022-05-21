@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import TextField from '@mui/material/TextField'
-import { inputToDinero, intlFormat } from '../../utils/Currency'
+import { Currency } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
 import { isZero, toUnit } from 'dinero.js'
 import { styled } from '@mui/material/styles'
@@ -29,10 +29,10 @@ const BudgetCell = styled(TextField)(({ theme }) => ({
 export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
   const theme = useTheme()
   const month = useSelector(state => state.budgets.currentMonth)
-  const [rowValue, setRowValue] = useState(intlFormat(budgeted))
+  const [rowValue, setRowValue] = useState(Currency.intlFormat(budgeted))
 
   useEffect(() => {
-    setRowValue(intlFormat(budgeted))
+    setRowValue(Currency.intlFormat(budgeted))
   }, [budgeted])
 
   const onFocus = async e => {
@@ -41,7 +41,7 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
   }
 
   const onBlur = async () => {
-    await setRowValue(intlFormat(budgeted))
+    await setRowValue(Currency.intlFormat(budgeted))
   }
 
   const onChange = e => {
@@ -62,8 +62,8 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
   const onKeyPress = e => {
     if (e.key === 'Enter') {
       try {
-        const newValue = inputToDinero(mexp.eval(rowValue))
-        setRowValue(intlFormat(newValue))
+        const newValue = Currency.inputToDinero(mexp.eval(rowValue))
+        setRowValue(Currency.intlFormat(newValue))
         onSubmit(newValue, month)
         e.target.blur()
       } catch (e) {}

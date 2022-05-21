@@ -4,7 +4,7 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { useTheme } from '@mui/styles'
-import { getBalanceColor, inputToDinero, intlFormat, valueToDinero } from '../../utils/Currency'
+import { getBalanceColor, Currency } from '../../utils/Currency'
 import { selectActiveBudget } from '../../redux/slices/Budgets'
 import { add } from 'dinero.js'
 
@@ -16,8 +16,8 @@ export default function BudgetMonthCalculation({ account }) {
     return state.budgetMonths.entities[month] || null
   })
 
-  const income = budgetMonth ? valueToDinero(budgetMonth.income) : inputToDinero(0)
-  const activity = budgetMonth ? valueToDinero(budgetMonth.activity) : inputToDinero(0)
+  const income = budgetMonth ? Currency.valueToDinero(budgetMonth.income) : Currency.inputToDinero(0)
+  const activity = budgetMonth ? Currency.valueToDinero(budgetMonth.activity) : Currency.inputToDinero(0)
 
   return (
     <Stack direction="row" justifyContent="space-evenly" alignItems="center" spacing={2}>
@@ -35,7 +35,7 @@ export default function BudgetMonthCalculation({ account }) {
             }}
             variant="subtitle1"
           >
-            {intlFormat(income)}
+            {Currency.intlFormat(income)}
           </Typography>
           <Typography
             variant="caption"
@@ -70,7 +70,7 @@ export default function BudgetMonthCalculation({ account }) {
             }}
             variant="subtitle1"
           >
-            {intlFormat(activity)}
+            {Currency.intlFormat(activity)}
           </Typography>
           <Typography
             variant="caption"
@@ -105,7 +105,7 @@ export default function BudgetMonthCalculation({ account }) {
             }}
             variant="subtitle1"
           >
-            {intlFormat(add(income, activity))}
+            {Currency.intlFormat(add(income, activity))}
           </Typography>
           <Typography
             variant="caption"

@@ -10,7 +10,7 @@ import IconButton from '@mui/material/IconButton'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import Grid from '@mui/material/Grid'
 import { equal, isPositive, isNegative, isZero } from 'dinero.js'
-import { FromAPI, intlFormat, valueToDinero } from '../../utils/Currency'
+import { FromAPI, Currency } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
 import PopupState, { bindTrigger } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
@@ -319,7 +319,7 @@ export default function BudgetTable(props) {
           },
           Header: props => <Box sx={{ textAlign: 'right' }}>BUDGETED</Box>,
           Cell: props => {
-            const value = valueToDinero(props.row.values.budgeted)
+            const value = Currency.valueToDinero(props.row.values.budgeted)
             if (!props.row.original.groupId) {
               return (
                 <Box
@@ -329,7 +329,7 @@ export default function BudgetTable(props) {
                     // fontWeight: 'bold',
                   }}
                 >
-                  {intlFormat(value)}
+                  {Currency.intlFormat(value)}
                 </Box>
               )
             }
@@ -361,7 +361,7 @@ export default function BudgetTable(props) {
           },
           Header: props => <Box sx={{ textAlign: 'right' }}>ACTIVITY</Box>,
           Cell: props => {
-            const value = valueToDinero(props.cell.value)
+            const value = Currency.valueToDinero(props.cell.value)
             return (
               <Box
                 sx={{
@@ -370,7 +370,7 @@ export default function BudgetTable(props) {
                   // fontWeight: 'bold',
                 }}
               >
-                {intlFormat(value)}
+                {Currency.intlFormat(value)}
               </Box>
             )
           },
@@ -382,8 +382,8 @@ export default function BudgetTable(props) {
           },
           Header: props => <Box sx={{ textAlign: 'right' }}>AVAILABLE</Box>,
           Cell: props => {
-            const balance = valueToDinero(props.cell.value)
-            let value = intlFormat(balance)
+            const balance = Currency.valueToDinero(props.cell.value)
+            let value = Currency.intlFormat(balance)
 
             let color = 'default'
             if (props.row.original.trackingAccountId) {

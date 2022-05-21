@@ -1,7 +1,7 @@
 import React from 'react'
 import Box from '@mui/material/Box'
 import { useSelector, useDispatch } from 'react-redux'
-import { inputToDinero, intlFormat, valueToDinero, getBalanceColor } from '../utils/Currency'
+import { Currency, getBalanceColor } from '../utils/Currency'
 import { useTheme } from '@mui/styles'
 import Stack from '@mui/material/Stack'
 import { isPositive, isNegative, isZero, add } from 'dinero.js'
@@ -31,8 +31,8 @@ export default function BudgetDetails(props) {
     if (account.type === 2) {
       return total
     }
-    return add(valueToDinero(account.balance), total)
-  }, inputToDinero(0))
+    return add(Currency.valueToDinero(account.balance), total)
+  }, Currency.inputToDinero(0))
   const balanceColor = isNegative(balance) ? theme.palette.error.main : theme.palette.secondary.main
 
   const month = useSelector(state => state.budgets.currentMonth)
@@ -40,9 +40,9 @@ export default function BudgetDetails(props) {
     return state.budgetMonths.entities[month] || null
   })
 
-  const underfunded = budgetMonth ? valueToDinero(budgetMonth.underfunded) : inputToDinero(0)
+  const underfunded = budgetMonth ? Currency.valueToDinero(budgetMonth.underfunded) : Currency.inputToDinero(0)
   const budget = useSelector(selectActiveBudget)
-  const toBeBudgeted = budgetMonth ? valueToDinero(budgetMonth.available) : inputToDinero(0)
+  const toBeBudgeted = budgetMonth ? Currency.valueToDinero(budgetMonth.available) : Currency.inputToDinero(0)
 
   const selectedCategory = useSelector(state => {
     if (!state.categories.selected) {
@@ -95,7 +95,7 @@ export default function BudgetDetails(props) {
                         color: !isZero(toBeBudgeted) ? getBalanceColor(toBeBudgeted, theme) : theme.palette.grey[500],
                       }}
                     >
-                      {intlFormat(toBeBudgeted)}
+                      {Currency.intlFormat(toBeBudgeted)}
                     </Typography>
                   </Box>
                 </Stack>
@@ -123,7 +123,7 @@ export default function BudgetDetails(props) {
                         // color: balanceColor,
                       }}
                     >
-                      {intlFormat(balance)}
+                      {Currency.intlFormat(balance)}
                     </Typography>
                   </Box>
                 </Stack>
@@ -179,8 +179,8 @@ export default function BudgetDetails(props) {
       >
         {isPositive(underfunded) && !isZero(underfunded) && (
           <Alert variant="filled" severity="error">
-            You are {intlFormat(underfunded)} in self debt! Your budget may not be accurate until you resolve any
-            negative balances.
+            You are {Currency.intlFormat(underfunded)} in self debt! Your budget may not be accurate until you resolve
+            any negative balances.
           </Alert>
         )}
       </Box>

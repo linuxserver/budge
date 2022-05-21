@@ -14,7 +14,7 @@ import Stack from '@mui/material/Stack'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import CircularProgress from '@mui/material/CircularProgress'
-import { inputToDinero } from '../utils/Currency'
+import { Currency } from '../utils/Currency'
 import { fetchAccounts, createTransactions, fetchAccountTransactions } from '../redux/slices/Accounts'
 import { createPayee, fetchPayees } from '../redux/slices/Payees'
 import { refreshBudget, fetchAvailableMonths } from '../redux/slices/Budgets'
@@ -103,16 +103,16 @@ export default function ImportCSV({ accountId, open, close }) {
           case 'Ignore':
             break
           case 'Amount':
-            newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, '')))
+            newTransaction.amount = Currency.inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, '')))
             break
           case 'Inflow':
             if (parseFloat(value) !== 0) {
-              newTransaction.amount = inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, '')))
+              newTransaction.amount = Currency.inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, '')))
             }
             break
           case 'Outflow':
             if (parseFloat(value) !== 0) {
-              newTransaction.amount = multiply(inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, ''))), -1)
+              newTransaction.amount = multiply(Currency.inputToDinero(parseFloat(value.replace(/[^0-9\.-]/, ''))), -1)
             }
             break
           case 'Memo':
@@ -234,7 +234,7 @@ export default function ImportCSV({ accountId, open, close }) {
         )}
 
         {stage === 'IMPORT' && (
-          <Box sx={{ display: 'flex' }} sx={{ textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', textAlign: 'center' }}>
             <CircularProgress />
           </Box>
         )}

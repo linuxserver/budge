@@ -24,6 +24,7 @@ export class BudgetsController extends Controller {
       {
         id: 'abc123',
         name: 'My Budget',
+        currency: 'USD',
         accounts: [
           {
             id: 'def123',
@@ -45,6 +46,7 @@ export class BudgetsController extends Controller {
       {
         id: 'abc456',
         name: 'Another Budget',
+        currency: 'USD',
         accounts: [],
         created: new Date('2011-10-05T14:48:00.000Z'),
         updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -74,6 +76,7 @@ export class BudgetsController extends Controller {
     data: {
       id: 'abc123',
       name: 'My Budget',
+      currency: 'USD',
       accounts: [],
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -108,6 +111,7 @@ export class BudgetsController extends Controller {
     data: {
       id: 'abc123',
       name: 'My Budget',
+      currency: 'USD',
       accounts: [],
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
@@ -149,6 +153,7 @@ export class BudgetsController extends Controller {
     data: {
       id: 'abc123',
       name: 'My Budget',
+      currency: 'USD',
       accounts: [],
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),

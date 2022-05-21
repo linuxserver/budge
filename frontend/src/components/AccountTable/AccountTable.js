@@ -20,7 +20,7 @@ import IconButton from '@mui/material/IconButton'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import LockIcon from '@mui/icons-material/Lock'
-import { FromAPI, intlFormat, valueToDinero, inputToDinero, getBalanceColor } from '../../utils/Currency'
+import { FromAPI, Currency, getBalanceColor } from '../../utils/Currency'
 import { isZero, isPositive, add } from 'dinero.js'
 import Tooltip from '@mui/material/Tooltip'
 import { useTheme } from '@mui/styles'
@@ -610,12 +610,12 @@ export default function Account(props) {
                   textAlign: 'right',
                 }}
               >
-                {intlFormat(trx.amount)}
+                {Currency.intlFormat(trx.amount)}
               </Typography>
             )
           },
           Editing: props => <AccountAmountCell {...props} />,
-          exportTransformer: value => intlFormat(valueToDinero(value)),
+          exportTransformer: value => Currency.intlFormat(Currency.valueToDinero(value)),
         },
         {
           title: 'Status',
@@ -855,7 +855,7 @@ export default function Account(props) {
       {
         ...rowData,
         status: rowData.status === 0 ? 1 : 0,
-        amount: valueToDinero(rowData.amount),
+        amount: Currency.valueToDinero(rowData.amount),
       },
       { ...rowData },
     )
@@ -967,7 +967,7 @@ export default function Account(props) {
       getSelectedRows().map(row => ({
         ...row,
         status: 1,
-        amount: valueToDinero(row.amount),
+        amount: Currency.valueToDinero(row.amount),
       })),
     )
   }
@@ -978,7 +978,7 @@ export default function Account(props) {
       getSelectedRows().map(row => ({
         ...row,
         status: 0,
-        amount: valueToDinero(row.amount),
+        amount: Currency.valueToDinero(row.amount),
       })),
     )
   }
@@ -1057,9 +1057,9 @@ export default function Account(props) {
   }
 
   const selectedTransactionTotal = getSelectedRows().reduce((total, row) => {
-    total = add(total, valueToDinero(row.amount))
+    total = add(total, Currency.valueToDinero(row.amount))
     return total
-  }, inputToDinero(0))
+  }, Currency.inputToDinero(0))
 
   return (
     <Box
@@ -1214,7 +1214,7 @@ export default function Account(props) {
                         <Box
                           sx={{ fontWeight: 'bold', color: getBalanceColor(selectedTransactionTotal, theme), px: 1 }}
                         >
-                          {intlFormat(selectedTransactionTotal)}
+                          {Currency.intlFormat(selectedTransactionTotal)}
                         </Box>
                       </>
                     )}

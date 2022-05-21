@@ -19,6 +19,9 @@ export class Budget {
   @Column({ type: 'varchar' })
   name: string
 
+  @Column({ type: 'varchar', default: 'USD' })
+  currency: string
+
   @CreateDateColumn()
   created: Date
 
@@ -77,6 +80,7 @@ export class Budget {
       id: this.id,
       userId: this.userId,
       name: this.name,
+      currency: this.currency,
     }
   }
 
@@ -84,6 +88,7 @@ export class Budget {
     return {
       id: this.id,
       name: this.name,
+      currency: this.currency,
       accounts: await Promise.all((await this.accounts).map(account => account.toResponseModel())),
       created: this.created,
       updated: this.updated,

@@ -53,6 +53,15 @@ export default class API {
     return response.data.data
   }
 
+  static async updateBudget(id, name, currency) {
+    const response = await axios.put(`/api/budgets/${id}`, {
+      name,
+      currency,
+    })
+
+    return response.data.data
+  }
+
   static async fetchBudgets() {
     const response = await axios.get('/api/budgets')
 
