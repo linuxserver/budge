@@ -18,7 +18,14 @@ export class Currency {
   }
 
   static inputToDinero(amount) {
-    return dinero({ amount: parseInt(amount * 100), currency: currencies[Currency.getCurrency()] })
+    return dinero({
+      amount: parseInt(`${parseFloat(amount).toFixed(2)}`.replace('.', '')),
+      currency: currencies[Currency.getCurrency()],
+    })
+  }
+
+  static inputToValue(amount) {
+    return dineroToValue(Currency.inputToDinero(amount))
   }
 
   static intlFormat(dineroObject, locale, options = {}) {

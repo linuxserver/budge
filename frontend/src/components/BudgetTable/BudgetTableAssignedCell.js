@@ -62,11 +62,17 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
   const onKeyPress = e => {
     if (e.key === 'Enter') {
       try {
-        const newValue = Currency.inputToDinero(mexp.eval(rowValue))
+        const fixedValue = rowValue.replace(/\d+\.?\d*/g, (match, contents, offset, input) => {
+          return Currency.inputToValue(match)
+        })
+
+        const newValue = Currency.valueToDinero(mexp.eval(fixedValue))
         setRowValue(Currency.intlFormat(newValue))
         onSubmit(newValue, month)
         e.target.blur()
-      } catch (e) {}
+      } catch (e) {
+        console.log(e)
+      }
     }
   }
 
