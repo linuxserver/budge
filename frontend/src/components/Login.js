@@ -156,6 +156,13 @@ export default function Login() {
     await initUser()
   }
 
+  const onKeyPress = e => {
+    switch (e.key) {
+      case 'Enter':
+        return handleLogin()
+    }
+  }
+
   return (
     <div>
       <AlertDialog open={alertDialogOpen} body={alertDialogBody} handleClose={() => setAlertDialogOpen(false)} />
@@ -172,6 +179,7 @@ export default function Login() {
             fullWidth
             variant="standard"
             onChange={onEmailChange}
+            onKeyPress={onKeyPress}
           />
           <TextField
             margin="dense"
@@ -181,6 +189,7 @@ export default function Login() {
             fullWidth
             variant="standard"
             onChange={onPasswordChange}
+            onKeyPress={onKeyPress}
           />
         </DialogContent>
         <DialogActions>
