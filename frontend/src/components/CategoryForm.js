@@ -18,6 +18,8 @@ export default function NewCategoryDialog(props) {
   const dispatch = useDispatch()
   const categoryGroups = useSelector(categoryGroupsSelectors.selectAll)
 
+  console.log(props)
+
   /**
    * State block
    */
@@ -86,8 +88,10 @@ export default function NewCategoryDialog(props) {
               return
             }
 
+            const isSelected = group.id === props.categoryGroupId
+
             return (
-              <MenuItem value={group.id} key={group.id}>
+              <MenuItem value={group.id} key={group.id} selected={isSelected}>
                 {group.name}
               </MenuItem>
             )
