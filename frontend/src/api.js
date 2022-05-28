@@ -204,6 +204,16 @@ export default class API {
     return response.data.data
   }
 
+  static async deleteCategory(categoryId, newCategoryId, budgetId) {
+    console.log('here')
+    const response = await axios.delete(`/api/budgets/${budgetId}/categories/${categoryId}`, {
+      data: {
+        newCategoryId,
+      },
+    })
+    return response.data.data
+  }
+
   static async fetchBudgetMonth(budgetId, month) {
     const response = await axios.get(`/api/budgets/${budgetId}/months/${month}`)
 

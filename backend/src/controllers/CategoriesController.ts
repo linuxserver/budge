@@ -1,16 +1,17 @@
-import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example, Query } from 'tsoa'
+import { Get, Put, Route, Path, Security, Post, Body, Controller, Tags, Request, Example, Query, Delete } from 'tsoa'
 import { Budget } from '../entities/Budget'
 import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { CategoryGroup } from '../entities/CategoryGroup'
 import { CategoryGroupRequest, CategoryGroupResponse, CategoryGroupsResponse } from '../models/CategoryGroup'
-import { CategoryResponse } from '../models/Category'
+import { CategoryResponse, DeleteCategoryRequest } from '../models/Category'
 import { CategoryRequest } from '../models/Category'
 import { Category } from '../entities/Category'
 import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../models/CategoryMonth'
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
+import { Transaction } from 'src/entities/Transaction'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -292,6 +293,70 @@ export class CategoriesController extends Controller {
       return {
         message: 'success',
         data: await category.toResponseModel(),
+      }
+    } catch (err) {
+      console.log(err)
+      return { message: err.message }
+    }
+  }
+
+  /**
+   * Deete a category
+   */
+  @Security('jwtRequired')
+  @Delete('{id}')
+  @Example<CategoryResponse>({
+    message: 'success',
+    data: {
+      id: 'abc123',
+      categoryGroupId: 'def456',
+      trackingAccountId: null,
+      name: 'Expenses',
+      inflow: false,
+      locked: false,
+      order: 0,
+      created: new Date('2011-10-05T14:48:00.000Z'),
+      updated: new Date('2011-10-05T14:48:00.000Z'),
+    },
+  })
+  public async deleteCategory(
+    @Path() budgetId: string,
+    @Path() id: string,
+    @Body() requestBody: DeleteCategoryRequest,
+    @Request() request: ExpressRequest,
+  ): Promise<CategoryResponse | ErrorResponse> {
+    try {
+      const budget = await getRepository(Budget).findOne(budgetId)
+      if (!budget || budget.userId !== request.user.id) {
+        this.setStatus(404)
+        return {
+          message: 'Not found',
+        }
+      }
+
+      const category = await getRepository(Category).findOne(id, { relations: ['transactions', 'categoryMonths'] })
+
+      // First, transfer all existing transactions to the new category
+      for (const transaction of category.transactions) {
+        transaction.update({
+          categoryId: requestBody.newCategoryId,
+        })
+        await getRepository(Transaction)
+          .update(transaction.id, transaction.getUpdatePayload())
+      }
+
+      // Next, update all category months for budgeted items to the new category
+      for (const categoryMonth of category.categoryMonths) {
+        const newCategoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, requestBody.newCategoryId, categoryMonth.month)
+        newCategoryMonth.update({ budgeted: newCategoryMonth.budgeted + categoryMonth.budgeted })
+        await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
+      }
+
+      // Finally, delete the category
+      await getRepository(Category).remove(category)
+
+      return {
+        message: 'success',
       }
     } catch (err) {
       console.log(err)

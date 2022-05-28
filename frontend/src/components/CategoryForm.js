@@ -10,6 +10,7 @@ import Box from '@mui/material/Box'
 import { bindPopover } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack'
 import { categoryGroupsSelectors } from '../redux/slices/CategoryGroups'
+import API from '../api'
 
 export default function NewCategoryDialog(props) {
   /**
@@ -17,8 +18,7 @@ export default function NewCategoryDialog(props) {
    */
   const dispatch = useDispatch()
   const categoryGroups = useSelector(categoryGroupsSelectors.selectAll)
-
-  console.log(props)
+  const budgetId = useSelector(state => state.budgets.activeBudgetId)
 
   /**
    * State block
@@ -49,6 +49,10 @@ export default function NewCategoryDialog(props) {
     }
 
     props.popupState.close()
+  }
+
+  const deleteCategory = async () => {
+    await API.deleteCategory(props.categoryId, 'test', budgetId)
   }
 
   return (
@@ -100,6 +104,10 @@ export default function NewCategoryDialog(props) {
         <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0} sx={{ pt: 2 }}>
           <Button size="small" onClick={submit}>
             {props.mode === 'create' ? 'Create' : 'Save'}
+          </Button>
+
+          <Button size="small" onClick={deleteCategory}>
+            Delete
           </Button>
         </Stack>
       </Box>

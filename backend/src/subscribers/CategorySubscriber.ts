@@ -1,4 +1,4 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm'
+import { EntitySubscriberInterface, EventSubscriber, InsertEvent, RemoveEvent } from 'typeorm'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { Category } from '../entities/Category'
 import { CategoryMonth, CategoryMonthCache } from '../entities/CategoryMonth'
@@ -25,5 +25,10 @@ export class CategorySubscriber implements EntitySubscriberInterface<Category> {
     )
 
     await manager.insert(CategoryMonth, categoryMonths)
+  }
+
+  async beforeRemove(event: RemoveEvent<Category>) {
+    const category = event.entity
+    const manager = event.manager
   }
 }

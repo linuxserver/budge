@@ -70,4 +70,8 @@ export interface CategoryRequest {
   order: number
 }
 
+export interface DeleteCategoryRequest {
+  newCategoryId: string
+}
+
 export type CategoryResponse = DataResponse<CategoryModel>
