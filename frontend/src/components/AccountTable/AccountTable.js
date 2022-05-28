@@ -826,7 +826,7 @@ export default function Account(props) {
           date: newRow.date,
           memo: newRow.memo,
           payeeId: newRow.payeeId,
-          categoryId: newRow.categoryId === '0' ? null : newRow.categoryId,
+          categoryId: newRow.categoryId === '0' || newRow.categoryId === '' ? null : newRow.categoryId,
           status: 0,
         },
       }),
