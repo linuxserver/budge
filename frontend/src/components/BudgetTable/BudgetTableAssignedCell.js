@@ -45,7 +45,7 @@ export default function BudgetTableAssignedCell({ budgeted, onSubmit }) {
   }
 
   const onChange = e => {
-    const operators = ['+', '-', '*', '/']
+    const operators = ['+', '-', '*', '/', '(', ')']
     const value = e.target.value
 
     if (operators.includes(value)) {

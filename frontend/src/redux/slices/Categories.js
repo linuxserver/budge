@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, createEntityAdapter, createSelector } from '@reduxjs/toolkit'
 import api from '../../api'
+import { setTransactions } from './Accounts'
 
 export const createCategory = createAsyncThunk(
   'categories/createCategory',
@@ -15,6 +16,19 @@ export const updateCategory = createAsyncThunk(
     const store = getState()
     const category = await api.updateCategory(id, name, order, categoryGroupId, store.budgets.activeBudgetId)
     return category
+  },
+)
+
+export const deleteCategory = createAsyncThunk(
+  'categories/deleteCategory',
+  async ({ categoryId, newCategoryId }, { getState, dispatch }) => {
+    const store = getState()
+    const response = await api.deleteCategory(categoryId, newCategoryId, store.budgets.activeBudgetId)
+
+    dispatch(setTransactions({ transactions: response.transactions }))
+    // dispatch(setCategoryMonths({ categoryMonths: response.categoryMonths }))
+
+    return response
   },
 )
 
@@ -44,6 +58,10 @@ const categoriesSlice = createSlice({
 
     builder.addCase(updateCategory.fulfilled, (state, { payload }) => {
       categoriesAdapter.upsertOne(state, payload)
+    })
+
+    builder.addCase(deleteCategory.fulfilled, (state, { payload }) => {
+      return state
     })
   },
 })
