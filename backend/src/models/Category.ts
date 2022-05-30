@@ -1,6 +1,8 @@
 import { AccountTypes } from '../entities/Account'
 import { DataResponse } from '../controllers/responses'
 import { TransactionStatus } from '../entities/Transaction'
+import { TransactionModel } from './Transaction'
+import { CategoryMonthModel } from './CategoryMonth'
 
 /**
  * @example {
@@ -74,4 +76,18 @@ export interface DeleteCategoryRequest {
   newCategoryId: string
 }
 
+export interface DeleteCategoryModel {
+  /**
+   * All updated transactions
+   */
+  transactions: TransactionModel[]
+
+  /**
+   * All updated category months
+   */
+  categoryMonths: CategoryMonthModel[]
+}
+
 export type CategoryResponse = DataResponse<CategoryModel>
+
+export type DeleteCategoryResponse = DataResponse<DeleteCategoryModel>

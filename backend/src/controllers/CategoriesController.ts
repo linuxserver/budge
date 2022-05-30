@@ -4,14 +4,19 @@ import { ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { CategoryGroup } from '../entities/CategoryGroup'
 import { CategoryGroupRequest, CategoryGroupResponse, CategoryGroupsResponse } from '../models/CategoryGroup'
-import { CategoryResponse, DeleteCategoryRequest } from '../models/Category'
+import {
+  CategoryResponse,
+  DeleteCategoryModel,
+  DeleteCategoryRequest,
+  DeleteCategoryResponse,
+} from '../models/Category'
 import { CategoryRequest } from '../models/Category'
 import { Category } from '../entities/Category'
 import { CategoryMonthRequest, CategoryMonthResponse, CategoryMonthsResponse } from '../models/CategoryMonth'
 import { CategoryMonth } from '../entities/CategoryMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
 import { CategoryMonths } from '../repositories/CategoryMonths'
-import { Transaction } from 'src/entities/Transaction'
+import { Transaction } from '../entities/Transaction'
 
 @Tags('Categories')
 @Route('budgets/{budgetId}/categories')
@@ -324,7 +329,7 @@ export class CategoriesController extends Controller {
     @Path() id: string,
     @Body() requestBody: DeleteCategoryRequest,
     @Request() request: ExpressRequest,
-  ): Promise<CategoryResponse | ErrorResponse> {
+  ): Promise<DeleteCategoryResponse | ErrorResponse> {
     try {
       const budget = await getRepository(Budget).findOne(budgetId)
       if (!budget || budget.userId !== request.user.id) {
@@ -334,6 +339,11 @@ export class CategoriesController extends Controller {
         }
       }
 
+      const response: DeleteCategoryModel = {
+        transactions: [],
+        categoryMonths: [],
+      }
+
       const category = await getRepository(Category).findOne(id, { relations: ['transactions', 'categoryMonths'] })
 
       // First, transfer all existing transactions to the new category
@@ -341,15 +351,28 @@ export class CategoriesController extends Controller {
         transaction.update({
           categoryId: requestBody.newCategoryId,
         })
-        await getRepository(Transaction)
-          .update(transaction.id, transaction.getUpdatePayload())
+        await getRepository(Transaction).update(transaction.id, transaction.getUpdatePayload())
+
+        response.transactions.push(transaction)
       }
 
       // Next, update all category months for budgeted items to the new category
       for (const categoryMonth of category.categoryMonths) {
-        const newCategoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(budgetId, requestBody.newCategoryId, categoryMonth.month)
+        const newCategoryMonth = await getCustomRepository(CategoryMonths).findOrCreate(
+          budgetId,
+          requestBody.newCategoryId,
+          categoryMonth.month,
+        )
+
         newCategoryMonth.update({ budgeted: newCategoryMonth.budgeted + categoryMonth.budgeted })
-        await getRepository(CategoryMonth).update(categoryMonth.id, categoryMonth.getUpdatePayload())
+        await getRepository(CategoryMonth).update(newCategoryMonth.id, newCategoryMonth.getUpdatePayload())
+
+        response.categoryMonths.push(newCategoryMonth)
+      }
+
+      // Delete old category months now
+      for (const categoryMonth of category.categoryMonths) {
+        await getRepository(CategoryMonth).remove(categoryMonth)
       }
 
       // Finally, delete the category
@@ -357,6 +380,7 @@ export class CategoriesController extends Controller {
 
       return {
         message: 'success',
+        data: response,
       }
     } catch (err) {
       console.log(err)
