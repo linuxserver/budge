@@ -33,6 +33,9 @@ export class Category {
   @Column({ type: 'int', default: 0 })
   order: number = 0
 
+  @Column({ type: 'boolean', default: false })
+  hidden: boolean
+
   @CreateDateColumn()
   created: Date
 
@@ -73,6 +76,7 @@ export class Category {
       inflow: this.inflow,
       locked: this.locked,
       order: this.order,
+      hidden: this.hidden,
     }
   }
 
@@ -85,6 +89,7 @@ export class Category {
       inflow: this.inflow,
       locked: this.locked,
       order: this.order,
+      hidden: this.hidden,
       created: this.created,
       updated: this.updated,
     }

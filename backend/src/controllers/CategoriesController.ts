@@ -199,6 +199,7 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
+      hidden: false,
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
     },
@@ -251,6 +252,7 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
+      hidden: false,
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
     },
@@ -278,6 +280,10 @@ export class CategoriesController extends Controller {
 
       category.name = requestBody.name
       category.order = requestBody.order
+      if (requestBody.hidden !== undefined) {
+        category.hidden = requestBody.hidden
+      }
+
       delete category.categoryGroup
       category.categoryGroupId = requestBody.categoryGroupId
 
@@ -320,6 +326,7 @@ export class CategoriesController extends Controller {
       inflow: false,
       locked: false,
       order: 0,
+      hidden: false,
       created: new Date('2011-10-05T14:48:00.000Z'),
       updated: new Date('2011-10-05T14:48:00.000Z'),
     },

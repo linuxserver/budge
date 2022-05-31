@@ -50,6 +50,11 @@ export interface CategoryModel {
   order: number
 
   /**
+   * Hidden flag
+   */
+  hidden: boolean
+
+  /**
    * Datetime transaction was created
    */
   created: Date
@@ -70,6 +75,7 @@ export interface CategoryRequest {
   categoryGroupId: string
   name: string
   order: number
+  hidden?: boolean
 }
 
 export interface DeleteCategoryRequest {
