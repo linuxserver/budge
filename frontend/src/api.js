@@ -194,10 +194,11 @@ export default class API {
     return response.data.data
   }
 
-  static async updateCategory(categoryId, name, order, categoryGroupId, budgetId) {
+  static async updateCategory(categoryId, name, order, hidden, categoryGroupId, budgetId) {
     const response = await axios.put(`/api/budgets/${budgetId}/categories/${categoryId}`, {
       name,
       order,
+      hidden,
       categoryGroupId,
     })
 
@@ -205,7 +206,6 @@ export default class API {
   }
 
   static async deleteCategory(categoryId, newCategoryId, budgetId) {
-    console.log('here')
     const response = await axios.delete(`/api/budgets/${budgetId}/categories/${categoryId}`, {
       data: {
         newCategoryId,

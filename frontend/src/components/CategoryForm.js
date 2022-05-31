@@ -47,6 +47,7 @@ export default function NewCategoryDialog(props) {
             id: props.categoryId,
             name: name,
             order: props.order,
+            hidden: props.hidden,
             categoryGroupId: categoryGroup,
           }),
         )
@@ -78,6 +79,20 @@ export default function NewCategoryDialog(props) {
     }
 
     setDeleteDialogOpen(false)
+    props.popupState.close()
+  }
+
+  const hideCategory = async () => {
+    await dispatch(
+      updateCategory({
+        id: props.categoryId,
+        name: props.name,
+        order: props.order,
+        hidden: !props.hidden,
+        categoryGroupId: props.categoryGroupId,
+      }),
+    )
+
     props.popupState.close()
   }
 
@@ -136,15 +151,25 @@ export default function NewCategoryDialog(props) {
           })}
         </Select>
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0} sx={{ pt: 2 }}>
-          {props.mode === 'edit' && (
-            <Button size="small" onClick={openDeleteDialog}>
-              Delete
-            </Button>
-          )}
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+            {props.mode === 'edit' && (
+              <>
+                <Button color="error" variant="outlined" size="small" onClick={openDeleteDialog}>
+                  Delete
+                </Button>
 
-          <Button size="small" onClick={submit}>
-            {props.mode === 'create' ? 'Create' : 'Save'}
-          </Button>
+                <Button size="small" onClick={hideCategory}>
+                  {props.hidden === true ? 'Unhide' : 'Hide'}
+                </Button>
+              </>
+            )}
+          </Stack>
+
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+            <Button size="small" onClick={submit}>
+              {props.mode === 'create' ? 'Create' : 'Save'}
+            </Button>
+          </Stack>
         </Stack>
       </Box>
     </Popover>

@@ -144,8 +144,6 @@ const accountsSlice = createSlice({
     },
 
     setTransactions: (state, { payload }) => {
-      console.log(payload)
-      console.log(state.entities)
       for (const transaction of payload.transactions) {
         console.log(transaction)
         try {
@@ -154,8 +152,6 @@ const accountsSlice = createSlice({
           console.log(e)
         }
       }
-
-      console.log('done')
     },
   },
 

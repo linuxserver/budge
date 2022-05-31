@@ -12,7 +12,7 @@ import Grid from '@mui/material/Grid'
 import { equal, isPositive, isNegative, isZero } from 'dinero.js'
 import { FromAPI, Currency } from '../../utils/Currency'
 import { useTheme } from '@mui/styles'
-import PopupState, { bindTrigger } from 'material-ui-popup-state'
+import PopupState, { bindTrigger, bindContextMenu } from 'material-ui-popup-state'
 import CategoryGroupForm from '../CategoryGroupForm'
 import CategoryForm from '../CategoryForm'
 import Tooltip from '@mui/material/Tooltip'
@@ -34,8 +34,6 @@ import ExpandMore from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { styled } from '@mui/material/styles'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import Divider from '@mui/material/Divider'
-import BudgetTableHeader from './BudgetTableHeader'
 
 const BudgetTableCell = styled(TableCell)(({ theme }) => ({
   paddingTop: '4px',
@@ -50,13 +48,11 @@ export default function BudgetTable(props) {
    * Redux block
    */
   const dispatch = useDispatch()
-  const budgetId = useSelector(state => state.budgets.activeBudgetId)
   const month = useSelector(state => state.budgets.currentMonth)
   const availableMonths = useSelector(state => state.budgets.availableMonths)
 
   const nextMonth = getDateFromString(month)
   nextMonth.setMonth(nextMonth.getMonth() + 1)
-  const nextMonthExists = availableMonths.includes(formatMonthFromDateString(nextMonth))
 
   const currentTheme = useSelector(state => state.app.theme)
 
@@ -105,6 +101,7 @@ export default function BudgetTable(props) {
     [categoryGroupsSelectors.selectAll, categoriesSelectors.selectAll, selectCategoryMonths],
     (groups, categories, categoryMonths) => {
       let retval = []
+      const hiddenCategories = []
       const underfunded = !budgetMonth.id
         ? false
         : isPositive(budgetMonth.underfunded) && !isZero(budgetMonth.underfunded)
@@ -132,6 +129,7 @@ export default function BudgetTable(props) {
             id: category.id,
             name: category.name,
             order: category.order,
+            hidden: false,
             groupId: group.id,
             categoryId: category.id,
             month,
@@ -159,19 +157,48 @@ export default function BudgetTable(props) {
             groupRow.underfunded = underfunded
           }
 
-          groupRow.subRows.push({
-            ...categoryMonth,
-            name: category.name,
-            order: category.order,
-            groupId: group.id,
-            trackingAccountId: category.trackingAccountId,
-            underfunded,
-          })
+          if (category.hidden === true) {
+            hiddenCategories.push({
+              ...categoryMonth,
+              name: category.name,
+              order: category.order,
+              hidden: category.hidden,
+              groupId: group.id,
+              trackingAccountId: category.trackingAccountId,
+              underfunded,
+            })
+          } else {
+            groupRow.subRows.push({
+              ...categoryMonth,
+              name: category.name,
+              order: category.order,
+              hidden: category.hidden,
+              groupId: group.id,
+              trackingAccountId: category.trackingAccountId,
+              underfunded,
+            })
+          }
         }
 
         groupRow.subRows.sort((a, b) => (a.order < b.order ? -1 : 1))
         retval.push(groupRow)
       })
+
+      if (hiddenCategories.length > 0) {
+        retval.push({
+          id: 0,
+          name: 'Hidden',
+          locked: true,
+          trackingAccountId: true,
+          order: 9999,
+          categoryId: 0,
+          month,
+          budgeted: hiddenCategories.reduce((total, cat) => total + cat.budgeted, 0),
+          activity: hiddenCategories.reduce((total, cat) => total + cat.activity, 0),
+          balance: hiddenCategories.reduce((total, cat) => total + cat.balance, 0),
+          subRows: hiddenCategories,
+        })
+      }
 
       return retval.sort((a, b) => (a.order < b.order ? -1 : 1))
     },
@@ -180,7 +207,6 @@ export default function BudgetTable(props) {
   const budgetData = useSelector(state => selectData(state, month))
   const data = useMemo(() => budgetData, [budgetData])
 
-  const openCategoryGroupDialog = props.openCategoryGroupDialog
   const DragState = {
     row: -1,
     dropRow: -1, // drag target
@@ -261,6 +287,7 @@ export default function BudgetTable(props) {
                           }),
                         }}
                         {...(!props.row.original.trackingAccountId && bindTrigger(popupState))}
+                        {...(!props.row.original.trackingAccountId && bindContextMenu(popupState))}
                       >
                         {props.row.values.name}
                       </Box>
@@ -280,6 +307,7 @@ export default function BudgetTable(props) {
                           mode={'edit'}
                           name={props.row.values.name}
                           order={props.row.original.order}
+                          hidden={props.row.original.hidden}
                           categoryId={props.row.original.categoryId}
                           categoryGroupId={props.row.original.groupId}
                         />
@@ -459,6 +487,12 @@ export default function BudgetTable(props) {
   )
 
   const reorderRows = async (from, to) => {
+    // This is the auto-generated 'hidden' category group - can't be moved
+    // and shouldn't be able to move others 'after' it
+    if (from.id === 0 || to.id === 0) {
+      return
+    }
+
     if (from.groupId) {
       /// updating a category, not a group
       if (!to.groupId) {
@@ -472,7 +506,13 @@ export default function BudgetTable(props) {
       }
 
       await dispatch(
-        updateCategory({ id: from.categoryId, name: from.name, order: from.order, categoryGroupId: from.groupId }),
+        updateCategory({
+          id: from.categoryId,
+          name: from.name,
+          order: from.order,
+          hidden: from.hidden,
+          categoryGroupId: from.groupId,
+        }),
       )
     } else {
       if (to.groupId) {
@@ -512,7 +552,7 @@ export default function BudgetTable(props) {
         expanded: useMemo(
           () =>
             data.reduce((result, current, index) => {
-              result[index] = true
+              result[index] = data[index].id === 0 ? false : true // Hidden group (id === 0) is collapsed by default
               return result
             }, {}),
           [],
@@ -532,10 +572,6 @@ export default function BudgetTable(props) {
         height: '100vh',
       }}
     >
-      {/* <BudgetTableHeader />
-
-      <Divider /> */}
-
       <TableContainer component={Box}>
         <Table stickyHeader {...getTableProps()} size="small">
           <TableHead>
