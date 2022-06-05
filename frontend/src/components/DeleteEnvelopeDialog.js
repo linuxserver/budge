@@ -6,14 +6,8 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import { useSelector } from 'react-redux'
 import MenuItem from '@mui/material/MenuItem'
-import { fetchCategories } from '../redux/slices/CategoryGroups'
-import { refreshBudget } from '../redux/slices/Budgets'
-import { Currency } from '../utils/Currency'
-import { fetchPayees } from '../redux/slices/Payees'
 import { categoriesSelectors } from '../redux/slices/Categories'
 import Select from '@mui/material/Select'
-
-const accountTypes = ['Bank', 'Credit Card', 'Off Budget Account']
 
 export default function DeleteEnvelopeDialog(props) {
   /**
@@ -29,7 +23,7 @@ export default function DeleteEnvelopeDialog(props) {
 
   return (
     <div>
-      <Dialog open={props.isOpen} disableEscapeKeyDown={true} onBackdropClick={() => false}>
+      <Dialog open={props.isOpen} disableEscapeKeyDown={true} onBackdropClick={() => false} maxWidth="xs">
         <DialogTitle>Delete Envelope</DialogTitle>
         <DialogContent>
           Select a new category for all existing transactions and budgets

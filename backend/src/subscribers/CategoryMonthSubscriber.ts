@@ -1,5 +1,12 @@
 import { Budget } from '../entities/Budget'
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm'
+import {
+  EntityManager,
+  EntitySubscriberInterface,
+  EventSubscriber,
+  InsertEvent,
+  RemoveEvent,
+  UpdateEvent,
+} from 'typeorm'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { Category } from '../entities/Category'
@@ -47,6 +54,22 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
   }
 
   /**
+   * Although the insert / updating of this entity is recursive / cascades, a removal will not
+   * as we should only be removing category months when a category is being removed. So we are
+   * removing the category months individually, so no need to cascade any updates from a single one.
+   */
+  async beforeRemove(event: RemoveEvent<CategoryMonth>) {
+    const categoryMonth = event.entity
+    const manager = event.manager
+
+    const budgetMonth = await manager.findOne(BudgetMonth, categoryMonth.budgetMonthId)
+    budgetMonth.available += categoryMonth.budgeted
+    budgetMonth.budgeted -= categoryMonth.budgeted
+
+    await manager.update(BudgetMonth, budgetMonth.id, budgetMonth.getUpdatePayload())
+  }
+
+  /**
    * == RECURSIVE ==
    *
    * Cascade the new assigned and activity amounts up into the parent budget month for new totals.
@@ -70,14 +93,11 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     const budgetedDifference = originalCategoryMonth.budgeted - categoryMonth.budgeted
     const activityDifference = categoryMonth.activity - originalCategoryMonth.activity
     if (budgetedDifference !== 0 || activityDifference !== 0) {
-      const budget = await manager.findOne(Budget, budgetMonth.budgetId)
       budgetMonth.available += budgetedDifference
 
       if (category.inflow) {
         budgetMonth.available += activityDifference
       }
-
-      await manager.update(Budget, budget.id, budget.getUpdatePayload())
     }
 
     if (category.inflow) {
