@@ -9,10 +9,7 @@ export class CategorySubscriber implements EntitySubscriberInterface<Category> {
     return Category
   }
 
-  async afterInsert(event: InsertEvent<Category>) {
-    const category = event.entity
-    const manager = event.manager
-
+  async afterInsert({ entity: category, manager }: InsertEvent<Category>) {
     // Create a category month for all existing months
     const budgetMonths = await manager.find(BudgetMonth, { budgetId: category.budgetId })
 
@@ -25,10 +22,5 @@ export class CategorySubscriber implements EntitySubscriberInterface<Category> {
     )
 
     await manager.insert(CategoryMonth, categoryMonths)
-  }
-
-  async beforeRemove(event: RemoveEvent<Category>) {
-    const category = event.entity
-    const manager = event.manager
   }
 }

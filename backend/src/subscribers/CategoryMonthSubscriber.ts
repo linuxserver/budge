@@ -22,18 +22,15 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
   /**
    * Get the previous month's 'balance' as this will be the 'carry over' amount for this new month
    */
-  async beforeInsert(event: InsertEvent<CategoryMonth>) {
-    const categoryMonth = event.entity
-    const manager = event.manager
-
+  async beforeInsert({ entity: categoryMonth, manager }: InsertEvent<CategoryMonth>) {
     const prevMonth = getDateFromString(categoryMonth.month).minus({ month: 1 })
     const prevCategoryMonth = await manager.findOne(CategoryMonth, {
       categoryId: categoryMonth.categoryId,
       month: formatMonthFromDateString(prevMonth.toJSDate()),
     })
 
-    const category = await event.manager.findOne(Category, {
-      id: event.entity.categoryId,
+    const category = await manager.findOne(Category, {
+      id: categoryMonth.categoryId,
     })
 
     if (prevCategoryMonth && (category.trackingAccountId || prevCategoryMonth.balance > 0)) {
@@ -41,16 +38,16 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     }
   }
 
-  async afterInsert(event: InsertEvent<CategoryMonth>) {
-    if (event.entity.balance === 0) {
+  async afterInsert({ entity: categoryMonth, manager }: InsertEvent<CategoryMonth>) {
+    if (categoryMonth.balance === 0) {
       return
     }
 
-    await this.bookkeeping(event.entity as CategoryMonth, event.manager)
+    await this.bookkeeping(categoryMonth as CategoryMonth, manager)
   }
 
-  async afterUpdate(event: UpdateEvent<CategoryMonth>) {
-    await this.bookkeeping(event.entity as CategoryMonth, event.manager)
+  async afterUpdate({ entity: categoryMonth, manager }: UpdateEvent<CategoryMonth>) {
+    await this.bookkeeping(categoryMonth as CategoryMonth, manager)
   }
 
   /**
@@ -58,10 +55,7 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
    * as we should only be removing category months when a category is being removed. So we are
    * removing the category months individually, so no need to cascade any updates from a single one.
    */
-  async beforeRemove(event: RemoveEvent<CategoryMonth>) {
-    const categoryMonth = event.entity
-    const manager = event.manager
-
+  async beforeRemove({ entity: categoryMonth, manager }: RemoveEvent<CategoryMonth>) {
     const budgetMonth = await manager.findOne(BudgetMonth, categoryMonth.budgetMonthId)
     budgetMonth.available += categoryMonth.budgeted
     budgetMonth.budgeted -= categoryMonth.budgeted

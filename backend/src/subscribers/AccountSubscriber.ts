@@ -14,10 +14,7 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
     await Promise.all([this.createCreditCardCategory(event), this.createAccountPayee(event)])
   }
 
-  private async createAccountPayee(event: InsertEvent<Account>) {
-    const account = event.entity
-    const manager = event.manager
-
+  private async createAccountPayee({ entity: account, manager }: InsertEvent<Account>) {
     const payee = manager.create(Payee, {
       budgetId: account.budgetId,
       name: `Transfer : ${account.name}`,
@@ -30,10 +27,7 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
     await manager.update(Account, account.id, account.getUpdatePayload())
   }
 
-  private async createCreditCardCategory(event: InsertEvent<Account>) {
-    const account = event.entity
-    const manager = event.manager
-
+  private async createCreditCardCategory({ entity: account, manager }: InsertEvent<Account>) {
     if (account.type === AccountTypes.CreditCard) {
       // Create CC payments category if it doesn't exist
       const ccGroup =
@@ -61,9 +55,7 @@ export class AccountSubscriber implements EntitySubscriberInterface<Account> {
     }
   }
 
-  async beforeUpdate(event: UpdateEvent<Account>) {
-    const account = event.entity
-
+  async beforeUpdate({ entity: account }: UpdateEvent<Account>) {
     account.balance = account.cleared + account.uncleared
   }
 }
