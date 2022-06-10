@@ -102,6 +102,12 @@ export default function Login() {
   }
 
   const userCreation = async () => {
+    if (!email || !password) {
+      setAlertDialogBody('Please enter an email address and password to create a new account')
+      setAlertDialogOpen(true)
+      return
+    }
+
     try {
       await api.createUser(email, password)
     } catch (err) {
