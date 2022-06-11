@@ -45,7 +45,7 @@ import { styled } from '@mui/material/styles'
 import UploadIcon from '@mui/icons-material/Upload'
 import EventIcon from '@mui/icons-material/Event'
 import ImportCSV from '../ImportCSV'
-import { useGlobalFilter, useRowSelect, useSortBy, useTable, useAsyncDebounce } from 'react-table'
+import { useGlobalFilter, useRowSelect, useSortBy, useTable, useAsyncDebounce, useResizeColumns } from 'react-table'
 import Checkbox from '@mui/material/Checkbox'
 import Table from '@mui/material/Table'
 import TableCell from '@mui/material/TableCell'
@@ -91,6 +91,18 @@ export const useStyles = makeStyles(theme => ({
     gridTemplateColums: '1fr',
     gridTemplateRows: 'auto 1fr auto',
     height: '100vh',
+  },
+  resizer: {
+    display: 'inline-block',
+    background: theme.palette.action.disabledBackground,
+    width: 2,
+    height: '100%',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    transform: 'translateX(50%)',
+    zIndex: 1,
+    touchAction: 'none',
   },
   list: {},
   thead: {},
@@ -625,6 +637,7 @@ export default function Account(props) {
           numeric: true,
           Header: props => <></>,
           disableSortBy: true,
+          disableResizing: false,
           Cell: props => {
             let statusIcon = <></>
             let tooltipText = ''
@@ -770,6 +783,7 @@ export default function Account(props) {
     useGlobalFilter,
     useSortBy,
     useRowSelect,
+    useResizeColumns,
     hooks => {
       hooks.allColumns.push(columns => [
         // Let's make a column for selection
@@ -788,6 +802,7 @@ export default function Account(props) {
           // The cell can use the individual row's getToggleRowSelectedProps method
           // to the render a checkbox
           sortType: 'defaultSort',
+          disableResizing: true,
           Cell: ({ row }) => <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />,
           Editing: ({ row }) => <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />,
         },
@@ -1053,13 +1068,42 @@ export default function Account(props) {
   }
 
   const onKeyPress = e => {
-    console.log(e)
+    // console.log(e)
   }
 
   const selectedTransactionTotal = getSelectedRows().reduce((total, row) => {
     total = add(total, Currency.valueToDinero(row.amount))
     return total
   }, Currency.inputToDinero(0))
+
+  const renderHeader = column => {
+    const sortElement =
+      column.id !== 'selection' ? (
+        <TableSortLabel
+          active={column.isSorted}
+          // react-table has a unsorted state which is not treated here
+          direction={column.isSortedDesc ? 'desc' : 'asc'}
+        />
+      ) : null
+
+    if (column.numeric) {
+      return (
+        <>
+          {sortElement}
+          {column.render('Header')}
+          {column.canResize && <Box {...column.getResizerProps()} className={classes.resizer} />}
+        </>
+      )
+    }
+
+    return (
+      <>
+        {column.render('Header')}
+        {sortElement}
+        {column.canResize && <Box {...column.getResizerProps()} className={classes.resizer} />}
+      </>
+    )
+  }
 
   return (
     <Box
@@ -1247,17 +1291,11 @@ export default function Account(props) {
                     ...(column.style && column.style),
                     fontSize: theme.typography.caption.fontSize,
                     fontWeight: 'bold',
+                    position: 'relative',
                   }}
                   scope="col"
                 >
-                  {column.render('Header')}
-                  {column.id !== 'selection' ? (
-                    <TableSortLabel
-                      active={column.isSorted}
-                      // react-table has a unsorted state which is not treated here
-                      direction={column.isSortedDesc ? 'desc' : 'asc'}
-                    />
-                  ) : null}
+                  {renderHeader(column)}
                 </TableCell>
               ))}
             </TableRow>

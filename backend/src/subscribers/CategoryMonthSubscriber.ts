@@ -1,5 +1,12 @@
 import { Budget } from '../entities/Budget'
-import { EntityManager, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm'
+import {
+  EntityManager,
+  EntitySubscriberInterface,
+  EventSubscriber,
+  InsertEvent,
+  RemoveEvent,
+  UpdateEvent,
+} from 'typeorm'
 import { formatMonthFromDateString, getDateFromString } from '../utils'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { Category } from '../entities/Category'
@@ -15,18 +22,15 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
   /**
    * Get the previous month's 'balance' as this will be the 'carry over' amount for this new month
    */
-  async beforeInsert(event: InsertEvent<CategoryMonth>) {
-    const categoryMonth = event.entity
-    const manager = event.manager
-
+  async beforeInsert({ entity: categoryMonth, manager }: InsertEvent<CategoryMonth>) {
     const prevMonth = getDateFromString(categoryMonth.month).minus({ month: 1 })
     const prevCategoryMonth = await manager.findOne(CategoryMonth, {
       categoryId: categoryMonth.categoryId,
       month: formatMonthFromDateString(prevMonth.toJSDate()),
     })
 
-    const category = await event.manager.findOne(Category, {
-      id: event.entity.categoryId,
+    const category = await manager.findOne(Category, {
+      id: categoryMonth.categoryId,
     })
 
     if (prevCategoryMonth && (category.trackingAccountId || prevCategoryMonth.balance > 0)) {
@@ -34,16 +38,29 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     }
   }
 
-  async afterInsert(event: InsertEvent<CategoryMonth>) {
-    if (event.entity.balance === 0) {
+  async afterInsert({ entity: categoryMonth, manager }: InsertEvent<CategoryMonth>) {
+    if (categoryMonth.balance === 0) {
       return
     }
 
-    await this.bookkeeping(event.entity as CategoryMonth, event.manager)
+    await this.bookkeeping(categoryMonth as CategoryMonth, manager)
   }
 
-  async afterUpdate(event: UpdateEvent<CategoryMonth>) {
-    await this.bookkeeping(event.entity as CategoryMonth, event.manager)
+  async afterUpdate({ entity: categoryMonth, manager }: UpdateEvent<CategoryMonth>) {
+    await this.bookkeeping(categoryMonth as CategoryMonth, manager)
+  }
+
+  /**
+   * Although the insert / updating of this entity is recursive / cascades, a removal will not
+   * as we should only be removing category months when a category is being removed. So we are
+   * removing the category months individually, so no need to cascade any updates from a single one.
+   */
+  async beforeRemove({ entity: categoryMonth, manager }: RemoveEvent<CategoryMonth>) {
+    const budgetMonth = await manager.findOne(BudgetMonth, categoryMonth.budgetMonthId)
+    budgetMonth.available += categoryMonth.budgeted
+    budgetMonth.budgeted -= categoryMonth.budgeted
+
+    await manager.update(BudgetMonth, budgetMonth.id, budgetMonth.getUpdatePayload())
   }
 
   /**
@@ -70,14 +87,11 @@ export class CategoryMonthSubscriber implements EntitySubscriberInterface<Catego
     const budgetedDifference = originalCategoryMonth.budgeted - categoryMonth.budgeted
     const activityDifference = categoryMonth.activity - originalCategoryMonth.activity
     if (budgetedDifference !== 0 || activityDifference !== 0) {
-      const budget = await manager.findOne(Budget, budgetMonth.budgetId)
       budgetMonth.available += budgetedDifference
 
       if (category.inflow) {
         budgetMonth.available += activityDifference
       }
-
-      await manager.update(Budget, budget.id, budget.getUpdatePayload())
     }
 
     if (category.inflow) {

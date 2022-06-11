@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { createCategory, updateCategory } from '../redux/slices/Categories'
+import { createCategory, deleteCategory, updateCategory } from '../redux/slices/Categories'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Select from '@mui/material/Select'
@@ -9,7 +9,10 @@ import Popover from '@mui/material/Popover'
 import Box from '@mui/material/Box'
 import { bindPopover } from 'material-ui-popup-state/hooks'
 import Stack from '@mui/material/Stack'
-import { categoryGroupsSelectors } from '../redux/slices/CategoryGroups'
+import { categoryGroupsSelectors, fetchCategories } from '../redux/slices/CategoryGroups'
+import API from '../api'
+import DeleteEnvelopeDialog from './DeleteEnvelopeDialog'
+import { refreshBudgetCategory } from '../redux/slices/BudgetMonths'
 
 export default function NewCategoryDialog(props) {
   /**
@@ -17,14 +20,16 @@ export default function NewCategoryDialog(props) {
    */
   const dispatch = useDispatch()
   const categoryGroups = useSelector(categoryGroupsSelectors.selectAll)
-
-  console.log(props)
+  const budgetId = useSelector(state => state.budgets.activeBudgetId)
 
   /**
    * State block
    */
   const [name, setName] = useState(props.name)
   const [categoryGroup, setCategoryGroup] = useState(props.categoryGroupId)
+  const availableMonths = useSelector(state => state.budgets.availableMonths)
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const submit = async () => {
     switch (props.mode) {
@@ -42,11 +47,51 @@ export default function NewCategoryDialog(props) {
             id: props.categoryId,
             name: name,
             order: props.order,
+            hidden: props.hidden,
             categoryGroupId: categoryGroup,
           }),
         )
         break
     }
+
+    props.popupState.close()
+  }
+
+  const openDeleteDialog = () => {
+    setDeleteDialogOpen(true)
+  }
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false)
+  }
+
+  const onCategoryDelete = async newCategory => {
+    await dispatch(
+      deleteCategory({
+        categoryId: props.categoryId,
+        newCategoryId: newCategory,
+      }),
+    )
+
+    dispatch(fetchCategories())
+    for (const month of availableMonths) {
+      dispatch(refreshBudgetCategory({ month, categoryId: newCategory }))
+    }
+
+    setDeleteDialogOpen(false)
+    props.popupState.close()
+  }
+
+  const hideCategory = async () => {
+    await dispatch(
+      updateCategory({
+        id: props.categoryId,
+        name: props.name,
+        order: props.order,
+        hidden: !props.hidden,
+        categoryGroupId: props.categoryGroupId,
+      }),
+    )
 
     props.popupState.close()
   }
@@ -61,6 +106,14 @@ export default function NewCategoryDialog(props) {
       }}
       BackdropProps={{ onClick: () => props.popupState.close() }}
     >
+      <DeleteEnvelopeDialog
+        isOpen={deleteDialogOpen}
+        submit={onCategoryDelete}
+        categoryId={props.categoryId}
+        categoryGroups={categoryGroups}
+        close={closeDeleteDialog}
+      />
+
       <Box sx={{ px: 2, py: 1 }}>
         <TextField
           autoFocus
@@ -97,10 +150,26 @@ export default function NewCategoryDialog(props) {
             )
           })}
         </Select>
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0} sx={{ pt: 2 }}>
-          <Button size="small" onClick={submit}>
-            {props.mode === 'create' ? 'Create' : 'Save'}
-          </Button>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+            {props.mode === 'edit' && (
+              <>
+                <Button color="error" variant="outlined" size="small" onClick={openDeleteDialog}>
+                  Delete
+                </Button>
+
+                <Button size="small" onClick={hideCategory}>
+                  {props.hidden === true ? 'Unhide' : 'Hide'}
+                </Button>
+              </>
+            )}
+          </Stack>
+
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={0} sx={{ pt: 2 }}>
+            <Button size="small" onClick={submit}>
+              {props.mode === 'create' ? 'Create' : 'Save'}
+            </Button>
+          </Stack>
         </Stack>
       </Box>
     </Popover>
