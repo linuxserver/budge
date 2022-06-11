@@ -21,35 +21,32 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     return Transaction
   }
 
-  async beforeInsert(event: InsertEvent<Transaction>) {
+  async beforeInsert({ entity: transaction, manager }: InsertEvent<Transaction>) {
     await Promise.all([
-      this.checkCreateTransferTransaction(event.entity as Transaction, event.manager),
-      this.createCategoryMonth(event.entity as Transaction, event.manager),
+      this.checkCreateTransferTransaction(transaction as Transaction, manager),
+      this.createCategoryMonth(transaction as Transaction, manager),
     ])
   }
 
-  async beforeUpdate(event: UpdateEvent<Transaction>) {
+  async beforeUpdate({ entity: transaction, manager }: UpdateEvent<Transaction>) {
     await Promise.all([
-      this.createCategoryMonth(event.entity as Transaction, event.manager),
-      this.updateTransferTransaction(event.entity as Transaction, event.manager),
+      this.createCategoryMonth(transaction as Transaction, manager),
+      this.updateTransferTransaction(transaction as Transaction, manager),
 
-      this.updateAccountBalanceOnUpdate(event.entity as Transaction, event.manager),
-      this.bookkeepingOnUpdate(event.entity as Transaction, event.manager),
+      this.updateAccountBalanceOnUpdate(transaction as Transaction, manager),
+      this.bookkeepingOnUpdate(transaction as Transaction, manager),
     ])
   }
 
-  async afterInsert(event: InsertEvent<Transaction>) {
+  async afterInsert({ entity: transaction, manager }: InsertEvent<Transaction>) {
     await Promise.all([
-      this.updateAccountBalanceOnAdd(event.entity as Transaction, event.manager),
-      this.bookkeepingOnAdd(event.entity as Transaction, event.manager),
-      this.createTransferTransaction(event.entity as Transaction, event.manager),
+      this.updateAccountBalanceOnAdd(transaction as Transaction, manager),
+      this.bookkeepingOnAdd(transaction as Transaction, manager),
+      this.createTransferTransaction(transaction as Transaction, manager),
     ])
   }
 
-  async beforeRemove(event: RemoveEvent<Transaction>) {
-    const transaction = event.entity
-    const manager = event.manager
-
+  async beforeRemove({ entity: transaction, manager }: RemoveEvent<Transaction>) {
     if (transaction.transferTransactionId === null) {
       return
     }
@@ -59,10 +56,10 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     await manager.remove(Transaction, transferTransaction)
   }
 
-  async afterRemove(event: RemoveEvent<Transaction>) {
+  async afterRemove({ entity: transaction, manager }: RemoveEvent<Transaction>) {
     await Promise.all([
-      this.updateAccountBalanceOnRemove(event.entity as Transaction, event.manager),
-      this.bookkeepingOnDelete(event.entity as Transaction, event.manager),
+      this.updateAccountBalanceOnRemove(transaction as Transaction, manager),
+      this.bookkeepingOnDelete(transaction as Transaction, manager),
     ])
   }
 

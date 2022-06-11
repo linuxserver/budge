@@ -142,6 +142,17 @@ const accountsSlice = createSlice({
     setEditingRow: (state, { payload }) => {
       state.editingRow = payload
     },
+
+    setTransactions: (state, { payload }) => {
+      for (const transaction of payload.transactions) {
+        console.log(transaction)
+        try {
+          transactionsAdapter.upsertOne(state.entities[transaction.accountId].transactions, transaction)
+        } catch (e) {
+          console.log(e)
+        }
+      }
+    },
   },
 
   extraReducers: builder => {
@@ -212,7 +223,7 @@ const accountsSlice = createSlice({
   },
 })
 
-export const { setAccounts, mapIdToAccount, setEditingRow } = accountsSlice.actions
+export const { setAccounts, mapIdToAccount, setEditingRow, setTransactions } = accountsSlice.actions
 
 export const accountsSelectors = accountsAdapter.getSelectors(state => state.accounts)
 export const transactionsSelectors = transactionsAdapter.getSelectors(state => state.transactions)

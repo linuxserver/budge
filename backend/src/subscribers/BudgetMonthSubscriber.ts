@@ -10,9 +10,7 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
     return BudgetMonth
   }
 
-  async beforeInsert(event: InsertEvent<BudgetMonth>) {
-    const budgetMonth = event.entity
-    const manager = event.manager
+  async beforeInsert({ entity: budgetMonth, manager }: InsertEvent<BudgetMonth>) {
     const prevMonth = getDateFromString(budgetMonth.month).minus({ month: 1 })
 
     const prevBudgetMonth = await manager.findOne(BudgetMonth, {
@@ -27,10 +25,7 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
     budgetMonth.available = prevBudgetMonth.available
   }
 
-  async afterUpdate(event: UpdateEvent<BudgetMonth>) {
-    const budgetMonth = event.entity
-    const manager = event.manager
-
+  async afterUpdate({ entity: budgetMonth, manager }: UpdateEvent<BudgetMonth>) {
     const nextMonth = getDateFromString(budgetMonth.month).plus({ month: 1 })
     const nextBudgetMonth = await manager.findOne(BudgetMonth, {
       budgetId: budgetMonth.budgetId,
@@ -64,9 +59,7 @@ export class BudgetMonthSubscriber implements EntitySubscriberInterface<BudgetMo
     await manager.getRepository(BudgetMonth).update(nextBudgetMonth.id, nextBudgetMonth.getUpdatePayload())
   }
 
-  async afterInsert(event: InsertEvent<BudgetMonth>) {
-    const budgetMonth = event.entity
-    const manager = event.manager
+  async afterInsert({ entity: budgetMonth, manager }: InsertEvent<BudgetMonth>) {
     const prevMonth = getDateFromString(budgetMonth.month).minus({ month: 1 })
 
     const prevBudgetMonth = await manager.findOne(BudgetMonth, {

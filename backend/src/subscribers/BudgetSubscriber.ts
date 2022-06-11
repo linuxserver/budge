@@ -12,10 +12,7 @@ export class BudgetSubscriber implements EntitySubscriberInterface<Budget> {
     return Budget
   }
 
-  async afterInsert(event: InsertEvent<Budget>) {
-    const manager = event.manager
-    const budget = event.entity
-
+  async afterInsert({ entity: budget, manager }: InsertEvent<Budget>) {
     const today = getMonthString()
     const prevMonth = getMonthStringFromNow(-1)
     const nextMonth = getMonthStringFromNow(1)
