@@ -1,3 +1,5 @@
+<img src="https://svgshare.com/i/ndp.svg">
+
 # BudgE
 BudgE (pronounced "budgie", like the bird) is an open source "budgeting with envelopes" personal finance app, taking inspiration from other tools such as [Aspire Budgeting](https://www.aspirebudget.com/), [budgetzero](https://budgetzero.io/), and [Buckets](https://www.budgetwithbuckets.com/).
 
