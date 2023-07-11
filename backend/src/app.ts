@@ -9,6 +9,7 @@ import swaggerUi from 'swagger-ui-express'
 import { RegisterRoutes } from '../routes'
 import { logger, stream } from './config/winston'
 import { ValidateError } from 'tsoa'
+import { createClient } from 'redis';
 
 const app: Application = express()
 
@@ -67,4 +68,17 @@ app.use('/docs', swaggerUi.serve, async (_req: Request, res: Response) => {
   return res.send(swaggerUi.generateHTML(await import('../swagger.json')))
 })
 
-export { app }
+const redis = createClient({
+  url: 'redis://redis:6379'
+});
+
+redis.on('error', function (err) {
+  console.log('could not establish a connection with redis. ' + err);
+});
+redis.on('connect', function (err) {
+  console.log('connected to redis successfully');
+});
+
+redis.connect();
+
+export { app, redis }

@@ -5,6 +5,7 @@ import { ErrorResponse } from './responses'
 import { PayeeRequest, PayeeResponse, PayeesResponse } from '../models/Payee'
 import { Payee } from '../entities/Payee'
 import { getRepository } from 'typeorm'
+import { BudgetRepository } from  '../repositories'
 
 @Tags('Payees')
 @Route('budgets/{budgetId}/payees')

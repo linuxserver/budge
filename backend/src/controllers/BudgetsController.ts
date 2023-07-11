@@ -7,7 +7,7 @@ import { AccountTypes } from '../entities/Account'
 import { BudgetMonth } from '../entities/BudgetMonth'
 import { BudgetMonthsResponse, BudgetMonthWithCategoriesResponse } from '../models/BudgetMonth'
 import { getCustomRepository, getRepository, MoreThanOrEqual } from 'typeorm'
-import { BudgetMonths } from '../repositories/BudgetMonths'
+import { BudgetMonths } from '../repositories'
 import { getMonthStringFromNow } from '../utils'
 
 @Tags('Budgets')

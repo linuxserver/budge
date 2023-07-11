@@ -10,8 +10,13 @@ services:
       - 5000:5000
     volumes:
       - ./docker:/config
+      - ./docker/custom-services.d:/custom-services.d
       - ./:/app
     environment:
       PGID: 1000
       PUID: 1000
       TZ: America/New_York
+
+  redis:
+    container_name: redis
+    image: redis:alpine

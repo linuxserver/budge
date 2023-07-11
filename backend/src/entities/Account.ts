@@ -82,6 +82,10 @@ export class Account {
   @JoinColumn()
   transferPayee: Promise<Payee>
 
+  constructor(partial: Partial<Account>) {
+    Object.assign(this, partial);
+  }
+
   public getUpdatePayload() {
     return {
       id: this.id,

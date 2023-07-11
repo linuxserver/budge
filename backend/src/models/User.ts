@@ -30,6 +30,10 @@ export interface UserModel {
   updated: Date
 }
 
+export interface UserCacheModel extends UserModel {
+  password: string
+}
+
 export type UserResponse = DataResponse<UserModel>
 
 export interface LoginResponse extends UserResponse {

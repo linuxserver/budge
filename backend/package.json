@@ -61,6 +61,7 @@
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
     "pg": "^8.7.1",
+    "redis": "^4.6.7",
     "sqlite3": "^5.0.2",
     "swagger-ui-express": "^4.1.6",
     "ts-node": "^10.7.0",

@@ -4,6 +4,7 @@ import { User } from '../entities/User'
 import { LoginRequest, ExpressRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getRepository } from 'typeorm'
+import { UserCache } from '../cache/UserCache'
 
 @Route()
 export class RootController extends Controller {
@@ -27,7 +28,7 @@ export class RootController extends Controller {
     @Request() request: ExpressRequest,
   ): Promise<LoginResponse | ErrorResponse> {
     const { email, password } = requestBody
-    const user: User = await getRepository(User).findOne({ email })
+    const user: User = await UserCache.getByEmail(email)
 
     if (!user) {
       this.setStatus(403)
@@ -43,11 +44,46 @@ export class RootController extends Controller {
 
     this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
 
+    // populate user cache
+
     return {
       data: await user.toResponseModel(),
       token: token,
     }
   }
+
+  /**
+   * Retrieve currently logged in user
+   */
+    @Security('jwtRequired')
+    @Get('login')
+    @Example<UserResponse>({
+      message: 'success',
+      data: {
+        id: 'abc123',
+        email: 'alex@example.com',
+        created: new Date('2011-10-05T14:48:00.000Z'),
+        updated: new Date('2011-10-05T14:48:00.000Z'),
+      },
+    })
+    public async loginPing(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
+      try {
+        const token = request.user.generateJWT()
+
+        this.setHeader('Set-Cookie', `jwt=${token}; Max-Age=3600; Path=/; HttpOnly`)
+
+        // populate user cache
+
+        return {
+          data: await request.user.toResponseModel(),
+          message: 'success',
+        }
+      } catch (err) {
+        return {
+          message: 'failed',
+        }
+      }
+    }
 
   /**
    * Retrieve currently logged in user
@@ -110,7 +146,7 @@ export class RootController extends Controller {
   })
   public async getMe(@Request() request: ExpressRequest): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await getRepository(User).findOne({ email: request.user.email })
+      const user: User = await UserCache.getByEmail(request.user.email)
 
       return {
         data: await user.toResponseModel(),

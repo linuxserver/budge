@@ -4,6 +4,7 @@ import { User } from '../entities/User'
 import { ExpressRequest, UserCreateRequest, UserUpdateRequest } from './requests'
 import { ErrorResponse } from './responses'
 import { getManager, getRepository } from 'typeorm'
+import { UserCache } from '../cache'
 
 @Tags('Users')
 @Route('users')
@@ -29,7 +30,7 @@ export class UsersController extends Controller {
 
     const { email } = requestBody
 
-    const emailCheck: User = await getRepository(User).findOne({ email })
+    const emailCheck: User = await await UserCache.getByEmail(email)
     if (emailCheck) {
       this.setStatus(400)
       return { message: 'Email already exists' }
@@ -70,7 +71,7 @@ export class UsersController extends Controller {
   })
   public async getUserByEmail(@Path() email: string): Promise<UserResponse | ErrorResponse> {
     try {
-      const user: User = await getRepository(User).findOne({ email })
+      const user: User = await UserCache.getByEmail(email)
 
       return {
         data: await user.toResponseModel(),

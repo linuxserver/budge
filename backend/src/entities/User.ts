@@ -61,6 +61,15 @@ export class User {
     })
   }
 
+  public serialize(): string {
+    return JSON.stringify({
+      id: this.id,
+      email: this.email,
+      created: this.created,
+      updated: this.updated,
+    })
+  }
+
   public async toResponseModel(): Promise<UserModel> {
     return {
       id: this.id,
